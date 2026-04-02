@@ -260,6 +260,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <select id="m-camp"><option>VISA</option><option>TLMK</option><option>EDESUR</option><option>FARMACITY</option><option>MATER DEI</option><option>ADT</option><option>STRIX</option><option>CAR ONE</option><option>PRO JUBILAR</option><option>AYSA</option><option>RIO GAS</option><option>MIRGOR</option><option>General</option><option>Onboarding</option></select>
     </div>
     <div class="fl"><label>URL Video YouTube (embed)</label><input type="text" id="m-video" placeholder="https://www.youtube.com/embed/ID"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="fl"><label>Orden en la campaña</label><input type="number" id="m-order" min="1" value="1" placeholder="1"/></div>
+      <div class="fl"><label>Días límite para completar</label><input type="number" id="m-days" min="1" value="7" placeholder="7"/></div>
+    </div>
+    <div class="fl" style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <input type="checkbox" id="m-required" checked style="width:auto;accent-color:var(--fo)"/>
+      <label for="m-required" style="font-size:13px;color:var(--fn);text-transform:none;letter-spacing:0;margin:0;cursor:pointer">Módulo obligatorio</label>
+    </div>
     <div style="border-top:1px solid var(--fbr);margin:16px 0 12px"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <span style="font-size:13px;font-weight:500;color:var(--fn)">Preguntas de evaluación</span>
@@ -430,33 +438,64 @@ function loading() {
 async function renderColList() {
   setActive('ni-home');
   loading();
-  const { data: mods } = await sb.from('modules').select('*').or(`campaign.eq.${S.user.campaign},campaign.eq.General`).order('created_at');
+  const { data: mods } = await sb.from('modules').select('*').or(`campaign.eq.${S.user.campaign},campaign.eq.General`).order('sort_order').order('created_at');
   const { data: comps } = await sb.from('completions').select('*').eq('user_id', S.user.id);
   const done = mods ? mods.filter(m => comps?.some(c => c.module_id === m.id && c.passed)).length : 0;
   const total = mods ? mods.length : 0;
   const pct = total ? Math.round(done / total * 100) : 0;
-  setTopbar(`Hola, ${S.user.full_name.split(' ')[0]}`, `${done}/${total} módulos completados`);
+  setTopbar(`Hola, ${S.user.full_name.split(' ')[0]}`, `${done}/${total} modulos completados`);
+
+  const startDate = S.user.start_date ? new Date(S.user.start_date) : new Date();
+  const today = new Date();
+  const daysSinceStart = Math.floor((today - startDate) / (1000*60*60*24));
+
+  const genMods = (mods||[]).filter(m => m.campaign==='General');
+  const campMods = (mods||[]).filter(m => m.campaign!=='General');
+  const genAllDone = genMods.every(m => comps?.some(c => c.module_id===m.id && c.passed));
+
+  const cardHtml = (m, idx, locked) => {
+    const comp = comps?.find(c => c.module_id===m.id);
+    const tagClass = m.campaign==='General'?'tag-gr':m.campaign==='EDESUR'?'tag-bl':'tag-gn';
+    const dl = m.days_limit||7;
+    const left = dl - daysSinceStart;
+    const expired = left<0 && !comp?.passed;
+    const urgent = left>=0 && left<=2 && !comp?.passed;
+    let badge = comp?.passed
+      ? `<span class="mc-st st-done">Aprobado - ${comp.score}%</span>`
+      : expired ? `<span class="mc-st st-fail">Vencido hace ${Math.abs(left)} dia(s)</span>`
+      : urgent ? `<span class="mc-st" style="color:#D97706">Vence en ${left} dia(s)</span>`
+      : comp ? `<span class="mc-st st-fail">Desaprobado - ${comp.score}%</span>`
+      : `<span class="mc-st st-pend">Pendiente - ${left} dia(s) restantes</span>`;
+    const ord = `<span style="font-size:10px;color:var(--fg);background:var(--fgl);padding:2px 7px;border-radius:10px">N${m.sort_order||idx+1}</span>`;
+    const req = m.is_required ? `<span style="font-size:10px;color:var(--fo);background:var(--fol);padding:2px 7px;border-radius:10px">Obligatorio</span>` : '';
+    if(locked) return `<div class="mc" style="opacity:.5;cursor:not-allowed;background:var(--fgb)">
+      <div style="display:flex;gap:6px;margin-bottom:8px"><span class="tag ${tagClass}">${m.campaign}</span>${ord}</div>
+      <div class="mc-title">Bloqueado - ${m.title}</div>
+      <div class="mc-desc">${m.description}</div>
+      <div style="font-size:12px;color:var(--fg)">Completa la induccion general primero</div></div>`;
+    const borderStyle = expired ? 'style="border-left:3px solid var(--frd)"' : comp?.passed ? '' : '';
+    return `<div class="mc ${comp?.passed?'done-card':''}" onclick="openMod('${m.id}')" ${borderStyle}>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><span class="tag ${tagClass}">${m.campaign}</span>${ord}${req}</div>
+      <div class="mc-title">${m.title}</div>
+      <div class="mc-desc">${m.description}</div>
+      <div>${badge}</div></div>`;
+  };
 
   let h = `<div class="prog-wrap">
     <div style="flex:1"><div style="font-size:12px;color:var(--fg);margin-bottom:7px">Progreso general</div>
     <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div></div>
     <div style="font-size:24px;font-weight:600;color:var(--fo)">${pct}%</div></div>`;
-  h += `<div class="section-hdr"><span class="section-title">Módulos asignados</span></div><div class="mods">`;
 
-  (mods || []).forEach(m => {
-    const comp = comps?.find(c => c.module_id === m.id);
-    const tagClass = m.campaign === 'General' ? 'tag-gr' : m.campaign === 'Edesur' ? 'tag-bl' : m.campaign === 'Anfitrión' ? 'tag-or' : 'tag-gn';
-    const st = comp
-      ? `<span class="mc-st ${comp.passed ? 'st-done' : 'st-fail'}">${comp.passed ? '✓ Aprobado' : '✗ Desaprobado'} · ${comp.score}%</span>`
-      : `<span class="mc-st st-pend">Pendiente</span>`;
-    h += `<div class="mc ${comp?.passed ? 'done-card' : ''}" onclick="openMod('${m.id}')">
-      <span class="tag ${tagClass}">${m.campaign}</span>
-      <div class="mc-title">${m.title}</div>
-      <div class="mc-desc">${m.description}</div>
-      <div>${st}</div>
-    </div>`;
-  });
-  h += `</div>`;
+  if(genMods.length>0){
+    h += `<div class="section-hdr"><span class="section-title">Induccion general</span></div><div class="mods">`;
+    genMods.forEach((m,i) => { h += cardHtml(m,i,false); });
+    h += `</div>`;
+  }
+  if(campMods.length>0){
+    h += `<div class="section-hdr" style="margin-top:24px"><span class="section-title">Modulos de tu campana - ${S.user.campaign}</span></div><div class="mods">`;
+    campMods.forEach((m,i) => { h += cardHtml(m,i,genMods.length>0 && !genAllDone); });
+    h += `</div>`;
+  }
   document.getElementById('page').innerHTML = h;
 }
 
@@ -654,14 +693,20 @@ async function renderDash() {
 
 async function renderMods() {
   loading();
-  const { data: mods } = await sb.from('modules').select('*, questions(count)').order('created_at');
+  const { data: mods } = await sb.from('modules').select('*, questions(count)').order('campaign').order('sort_order');
   const { data: comps } = await sb.from('completions').select('module_id');
-  let h = `<div class="tbl-wrap"><table><thead><tr><th>Título</th><th>Campaña</th><th>Preguntas</th><th>Completados</th><th></th></tr></thead><tbody>`;
+  let h = `<div class="tbl-wrap"><table><thead><tr><th>Orden</th><th>Título</th><th>Campaña</th><th>Días límite</th><th>Obligatorio</th><th>Preguntas</th><th>Completados</th><th></th></tr></thead><tbody>`;
   (mods || []).forEach(m => {
     const co = comps?.filter(c => c.module_id === m.id).length || 0;
-    const tagClass = m.campaign === 'General' ? 'tag-gr' : m.campaign === 'Edesur' ? 'tag-bl' : m.campaign === 'Anfitrión' ? 'tag-or' : 'tag-gn';
-    h += `<tr><td style="font-weight:500">${m.title}</td><td><span class="tag ${tagClass}">${m.campaign}</span></td>
-      <td>${m.questions?.[0]?.count || 0}</td><td>${co}</td>
+    const tagClass = m.campaign === 'General' ? 'tag-gr' : m.campaign === 'EDESUR' ? 'tag-bl' : 'tag-gn';
+    h += `<tr>
+      <td style="color:var(--fg);text-align:center">${m.sort_order||1}</td>
+      <td style="font-weight:500">${m.title}</td>
+      <td><span class="tag ${tagClass}">${m.campaign}</span></td>
+      <td style="text-align:center">${m.days_limit||7} días</td>
+      <td style="text-align:center">${m.is_required!==false?'<span class="pill p-ok">Sí</span>':'<span class="pill p-pe">No</span>'}</td>
+      <td style="text-align:center">${m.questions?.[0]?.count||0}</td>
+      <td style="text-align:center">${co}</td>
       <td><button class="btn-s btn-sm" onclick="openEditMod('${m.id}')">Editar</button></td></tr>`;
   });
   h += `</tbody></table></div>`;
@@ -749,6 +794,9 @@ async function openEditMod(id) {
   document.getElementById('m-desc').value = m.description;
   document.getElementById('m-video').value = m.video_url;
   document.getElementById('m-camp').value = m.campaign;
+  document.getElementById('m-order').value = m.sort_order || 1;
+  document.getElementById('m-days').value = m.days_limit || 7;
+  document.getElementById('m-required').checked = m.is_required !== false;
   document.getElementById('mmod-title').textContent = 'Editar módulo';
   document.getElementById('btn-del-mod').style.display = 'inline-block';
   renderQList(); document.getElementById('modal-mod').classList.add('open');
@@ -781,7 +829,7 @@ function removeQ(i) { editQs.splice(i, 1); renderQList(); }
 async function saveModule() {
   const title = document.getElementById('m-title').value.trim();
   if (!title) { alert('El título es obligatorio'); return; }
-  const modData = { title, description: document.getElementById('m-desc').value.trim(), campaign: document.getElementById('m-camp').value, video_url: document.getElementById('m-video').value.trim() };
+  const modData = { title, description: document.getElementById('m-desc').value.trim(), campaign: document.getElementById('m-camp').value, video_url: document.getElementById('m-video').value.trim(), sort_order: parseInt(document.getElementById('m-order').value)||1, days_limit: parseInt(document.getElementById('m-days').value)||7, is_required: document.getElementById('m-required').checked };
   let modId = S.editModId;
   if (modId) {
     await sb.from('modules').update(modData).eq('id', modId);
