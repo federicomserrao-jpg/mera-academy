@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MERA Academy</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --fo:#FF6B35;--fol:#FFF3EE;--fod:#E55A27;
+  --fn:#1C1C2E;--fg:#6B7280;--fgl:#F3F4F6;--fgb:#F9FAFB;
+  --fw:#FFFFFF;--fbr:#E5E7EB;
+  --fgr:#10B981;--fgrl:#D1FAE5;
+  --frd:#EF4444;--frdl:#FEE2E2;
+  --fbl:#3B82F6;--fbll:#EFF6FF;
+  --fr:8px;--frlg:12px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--fgb);color:var(--fn);min-height:100vh}
+.hidden{display:none!important}
+
+/* LOGIN */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--fgb);padding:20px}
+.login-card{background:var(--fw);border-radius:var(--frlg);padding:32px;width:100%;max-width:380px;border:1px solid var(--fbr);box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.login-logo{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--fbr)}
+.login-logo-title{font-size:22px;font-weight:700;color:var(--fo);letter-spacing:-.5px}
+.login-logo-sub{font-size:11px;color:var(--fg);text-transform:uppercase;letter-spacing:.08em}
+.role-row{display:flex;gap:8px;margin-bottom:20px}
+.role-btn{flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:none;color:var(--fg);font-size:13px;cursor:pointer;transition:all .12s}
+.role-btn.on{border-color:var(--fo);color:var(--fo);background:var(--fol);font-weight:500}
+.fl{margin-bottom:14px}
+.fl label{display:block;font-size:11px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
+.fl input,.fl select,.fl textarea{width:100%;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit;transition:border-color .12s}
+.fl input:focus,.fl select:focus,.fl textarea:focus{border-color:var(--fo);outline:none}
+.fl textarea{resize:vertical;min-height:70px}
+.err-msg{font-size:12px;color:var(--frd);margin-top:8px;display:none}
+.btn-p{background:var(--fo);color:#fff;border:none;border-radius:var(--fr);padding:10px 18px;font-size:14px;font-weight:500;cursor:pointer;transition:background .12s;font-family:inherit}
+.btn-p:hover{background:var(--fod)}
+.btn-p:disabled{opacity:.6;cursor:not-allowed}
+.btn-s{background:var(--fw);color:var(--fn);border:1px solid var(--fbr);border-radius:var(--fr);padding:9px 14px;font-size:13px;cursor:pointer;transition:all .12s;font-family:inherit}
+.btn-s:hover{border-color:var(--fo);color:var(--fo)}
+.btn-sm{padding:7px 13px;font-size:12px}
+.btn-danger{background:var(--frd);color:#fff;border:none;border-radius:var(--fr);padding:7px 13px;font-size:12px;cursor:pointer;font-family:inherit}
+
+/* SHELL */
+.shell{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sb{width:220px;background:var(--fw);border-right:1px solid var(--fbr);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:10}
+.sb-logo{padding:20px 16px 16px;border-bottom:1px solid var(--fbr)}
+.sb-logo-title{font-size:20px;font-weight:700;color:var(--fo)}
+.sb-logo-sub{font-size:10px;color:var(--fg);text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
+.sb-nav{padding:12px 8px;flex:1;overflow-y:auto}
+.nav-sect{margin-bottom:20px}
+.nav-sect-lbl{font-size:10px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.07em;padding:0 8px;margin-bottom:6px}
+.ni{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--fr);font-size:13px;color:var(--fg);cursor:pointer;transition:all .12s;margin-bottom:2px;user-select:none}
+.ni:hover{background:var(--fgb);color:var(--fn)}
+.ni.on{background:var(--fol);color:var(--fo);font-weight:500}
+.ni svg{width:16px;height:16px;flex-shrink:0}
+.sb-user{padding:14px 16px;border-top:1px solid var(--fbr)}
+.su-row{display:flex;align-items:center;gap:10px}
+.su-av{width:32px;height:32px;border-radius:50%;background:var(--fol);color:var(--fo);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+.su-name{font-size:13px;font-weight:500;color:var(--fn);line-height:1.3}
+.su-role{font-size:11px;color:var(--fg)}
+.su-out{font-size:12px;color:var(--fg);background:none;border:none;cursor:pointer;padding:3px 0;margin-top:4px;display:block;font-family:inherit}
+.su-out:hover{color:var(--fo)}
+
+/* MAIN */
+.main{flex:1;margin-left:220px;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--fw);border-bottom:1px solid var(--fbr);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+.tb-title{font-size:17px;font-weight:500;color:var(--fn)}
+.tb-sub{font-size:12px;color:var(--fg);margin-top:2px}
+.tb-right{display:flex;gap:8px;align-items:center}
+.page{padding:28px;flex:1}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.sc{background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr)}
+.sc-icon{width:36px;height:36px;border-radius:var(--fr);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.sc-val{font-size:28px;font-weight:600;color:var(--fn);line-height:1}
+.sc-lbl{font-size:12px;color:var(--fg);margin-top:4px}
+
+/* MODULES */
+.mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.mc{background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr);cursor:pointer;transition:all .15s}
+.mc:hover{border-color:var(--fo);transform:translateY(-2px);box-shadow:0 4px 16px rgba(255,107,53,.1)}
+.mc.done-card{border-left:3px solid var(--fgr)}
+.tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
+.tag-bl{background:var(--fbll);color:var(--fbl)}
+.tag-or{background:var(--fol);color:var(--fo)}
+.tag-gr{background:var(--fgl);color:var(--fg)}
+.tag-gn{background:var(--fgrl);color:#065F46}
+.mc-title{font-size:14px;font-weight:500;color:var(--fn);margin:10px 0 5px;line-height:1.4}
+.mc-desc{font-size:12px;color:var(--fg);line-height:1.5;margin-bottom:14px}
+.mc-st{font-size:12px;font-weight:500}
+.st-done{color:var(--fgr)}
+.st-pend{color:var(--fg)}
+.st-fail{color:var(--frd)}
+.pbar{height:4px;background:var(--fgl);border-radius:2px;margin-top:10px}
+.pfill{height:100%;border-radius:2px;background:var(--fgr);transition:width .3s}
+
+/* VIDEO */
+.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--fg);background:none;border:none;cursor:pointer;margin-bottom:18px;padding:0;font-family:inherit}
+.back-btn:hover{color:var(--fn)}
+.vid-box{background:#0a1628;border-radius:var(--frlg);overflow:hidden;position:relative;padding-bottom:45%;margin-bottom:20px}
+.vid-box iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+
+/* EVAL */
+.eval-hdr{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.eval-dots{display:flex;gap:4px;flex:1}
+.eval-dot{flex:1;height:4px;border-radius:2px;background:var(--fgl)}
+.eval-dot.done{background:var(--fo)}
+.eval-dot.cur{background:rgba(255,107,53,.4)}
+.qblock{background:var(--fgb);border-radius:var(--fr);padding:18px;margin-bottom:14px;border:1px solid var(--fbr)}
+.q-n{font-size:11px;color:var(--fg);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+.q-t{font-size:14px;font-weight:500;color:var(--fn);margin-bottom:16px;line-height:1.5}
+.opt{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--fr);border:1px solid var(--fbr);background:var(--fw);margin-bottom:7px;cursor:pointer;font-size:13px;color:var(--fn);transition:all .1s;user-select:none}
+.opt:hover{border-color:var(--fo)}
+.opt.sel{border-color:var(--fo);background:var(--fol);color:var(--fo);font-weight:500}
+.opt.correct{border-color:var(--fgr);background:var(--fgrl);color:#065F46}
+.opt.wrong{border-color:var(--frd);background:var(--frdl);color:#7F1D1D}
+.opt input[type=radio]{accent-color:var(--fo);margin:0;flex-shrink:0}
+.nav-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+
+/* REVIEW */
+.score-card{background:var(--fw);border-radius:var(--frlg);padding:24px;border:1px solid var(--fbr);text-align:center;margin-bottom:20px}
+.score-ring{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;margin:0 auto 12px}
+.r-pass{background:var(--fgrl);color:var(--fgr)}
+.r-fail{background:var(--frdl);color:var(--frd)}
+.score-title{font-size:16px;font-weight:500;color:var(--fn)}
+.score-sub{font-size:13px;color:var(--fg);margin-top:4px}
+.rev-item{background:var(--fw);border-radius:var(--fr);padding:14px;margin-bottom:10px;border:1px solid var(--fbr);border-left:3px solid var(--fbr)}
+.rev-item.ok{border-left-color:var(--fgr)}
+.rev-item.err{border-left-color:var(--frd)}
+.rev-top{display:flex;gap:8px;margin-bottom:8px}
+.rev-badge{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:1px}
+.rb-ok{background:var(--fgrl);color:#065F46}
+.rb-err{background:var(--frdl);color:#7F1D1D}
+.rev-q{font-size:13px;font-weight:500;color:var(--fn);line-height:1.4}
+.rev-ans{font-size:12px;margin-top:6px}
+.ans-row{display:flex;gap:6px;margin-bottom:4px}
+.ans-lbl{color:var(--fg);min-width:110px;flex-shrink:0}
+.ans-ok{color:var(--fgr);font-weight:500}
+.ans-err{color:var(--frd)}
+.why{margin-top:8px;background:var(--fbll);border-radius:var(--fr);padding:9px 12px;font-size:12px;color:#1E40AF;line-height:1.5}
+
+/* CERT */
+.cert-area{background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr);text-align:center;margin-top:20px}
+.cert-lbl{font-size:11px;color:var(--fg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+#cert-canvas{border-radius:var(--fr);max-width:100%;border:1px solid var(--fbr)}
+
+/* TABLE */
+.tbl-wrap{background:var(--fw);border-radius:var(--frlg);border:1px solid var(--fbr);overflow:hidden;margin-bottom:20px}
+.tbl-wrap table{width:100%;border-collapse:collapse;font-size:13px}
+.tbl-wrap th{text-align:left;padding:11px 16px;font-size:11px;color:var(--fg);font-weight:500;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--fbr);background:var(--fgb)}
+.tbl-wrap td{padding:12px 16px;border-bottom:1px solid var(--fbr);color:var(--fn)}
+.tbl-wrap tr:last-child td{border-bottom:none}
+.tbl-wrap tr:hover td{background:var(--fgb)}
+.pill{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
+.p-ok{background:var(--fgrl);color:#065F46}
+.p-fl{background:var(--frdl);color:#7F1D1D}
+.p-pe{background:#FEF3C7;color:#92400E}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(17,24,39,.5);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:100;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:var(--fw);border-radius:var(--frlg);width:100%;max-width:520px;border:1px solid var(--fbr);box-shadow:0 20px 60px rgba(0,0,0,.15);margin:auto}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--fbr)}
+.modal-title{font-size:15px;font-weight:500;color:var(--fn)}
+.modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--fg);line-height:1;padding:2px 6px}
+.modal-body{padding:20px;max-height:60vh;overflow-y:auto}
+.modal-footer{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--fbr)}
+.qe-block{background:var(--fgb);border-radius:var(--fr);padding:12px;margin-bottom:10px;border:1px solid var(--fbr)}
+.qe-block input[type=text]{width:100%;padding:7px 10px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:13px;color:var(--fn);background:var(--fw);font-family:inherit;margin-bottom:7px}
+.opt-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.opt-row input[type=text]{flex:1;padding:6px 9px;font-size:12px;border:1px solid var(--fbr);border-radius:var(--fr);font-family:inherit;color:var(--fn);background:var(--fw)}
+.opt-row input[type=radio]{accent-color:var(--fo);flex-shrink:0}
+.exp-inp{width:100%;padding:7px 10px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:12px;color:var(--fn);background:var(--fw);resize:vertical;min-height:52px;margin-top:6px;font-family:inherit}
+.qe-hint{font-size:10px;color:var(--fg);margin:4px 0 6px}
+.add-q{font-size:12px;color:var(--fo);background:none;border:none;cursor:pointer;font-weight:500;padding:4px 0;font-family:inherit}
+
+/* PROGRESS BAR GLOBAL */
+.prog-wrap{background:var(--fw);border-radius:var(--frlg);padding:16px 20px;border:1px solid var(--fbr);margin-bottom:22px;display:flex;align-items:center;gap:16px}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;min-height:200px;color:var(--fg);font-size:14px}
+.spinner{width:28px;height:28px;border:3px solid var(--fgl);border-top-color:var(--fo);border-radius:50%;animation:spin .7s linear infinite;margin-right:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-size:14px;font-weight:500;color:var(--fn)}
+
+@media(max-width:768px){
+  .sb{transform:translateX(-100%);transition:transform .2s}
+  .sb.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .page{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="sc-login">
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-title">MERA Academy</div>
+      <div class="login-logo-sub">Plataforma de Capacitación · MERA Solutions</div>
+    </div>
+    <div class="role-row">
+      <button class="role-btn on" id="rb-col" onclick="setRole('col')">Colaborador</button>
+      <button class="role-btn" id="rb-adm" onclick="setRole('adm')">Administrador</button>
+    </div>
+    <div class="fl"><label>Usuario</label><input type="text" id="inp-u" placeholder="Tu usuario" autocomplete="username"/></div>
+    <div class="fl"><label>Contraseña</label><input type="password" id="inp-p" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <div class="err-msg" id="err-msg">Usuario o contraseña incorrectos</div>
+    <br>
+    <button class="btn-p" id="btn-login" style="width:100%" onclick="doLogin()">Ingresar</button>
+  </div>
+</div>
+</div>
+
+<!-- APP -->
+<div id="sc-app" class="hidden">
+<div class="shell">
+  <div class="sb" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-title">MERA Academy</div>
+      <div class="sb-logo-sub">Capacitación interna</div>
+    </div>
+    <div class="sb-nav" id="sb-nav"></div>
+    <div class="sb-user" id="sb-user"></div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="tb-title" id="tb-title">Dashboard</div>
+        <div class="tb-sub" id="tb-sub"></div>
+      </div>
+      <div class="tb-right" id="tb-right"></div>
+    </div>
+    <div class="page" id="page"></div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL MÓDULO -->
+<div class="modal-bg" id="modal-mod">
+<div class="modal">
+  <div class="modal-hdr">
+    <span class="modal-title" id="mmod-title">Nuevo módulo</span>
+    <button class="modal-close" onclick="closeModal('modal-mod')">×</button>
+  </div>
+  <div class="modal-body">
+    <div class="fl"><label>Título</label><input type="text" id="m-title"/></div>
+    <div class="fl"><label>Descripción</label><textarea id="m-desc"></textarea></div>
+    <div class="fl"><label>Campaña / Área</label>
+      <select id="m-camp"><option>Edesur</option><option>Anfitrión</option><option>General</option><option>Onboarding</option></select>
+    </div>
+    <div class="fl"><label>URL Video YouTube (embed)</label><input type="text" id="m-video" placeholder="https://www.youtube.com/embed/ID"/></div>
+    <div style="border-top:1px solid var(--fbr);margin:16px 0 12px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:13px;font-weight:500;color:var(--fn)">Preguntas de evaluación</span>
+      <button class="add-q" onclick="addQ()">+ Agregar pregunta</button>
+    </div>
+    <div class="qe-hint">Seleccioná ● en la respuesta correcta de cada pregunta</div>
+    <div id="q-list"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-p btn-sm" onclick="saveModule()" style="flex:1">Guardar módulo</button>
+    <button class="btn-danger btn-sm" id="btn-del-mod" style="display:none" onclick="deleteModule()">Eliminar</button>
+    <button class="btn-s btn-sm" onclick="closeModal('modal-mod')">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL USUARIO -->
+<div class="modal-bg" id="modal-usr">
+<div class="modal">
+  <div class="modal-hdr">
+    <span class="modal-title" id="musr-title">Nuevo colaborador</span>
+    <button class="modal-close" onclick="closeModal('modal-usr')">×</button>
+  </div>
+  <div class="modal-body">
+    <div class="fl"><label>Nombre completo</label><input type="text" id="u-name"/></div>
+    <div class="fl"><label>Usuario (para ingresar)</label><input type="text" id="u-user" autocomplete="off"/></div>
+    <div class="fl"><label>Contraseña</label><input type="password" id="u-pass" autocomplete="new-password"/></div>
+    <div class="fl"><label>Campaña / Área</label>
+      <select id="u-camp"><option>Edesur</option><option>Anfitrión</option><option>General</option><option>Onboarding</option></select>
+    </div>
+    <div id="u-edit-fields" class="hidden">
+      <div style="border-top:1px solid var(--fbr);margin:10px 0 14px"></div>
+      <div class="fl"><label>Nueva contraseña (dejar vacío para no cambiar)</label><input type="password" id="u-newpass" autocomplete="new-password"/></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-p btn-sm" onclick="saveUser()" style="flex:1">Guardar</button>
+    <button class="btn-danger btn-sm" id="btn-del-usr" style="display:none" onclick="deleteUser()">Eliminar</button>
+    <button class="btn-s btn-sm" onclick="closeModal('modal-usr')">Cancelar</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURACIÓN SUPABASE — reemplazar con tus datos reales
+// ============================================================
+const SUPABASE_URL = 'https://scgjdqszhebfqjxupzkd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+const S = {
+  role: 'col',
+  user: null,
+  editModId: null,
+  editUsrId: null,
+  editQs: [],
+  activeModule: null,
+  evalQs: [],
+  answers: {},
+  curQ: 0
+};
+
+// ============================================================
+// LOGIN
+// ============================================================
+function setRole(r) {
+  S.role = r;
+  document.getElementById('rb-col').classList.toggle('on', r === 'col');
+  document.getElementById('rb-adm').classList.toggle('on', r === 'adm');
+}
+
+async function doLogin() {
+  const u = document.getElementById('inp-u').value.trim();
+  const p = document.getElementById('inp-p').value.trim();
+  const err = document.getElementById('err-msg');
+  const btn = document.getElementById('btn-login');
+  if (!u || !p) { err.style.display = 'block'; err.textContent = 'Completá usuario y contraseña'; return; }
+  btn.disabled = true; btn.textContent = 'Ingresando...';
+  err.style.display = 'none';
+  try {
+    const { data, error } = await sb.from('users')
+      .select('*').eq('username', u).eq('password', p).eq('role', S.role).single();
+    if (error || !data) { err.style.display = 'block'; err.textContent = 'Usuario o contraseña incorrectos'; return; }
+    S.user = data;
+    document.getElementById('sc-login').classList.add('hidden');
+    document.getElementById('sc-app').classList.remove('hidden');
+    buildShell();
+    if (S.user.role === 'adm') aSection('dash'); else renderColList();
+  } catch(e) {
+    err.style.display = 'block'; err.textContent = 'Error de conexión. Verificá la configuración.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Ingresar';
+  }
+}
+
+function logout() {
+  S.user = null;
+  document.getElementById('sc-app').classList.add('hidden');
+  document.getElementById('sc-login').classList.remove('hidden');
+  document.getElementById('inp-u').value = '';
+  document.getElementById('inp-p').value = '';
+}
+
+// ============================================================
+// SHELL / SIDEBAR
+// ============================================================
+function buildShell() {
+  const u = S.user;
+  const ini = u.full_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  document.getElementById('sb-user').innerHTML = `
+    <div class="su-row">
+      <div class="su-av">${ini}</div>
+      <div><div class="su-name">${u.full_name}</div><div class="su-role">${u.campaign}</div></div>
+    </div>
+    <button class="su-out" onclick="logout()">Cerrar sesión</button>`;
+
+  const isAdm = u.role === 'adm';
+  document.getElementById('sb-nav').innerHTML = isAdm ? `
+    <div class="nav-sect">
+      <div class="nav-sect-lbl">General</div>
+      <div class="ni" id="ni-dash" onclick="aSection('dash')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2zm7 0h5v5H9zM2 9h5v5H2zm7 0h5v5H9z"/></svg>Dashboard
+      </div>
+      <div class="ni" id="ni-mods" onclick="aSection('mods')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2zm0 4h12v2H2zm0 4h8v2H2z"/></svg>Módulos
+      </div>
+    </div>
+    <div class="nav-sect">
+      <div class="nav-sect-lbl">Personas</div>
+      <div class="ni" id="ni-usrs" onclick="aSection('usrs')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 6a5 5 0 1110 0H3z"/></svg>Colaboradores
+      </div>
+      <div class="ni" id="ni-res" onclick="aSection('res')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v12H2V2zm2 3v1h8V5H4zm0 3v1h8V8H4zm0 3v1h5v-1H4z"/></svg>Resultados
+      </div>
+    </div>` : `
+    <div class="nav-sect">
+      <div class="nav-sect-lbl">Mi aprendizaje</div>
+      <div class="ni on" id="ni-home" onclick="renderColList()">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 7v8h5V9h4v6h5V7L8 1z"/></svg>Mis módulos
+      </div>
+    </div>`;
+}
+
+function setTopbar(title, sub = '', rightHtml = '') {
+  document.getElementById('tb-title').textContent = title;
+  document.getElementById('tb-sub').textContent = sub;
+  document.getElementById('tb-right').innerHTML = rightHtml;
+}
+
+function setActive(id) {
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('on');
+}
+
+function loading() {
+  document.getElementById('page').innerHTML = `<div class="loading"><div class="spinner"></div>Cargando...</div>`;
+}
+
+// ============================================================
+// COLABORADOR
+// ============================================================
+async function renderColList() {
+  setActive('ni-home');
+  loading();
+  const { data: mods } = await sb.from('modules').select('*').or(`campaign.eq.${S.user.campaign},campaign.eq.General`).order('created_at');
+  const { data: comps } = await sb.from('completions').select('*').eq('user_id', S.user.id);
+  const done = mods ? mods.filter(m => comps?.some(c => c.module_id === m.id && c.passed)).length : 0;
+  const total = mods ? mods.length : 0;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  setTopbar(`Hola, ${S.user.full_name.split(' ')[0]}`, `${done}/${total} módulos completados`);
+
+  let h = `<div class="prog-wrap">
+    <div style="flex:1"><div style="font-size:12px;color:var(--fg);margin-bottom:7px">Progreso general</div>
+    <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div></div>
+    <div style="font-size:24px;font-weight:600;color:var(--fo)">${pct}%</div></div>`;
+  h += `<div class="section-hdr"><span class="section-title">Módulos asignados</span></div><div class="mods">`;
+
+  (mods || []).forEach(m => {
+    const comp = comps?.find(c => c.module_id === m.id);
+    const tagClass = m.campaign === 'General' ? 'tag-gr' : m.campaign === 'Edesur' ? 'tag-bl' : m.campaign === 'Anfitrión' ? 'tag-or' : 'tag-gn';
+    const st = comp
+      ? `<span class="mc-st ${comp.passed ? 'st-done' : 'st-fail'}">${comp.passed ? '✓ Aprobado' : '✗ Desaprobado'} · ${comp.score}%</span>`
+      : `<span class="mc-st st-pend">Pendiente</span>`;
+    h += `<div class="mc ${comp?.passed ? 'done-card' : ''}" onclick="openMod('${m.id}')">
+      <span class="tag ${tagClass}">${m.campaign}</span>
+      <div class="mc-title">${m.title}</div>
+      <div class="mc-desc">${m.description}</div>
+      <div>${st}</div>
+    </div>`;
+  });
+  h += `</div>`;
+  document.getElementById('page').innerHTML = h;
+}
+
+async function openMod(id) {
+  loading();
+  const { data: m } = await sb.from('modules').select('*, questions(*)').eq('id', id).single();
+  const comp = await sb.from('completions').select('*').eq('user_id', S.user.id).eq('module_id', id).order('created_at', { ascending: false }).limit(1);
+  S.activeModule = m;
+  S.evalQs = (m.questions || []).slice(0, 10);
+  S.answers = {}; S.curQ = 0;
+
+  const tagClass = m.campaign === 'General' ? 'tag-gr' : m.campaign === 'Edesur' ? 'tag-bl' : m.campaign === 'Anfitrión' ? 'tag-or' : 'tag-gn';
+  setTopbar(m.title, `Campaña: ${m.campaign}`);
+
+  let h = `<button class="back-btn" onclick="renderColList()">← Volver a módulos</button>`;
+  h += `<div style="margin-bottom:16px"><span class="tag ${tagClass}">${m.campaign}</span><div style="font-size:16px;font-weight:500;color:var(--fn);margin-top:8px">${m.title}</div><div style="font-size:13px;color:var(--fg);margin-top:3px">${m.description}</div></div>`;
+  h += `<div class="vid-box"><iframe src="${m.video_url}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>`;
+
+  const lastComp = comp.data?.[0];
+  if (lastComp) {
+    h += `<div style="background:var(--fol);border-radius:var(--fr);padding:11px 14px;font-size:13px;color:var(--fod);margin-bottom:16px;border:1px solid #FFCBB0">
+      Ya realizaste este módulo con <strong>${lastComp.score}%</strong>. Podés volver a intentarlo.
+    </div>`;
+  }
+  h += `<div style="font-size:14px;font-weight:500;color:var(--fn);margin-bottom:14px">Evaluación · ${S.evalQs.length} preguntas</div><div id="eval-area"></div>`;
+  document.getElementById('page').innerHTML = h;
+  renderQ();
+}
+
+function renderQ() {
+  const qs = S.evalQs, i = S.curQ;
+  let dots = qs.map((_, j) => `<div class="eval-dot ${j < i ? 'done' : j === i ? 'cur' : ''}"></div>`).join('');
+  let h = `<div class="eval-hdr"><div class="eval-dots">${dots}</div><span style="font-size:12px;color:var(--fg);white-space:nowrap">${i + 1} / ${qs.length}</span></div>`;
+  h += `<div class="qblock"><div class="q-n">Pregunta ${i + 1}</div><div class="q-t">${qs[i].question_text}</div>`;
+  const opts = [qs[i].option_a, qs[i].option_b, qs[i].option_c, qs[i].option_d];
+  opts.forEach((o, j) => {
+    if (!o) return;
+    const sel = S.answers[i] === j;
+    h += `<div class="opt ${sel ? 'sel' : ''}" onclick="selA(${j})"><input type="radio" name="q" ${sel ? 'checked' : ''}> ${o}</div>`;
+  });
+  h += `</div><div class="nav-row">`;
+  if (i > 0) h += `<button class="btn-s btn-sm" onclick="goQ(${i - 1})">← Anterior</button>`;
+  if (i < qs.length - 1) h += `<button class="btn-p btn-sm" onclick="goQ(${i + 1})">Siguiente →</button>`;
+  else h += `<button class="btn-p btn-sm" onclick="submitEval()">Enviar evaluación</button>`;
+  h += `</div>`;
+  document.getElementById('eval-area').innerHTML = h;
+}
+
+function selA(j) { S.answers[S.curQ] = j; renderQ(); }
+function goQ(i) { S.curQ = i; renderQ(); }
+
+async function submitEval() {
+  const qs = S.evalQs;
+  const miss = qs.length - Object.keys(S.answers).length;
+  if (miss > 0 && !confirm(`Tenés ${miss} pregunta(s) sin responder. ¿Enviás igual?`)) return;
+  let correct = 0;
+  const correctMap = { 0: 'a', 1: 'b', 2: 'c', 3: 'd' };
+  qs.forEach((q, i) => {
+    const userAns = correctMap[S.answers[i]];
+    if (userAns === q.correct_option) correct++;
+  });
+  const score = Math.round(correct / qs.length * 100);
+  const passed = score >= 60;
+  await sb.from('completions').insert({ user_id: S.user.id, module_id: S.activeModule.id, score, passed });
+  renderReview(score, passed, correct, qs);
+}
+
+function renderReview(score, passed, correct, qs) {
+  setTopbar('Resultado de evaluación', S.activeModule.title);
+  const correctMap = { 0: 'a', 1: 'b', 2: 'c', 3: 'd' };
+  const optLabel = (q, idx) => [q.option_a, q.option_b, q.option_c, q.option_d][idx];
+
+  let h = `<button class="back-btn" onclick="renderColList()">← Volver a módulos</button>`;
+  h += `<div class="score-card">
+    <div class="score-ring ${passed ? 'r-pass' : 'r-fail'}">${score}%</div>
+    <div class="score-title">${passed ? '¡Módulo aprobado!' : 'Módulo desaprobado'}</div>
+    <div class="score-sub">${correct} de ${qs.length} correctas · Mínimo: 60%</div>
+    ${!passed ? '<div style="font-size:12px;color:var(--frd);margin-top:6px">Podés repetir el módulo cuando quieras.</div>' : ''}
+  </div>`;
+
+  if (passed) {
+    h += `<div class="cert-area">
+      <div class="cert-lbl">Certificado de aprobación</div>
+      <canvas id="cert-canvas" width="580" height="360"></canvas>
+      <div style="margin-top:12px"><button class="btn-p btn-sm" onclick="downloadCert()">Descargar certificado</button></div>
+    </div>`;
+  }
+
+  h += `<div style="font-size:14px;font-weight:500;color:var(--fn);margin:20px 0 12px">Revisión detallada</div>`;
+  qs.forEach((q, i) => {
+    const ua = S.answers[i];
+    const uaLetter = correctMap[ua];
+    const ok = uaLetter === q.correct_option;
+    h += `<div class="rev-item ${ok ? 'ok' : 'err'}">
+      <div class="rev-top">
+        <div class="rev-badge ${ok ? 'rb-ok' : 'rb-err'}">${ok ? '✓' : '✗'}</div>
+        <div class="rev-q">${i + 1}. ${q.question_text}</div>
+      </div>`;
+    if (!ok) {
+      const ul = ua !== undefined ? optLabel(q, ua) : 'Sin responder';
+      const correctIdx = ['a', 'b', 'c', 'd'].indexOf(q.correct_option);
+      h += `<div class="rev-ans">
+        <div class="ans-row"><span class="ans-lbl">Tu respuesta:</span><span class="ans-err">${ul || '—'}</span></div>
+        <div class="ans-row"><span class="ans-lbl">Correcta:</span><span class="ans-ok">${optLabel(q, correctIdx)}</span></div>
+        ${q.explanation ? `<div class="why">💡 ${q.explanation}</div>` : ''}
+      </div>`;
+    }
+    h += `</div>`;
+  });
+  h += `<div style="display:flex;gap:8px;margin-top:18px">
+    <button class="btn-s btn-sm" onclick="renderColList()">Volver a módulos</button>
+    ${!passed ? `<button class="btn-p btn-sm" onclick="openMod('${S.activeModule.id}')">Repetir módulo</button>` : ''}
+  </div>`;
+  document.getElementById('page').innerHTML = h;
+  if (passed) setTimeout(() => drawCert(score), 60);
+}
+
+function drawCert(score) {
+  const c = document.getElementById('cert-canvas'); if (!c) return;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, 580, 360);
+  ctx.strokeStyle = '#FF6B35'; ctx.lineWidth = 4; ctx.strokeRect(10, 10, 560, 340);
+  ctx.strokeStyle = '#1C1C2E'; ctx.lineWidth = 1; ctx.strokeRect(18, 18, 544, 324);
+  ctx.fillStyle = '#FF6B35'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.fillText('CERTIFICADO DE APROBACIÓN', 290, 62);
+  ctx.fillStyle = '#1C1C2E'; ctx.font = '13px Arial'; ctx.fillText('MERA Solutions · MERA Academy', 290, 88);
+  ctx.fillStyle = '#6B7280'; ctx.font = '13px Arial'; ctx.fillText('Se certifica que', 290, 124);
+  ctx.fillStyle = '#1C1C2E'; ctx.font = 'bold 22px Arial'; ctx.fillText(S.user.full_name, 290, 154);
+  ctx.fillStyle = '#6B7280'; ctx.font = '13px Arial'; ctx.fillText('completó exitosamente el módulo', 290, 182);
+  ctx.fillStyle = '#FF6B35'; ctx.font = 'bold 15px Arial'; ctx.fillText(S.activeModule.title, 290, 208);
+  ctx.fillStyle = '#10B981'; ctx.font = 'bold 18px Arial'; ctx.fillText(`Puntuación: ${score}%`, 290, 242);
+  ctx.strokeStyle = '#E5E7EB'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(80, 278); ctx.lineTo(500, 278); ctx.stroke();
+  ctx.fillStyle = '#6B7280'; ctx.font = '11px Arial'; ctx.fillText(`Fecha: ${new Date().toLocaleDateString('es-AR')} · MERA Solutions · Recursos Humanos`, 290, 306);
+}
+
+function downloadCert() {
+  const c = document.getElementById('cert-canvas'); if (!c) return;
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = `certificado_${S.user.full_name.replace(/ /g, '_')}_${S.activeModule.title.replace(/ /g, '_')}.png`;
+  a.click();
+}
+
+// ============================================================
+// ADMIN — SECCIONES
+// ============================================================
+function aSection(s) {
+  setActive('ni-' + s);
+  const cfg = {
+    dash: ['Dashboard', 'Resumen general', ''],
+    mods: ['Módulos', 'Módulos de capacitación', `<button class="btn-p btn-sm" onclick="openNewMod()">+ Nuevo módulo</button>`],
+    usrs: ['Colaboradores', 'Gestión de usuarios', `<button class="btn-p btn-sm" onclick="openNewUsr()">+ Nuevo colaborador</button>`],
+    res: ['Resultados', 'Evaluaciones completadas', `<button class="btn-s btn-sm" onclick="exportCSV()">Exportar CSV</button>`]
+  };
+  setTopbar(...cfg[s]);
+  ({ dash: renderDash, mods: renderMods, usrs: renderUsrs, res: renderRes })[s]();
+}
+
+async function renderDash() {
+  loading();
+  const [{ count: cols }, { count: mods }, { data: comps }] = await Promise.all([
+    sb.from('users').select('*', { count: 'exact', head: true }).eq('role', 'col'),
+    sb.from('modules').select('*', { count: 'exact', head: true }),
+    sb.from('completions').select('*')
+  ]);
+  const ev = comps?.length || 0;
+  const pa = comps?.filter(c => c.passed).length || 0;
+  const pct = ev ? Math.round(pa / ev * 100) : 0;
+
+  let h = `<div class="stats">
+    <div class="sc"><div class="sc-icon" style="background:#EFF6FF"><svg width="18" height="18" viewBox="0 0 24 24" fill="#3B82F6"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m9-10a4 4 0 100-8 4 4 0 000 8z"/></svg></div><div class="sc-val">${cols || 0}</div><div class="sc-lbl">Colaboradores</div></div>
+    <div class="sc"><div class="sc-icon" style="background:var(--fol)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--fo)"><path d="M12 2L2 7l10 5 10-5zm0 10l-10-5v9l10 5 10-5v-9z"/></svg></div><div class="sc-val">${mods || 0}</div><div class="sc-lbl">Módulos activos</div></div>
+    <div class="sc"><div class="sc-icon" style="background:var(--fgrl)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--fgr)"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div class="sc-val">${ev}</div><div class="sc-lbl">Evaluaciones</div></div>
+    <div class="sc"><div class="sc-icon" style="background:var(--frdl)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--frd)"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><div class="sc-val">${pct}%</div><div class="sc-lbl">Tasa aprobación</div></div>
+  </div>`;
+
+  h += `<div class="section-hdr"><span class="section-title">Actividad reciente</span></div>`;
+  h += `<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Módulo</th><th>Puntaje</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>`;
+  const recent = [...(comps || [])].reverse().slice(0, 10);
+  const uids = [...new Set(recent.map(c => c.user_id))];
+  const mids = [...new Set(recent.map(c => c.module_id))];
+  const [{ data: users }, { data: modules }] = await Promise.all([
+    sb.from('users').select('id,full_name').in('id', uids),
+    sb.from('modules').select('id,title').in('id', mids)
+  ]);
+  recent.forEach(c => {
+    const u = users?.find(x => x.id === c.user_id);
+    const m = modules?.find(x => x.id === c.module_id);
+    h += `<tr><td>${u?.full_name || '—'}</td><td>${m?.title || '—'}</td><td>${c.score}%</td>
+      <td><span class="pill ${c.passed ? 'p-ok' : 'p-fl'}">${c.passed ? 'Aprobado' : 'Desaprobado'}</span></td>
+      <td style="color:var(--fg)">${c.created_at?.slice(0, 10) || '—'}</td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+  document.getElementById('page').innerHTML = h;
+}
+
+async function renderMods() {
+  loading();
+  const { data: mods } = await sb.from('modules').select('*, questions(count)').order('created_at');
+  const { data: comps } = await sb.from('completions').select('module_id');
+  let h = `<div class="tbl-wrap"><table><thead><tr><th>Título</th><th>Campaña</th><th>Preguntas</th><th>Completados</th><th></th></tr></thead><tbody>`;
+  (mods || []).forEach(m => {
+    const co = comps?.filter(c => c.module_id === m.id).length || 0;
+    const tagClass = m.campaign === 'General' ? 'tag-gr' : m.campaign === 'Edesur' ? 'tag-bl' : m.campaign === 'Anfitrión' ? 'tag-or' : 'tag-gn';
+    h += `<tr><td style="font-weight:500">${m.title}</td><td><span class="tag ${tagClass}">${m.campaign}</span></td>
+      <td>${m.questions?.[0]?.count || 0}</td><td>${co}</td>
+      <td><button class="btn-s btn-sm" onclick="openEditMod('${m.id}')">Editar</button></td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+  document.getElementById('page').innerHTML = h;
+}
+
+async function renderUsrs() {
+  loading();
+  const { data: users } = await sb.from('users').select('*').eq('role', 'col').order('full_name');
+  const { data: comps } = await sb.from('completions').select('user_id,passed');
+  let h = `<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th>Módulos aprobados</th><th></th></tr></thead><tbody>`;
+  (users || []).forEach(u => {
+    const ap = comps?.filter(c => c.user_id === u.id && c.passed).length || 0;
+    h += `<tr><td style="font-weight:500">${u.full_name}</td><td style="color:var(--fg)">${u.username}</td>
+      <td>${u.campaign}</td><td>${ap}</td>
+      <td><button class="btn-s btn-sm" onclick="openEditUsr('${u.id}','${u.full_name}','${u.username}','${u.campaign}')">Editar</button></td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+  document.getElementById('page').innerHTML = h;
+}
+
+async function renderRes() {
+  loading();
+  const { data: comps } = await sb.from('completions').select('*').order('created_at', { ascending: false });
+  const uids = [...new Set((comps || []).map(c => c.user_id))];
+  const mids = [...new Set((comps || []).map(c => c.module_id))];
+  const [{ data: users }, { data: modules }] = await Promise.all([
+    uids.length ? sb.from('users').select('id,full_name,campaign').in('id', uids) : { data: [] },
+    mids.length ? sb.from('modules').select('id,title').in('id', mids) : { data: [] }
+  ]);
+  let h = `<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Campaña</th><th>Módulo</th><th>Puntaje</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>`;
+  (comps || []).forEach(c => {
+    const u = users?.find(x => x.id === c.user_id);
+    const m = modules?.find(x => x.id === c.module_id);
+    h += `<tr><td>${u?.full_name || '—'}</td><td style="color:var(--fg)">${u?.campaign || '—'}</td>
+      <td>${m?.title || '—'}</td><td>${c.score}%</td>
+      <td><span class="pill ${c.passed ? 'p-ok' : 'p-fl'}">${c.passed ? 'Aprobado' : 'Desaprobado'}</span></td>
+      <td style="color:var(--fg)">${c.created_at?.slice(0, 10) || '—'}</td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+  document.getElementById('page').innerHTML = h;
+}
+
+async function exportCSV() {
+  const { data: comps } = await sb.from('completions').select('*').order('created_at', { ascending: false });
+  const uids = [...new Set((comps || []).map(c => c.user_id))];
+  const mids = [...new Set((comps || []).map(c => c.module_id))];
+  const [{ data: users }, { data: modules }] = await Promise.all([
+    uids.length ? sb.from('users').select('id,full_name,campaign').in('id', uids) : { data: [] },
+    mids.length ? sb.from('modules').select('id,title').in('id', mids) : { data: [] }
+  ]);
+  const rows = [['Colaborador', 'Campaña', 'Módulo', 'Puntaje', 'Estado', 'Fecha']];
+  (comps || []).forEach(c => {
+    const u = users?.find(x => x.id === c.user_id);
+    const m = modules?.find(x => x.id === c.module_id);
+    rows.push([u?.full_name, u?.campaign, m?.title, c.score + '%', c.passed ? 'Aprobado' : 'Desaprobado', c.created_at?.slice(0, 10)]);
+  });
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows.map(r => r.join(',')).join('\n'));
+  a.download = `resultados_mera_academy_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+}
+
+// ============================================================
+// MODALES — MÓDULOS
+// ============================================================
+let editQs = [];
+function makeQ() { return { id: null, question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'a', explanation: '' }; }
+
+async function openNewMod() {
+  S.editModId = null; editQs = [makeQ()];
+  ['m-title', 'm-desc', 'm-video'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('m-camp').value = 'Edesur';
+  document.getElementById('mmod-title').textContent = 'Nuevo módulo';
+  document.getElementById('btn-del-mod').style.display = 'none';
+  renderQList(); document.getElementById('modal-mod').classList.add('open');
+}
+
+async function openEditMod(id) {
+  S.editModId = id;
+  const { data: m } = await sb.from('modules').select('*, questions(*)').eq('id', id).single();
+  editQs = (m.questions || []).map(q => ({ ...q }));
+  if (editQs.length === 0) editQs = [makeQ()];
+  document.getElementById('m-title').value = m.title;
+  document.getElementById('m-desc').value = m.description;
+  document.getElementById('m-video').value = m.video_url;
+  document.getElementById('m-camp').value = m.campaign;
+  document.getElementById('mmod-title').textContent = 'Editar módulo';
+  document.getElementById('btn-del-mod').style.display = 'inline-block';
+  renderQList(); document.getElementById('modal-mod').classList.add('open');
+}
+
+function renderQList() {
+  const opts = ['a', 'b', 'c', 'd'];
+  let h = '';
+  editQs.forEach((q, i) => {
+    h += `<div class="qe-block"><div style="font-size:11px;color:var(--fg);font-weight:500;margin-bottom:7px">Pregunta ${i + 1}</div>
+      <input type="text" value="${q.question_text}" placeholder="Texto de la pregunta" oninput="editQs[${i}].question_text=this.value" style="margin-bottom:8px"/>`;
+    opts.forEach((opt, j) => {
+      const labels = ['A', 'B', 'C', 'D'];
+      h += `<div class="opt-row">
+        <input type="radio" name="cr${i}" ${q.correct_option === opt ? 'checked' : ''} onchange="editQs[${i}].correct_option='${opt}'" title="Respuesta correcta">
+        <input type="text" value="${q['option_' + opt] || ''}" placeholder="Opción ${labels[j]}" oninput="editQs[${i}]['option_${opt}']=this.value"/>
+      </div>`;
+    });
+    h += `<div class="qe-hint">● = respuesta correcta</div>
+      <textarea class="exp-inp" placeholder="Explicación si se equivoca (opcional)" oninput="editQs[${i}].explanation=this.value">${q.explanation || ''}</textarea>
+      ${editQs.length > 1 ? `<button class="add-q" onclick="removeQ(${i})" style="color:var(--frd);margin-top:5px">Eliminar pregunta</button>` : ''}
+    </div>`;
+  });
+  document.getElementById('q-list').innerHTML = h;
+}
+
+function addQ() { editQs.push(makeQ()); renderQList(); }
+function removeQ(i) { editQs.splice(i, 1); renderQList(); }
+
+async function saveModule() {
+  const title = document.getElementById('m-title').value.trim();
+  if (!title) { alert('El título es obligatorio'); return; }
+  const modData = { title, description: document.getElementById('m-desc').value.trim(), campaign: document.getElementById('m-camp').value, video_url: document.getElementById('m-video').value.trim() };
+  let modId = S.editModId;
+  if (modId) {
+    await sb.from('modules').update(modData).eq('id', modId);
+    await sb.from('questions').delete().eq('module_id', modId);
+  } else {
+    const { data } = await sb.from('modules').insert(modData).select().single();
+    modId = data.id;
+  }
+  const validQs = editQs.filter(q => q.question_text).map(q => ({ ...q, id: undefined, module_id: modId }));
+  if (validQs.length) await sb.from('questions').insert(validQs);
+  closeModal('modal-mod'); renderMods();
+}
+
+async function deleteModule() {
+  if (!confirm('¿Eliminar este módulo y todas sus preguntas?')) return;
+  await sb.from('questions').delete().eq('module_id', S.editModId);
+  await sb.from('modules').delete().eq('id', S.editModId);
+  closeModal('modal-mod'); renderMods();
+}
+
+// ============================================================
+// MODALES — USUARIOS
+// ============================================================
+function openNewUsr() {
+  S.editUsrId = null;
+  ['u-name', 'u-user', 'u-pass'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('u-camp').value = 'Edesur';
+  document.getElementById('musr-title').textContent = 'Nuevo colaborador';
+  document.getElementById('btn-del-usr').style.display = 'none';
+  document.getElementById('u-edit-fields').classList.add('hidden');
+  document.getElementById('u-pass').closest('.fl').classList.remove('hidden');
+  document.getElementById('modal-usr').classList.add('open');
+}
+
+function openEditUsr(id, name, username, campaign) {
+  S.editUsrId = id;
+  document.getElementById('u-name').value = name;
+  document.getElementById('u-user').value = username;
+  document.getElementById('u-pass').value = '';
+  document.getElementById('u-camp').value = campaign;
+  document.getElementById('musr-title').textContent = 'Editar colaborador';
+  document.getElementById('btn-del-usr').style.display = 'inline-block';
+  document.getElementById('u-edit-fields').classList.remove('hidden');
+  document.getElementById('u-pass').closest('.fl').classList.add('hidden');
+  document.getElementById('u-newpass').value = '';
+  document.getElementById('modal-usr').classList.add('open');
+}
+
+async function saveUser() {
+  const name = document.getElementById('u-name').value.trim();
+  const username = document.getElementById('u-user').value.trim();
+  const camp = document.getElementById('u-camp').value;
+  if (!name || !username) { alert('Nombre y usuario son obligatorios'); return; }
+  if (S.editUsrId) {
+    const upd = { full_name: name, username, campaign: camp };
+    const newpass = document.getElementById('u-newpass').value.trim();
+    if (newpass) upd.password = newpass;
+    await sb.from('users').update(upd).eq('id', S.editUsrId);
+  } else {
+    const pass = document.getElementById('u-pass').value.trim();
+    if (!pass) { alert('La contraseña es obligatoria'); return; }
+    await sb.from('users').insert({ full_name: name, username, password: pass, campaign: camp, role: 'col' });
+  }
+  closeModal('modal-usr'); renderUsrs();
+}
+
+async function deleteUser() {
+  if (!confirm('¿Eliminar este colaborador?')) return;
+  await sb.from('users').delete().eq('id', S.editUsrId);
+  closeModal('modal-usr'); renderUsrs();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+</body>
+</html>
