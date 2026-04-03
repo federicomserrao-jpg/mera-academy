@@ -350,7 +350,7 @@ window.setRole = function(r) {
   }
 };
 window.doLogin = async function() {
-  if(!window.sb) { alert('Error: base de datos no conectada'); return; }
+  if(!window.sb) { console.log('Supabase not ready yet, retrying...'); setTimeout(window.doLogin, 500); return; }
   const u = document.getElementById('inp-u').value.trim();
   const p = document.getElementById('inp-p').value.trim();
   const err = document.getElementById('err-msg');
@@ -1389,7 +1389,8 @@ async function exportVencCSV() {
     });
   });
   const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(rows.map(r=>r.join(',')).join('
+'));
   a.download = `vencidos_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
@@ -1416,7 +1417,8 @@ async function exportRepCSV(camp) {
     rows.push(row);
   });
   const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(rows.map(r=>r.join(',')).join('
+'));
   a.download = `reporte_${camp}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
