@@ -921,30 +921,38 @@ async function renderMods(filterCamp) {
   document.getElementById('page').innerHTML = h;
 }
 
-async function renderUsrs(filterCamp) {
+let _usrsData = null;
+
+async function renderUsrs() {
   loading();
+  _usrsData = null;
   const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
     sb.from('users').select('*').eq('role', 'col').order('campaign').order('full_name'),
     sb.from('modules').select('id,campaign'),
     sb.from('completions').select('user_id,module_id,passed')
   ]);
-  const camps = [...new Set((users||[]).map(u => u.campaign).filter(Boolean))].sort();
-  const active = filterCamp !== undefined ? filterCamp : '';
-  const filtered = (users||[]).filter(u => !active || u.campaign === active);
+  _usrsData = { users: users||[], mods: mods||[], comps: comps||[] };
+  filterUsrs('');
+}
 
-  // filter bar + export button
+function filterUsrs(active) {
+  if (!_usrsData) return;
+  const { users, mods, comps } = _usrsData;
+  const camps = [...new Set(users.map(u => u.campaign).filter(Boolean))].sort();
+  const filtered = active ? users.filter(u => u.campaign === active) : users;
+
   let bar = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">`;
   bar += `<span style="font-size:12px;color:var(--fg);font-weight:500;margin-right:4px">Campaña:</span>`;
-  bar += `<button onclick="renderUsrs('')" class="btn-sm ${!active?'btn-p':'btn-s'}" style="padding:5px 12px;font-size:12px">Todas</button>`;
-  camps.forEach(c => bar += `<button onclick="renderUsrs('${c}')" class="btn-sm ${active===c?'btn-p':'btn-s'}" style="padding:5px 12px;font-size:12px">${c}</button>`);
+  bar += `<button onclick="filterUsrs('')" class="${!active?'btn-p':'btn-s'} btn-sm">Todas</button>`;
+  camps.forEach(c => bar += `<button onclick="filterUsrs('${c}')" class="${active===c?'btn-p':'btn-s'} btn-sm">${c}</button>`);
   bar += `<button onclick="exportUsrsCSV('${active}')" class="btn-s btn-sm" style="margin-left:auto">Exportar CSV</button>`;
   bar += `</div>`;
 
   let h = bar + `<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th>Progreso</th><th></th></tr></thead><tbody>`;
   filtered.forEach(u => {
-    const userMods = (mods||[]).filter(m => m.campaign === u.campaign || m.campaign === 'General');
+    const userMods = mods.filter(m => m.campaign === u.campaign || m.campaign === 'General');
     const total = userMods.length;
-    const passed = (comps||[]).filter(c => c.user_id === u.id && c.passed && userMods.find(m => m.id === c.module_id)).length;
+    const passed = comps.filter(c => c.user_id === u.id && c.passed && userMods.find(m => m.id === c.module_id)).length;
     const pct = total ? Math.round(passed / total * 100) : 0;
     const barColor = pct >= 80 ? 'var(--fgr)' : pct >= 40 ? 'var(--fo)' : 'var(--frd)';
     h += `<tr>
