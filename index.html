@@ -359,7 +359,8 @@ window.doLogin = async function() {
   btn.disabled=true; btn.textContent='Ingresando...';
   err.style.display='none';
   try {
-    const { data, error } = await sb.from('users').select('*').eq('username',u).eq('password',p).eq('role',S.role).maybeSingle();
+    const { data: rows, error } = await sb.from('users').select('*').eq('username',u).eq('password',p).eq('role',S.role).limit(1);
+    const data = rows?.[0] || null;
     if (error||!data) { err.style.display='block'; err.textContent='Usuario o contrasena incorrectos'; return; }
     S.user=data;
     document.getElementById('sc-login').classList.add('hidden');
@@ -379,7 +380,6 @@ window.doLogin = async function() {
 const SUPABASE_URL = 'https://scgjdqszhebfqjxupzkd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjZ2pkcXN6aGViZnFqeHVwemtkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTEzMDk0NSwiZXhwIjoyMDkwNzA2OTQ1fQ.d-Alh7JNv5KkLmdJyM-CTyBbceHpBwWMU146BISYZvU';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.sb = sb;
 
 // ============================================================
 // ESTADO GLOBAL
@@ -1390,7 +1390,8 @@ async function exportVencCSV() {
     });
   });
   const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(rows.map(r=>r.join(',')).join('
+'));
   a.download = `vencidos_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
@@ -1417,7 +1418,8 @@ async function exportRepCSV(camp) {
     rows.push(row);
   });
   const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(rows.map(r=>r.join(',')).join('
+'));
   a.download = `reporte_${camp}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
