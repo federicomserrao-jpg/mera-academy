@@ -4,27 +4,29 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>MERA Academy</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --fo:#FF6B35;--fol:#FFF3EE;--fod:#E55A27;
-  --fn:#1C1C2E;--fg:#6B7280;--fgl:#F3F4F6;--fgb:#F9FAFB;
-  --fw:#FFFFFF;--fbr:#E5E7EB;
-  --fgr:#10B981;--fgrl:#D1FAE5;
-  --frd:#EF4444;--frdl:#FEE2E2;
-  --fbl:#3B82F6;--fbll:#EFF6FF;
+  --fo:#5B4FCF;--fol:#EEF0FF;--fod:#4A3FB8;
+  --fn:#1A1D2E;--fg:#6B7280;--fgl:#F0F1F8;--fgb:#F7F8FC;
+  --fw:#FFFFFF;--fbr:#DDE1F0;
+  --fgr:#16A34A;--fgrl:#DCFCE7;
+  --frd:#DC2626;--frdl:#FEE2E2;
+  --fbl:#2563EB;--fbll:#EFF6FF;
   --fr:8px;--frlg:12px;
 }
 [data-theme="dark"]{
-  --fo:#FF6B35;--fol:#2D1A0E;--fod:#E55A27;
-  --fn:#F3F4F6;--fg:#9CA3AF;--fgl:#374151;--fgb:#111827;
-  --fw:#1F2937;--fbr:#374151;
-  --fgr:#10B981;--fgrl:#064E3B;
-  --frd:#EF4444;--frdl:#450A0A;
+  --fo:#7B6FE8;--fol:#1E1B4B;--fod:#6C5FD9;
+  --fn:#F1F5F9;--fg:#94A3B8;--fgl:#1E293B;--fgb:#0F172A;
+  --fw:#1E293B;--fbr:#334155;
+  --fgr:#16A34A;--fgrl:#052E16;
+  --frd:#DC2626;--frdl:#450A0A;
   --fbl:#3B82F6;--fbll:#1E3A5F;
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--fgb);color:var(--fn);min-height:100vh}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--fgb);color:var(--fn);min-height:100vh}
 .hidden{display:none!important}
 
 /* LOGIN */
@@ -54,7 +56,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .shell{display:flex;min-height:100vh}
 
 /* SIDEBAR */
-.sb{width:220px;background:var(--fw);border-right:1px solid var(--fbr);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:10}
+.sb{width:240px;background:var(--fw);border-right:1px solid var(--fbr);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:10}
 .sb-logo{padding:20px 16px 16px;border-bottom:1px solid var(--fbr)}
 .sb-logo-title{font-size:20px;font-weight:700;color:var(--fo)}
 .sb-logo-sub{font-size:10px;color:var(--fg);text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
@@ -74,7 +76,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .su-out:hover{color:var(--fo)}
 
 /* MAIN */
-.main{flex:1;margin-left:220px;display:flex;flex-direction:column;min-height:100vh}
+.main{flex:1;margin-left:240px;display:flex;flex-direction:column;min-height:100vh}
 .topbar{background:var(--fw);border-bottom:1px solid var(--fbr);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
 .tb-title{font-size:17px;font-weight:500;color:var(--fn)}
 .tb-sub{font-size:12px;color:var(--fg);margin-top:2px}
@@ -83,15 +85,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* STATS */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.sc{background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr)}
+.sc{background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .sc-icon{width:36px;height:36px;border-radius:var(--fr);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
 .sc-val{font-size:28px;font-weight:600;color:var(--fn);line-height:1}
 .sc-lbl{font-size:12px;color:var(--fg);margin-top:4px}
 
 /* MODULES */
 .mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-.mc{background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr);cursor:pointer;transition:all .15s}
-.mc:hover{border-color:var(--fo);transform:translateY(-2px);box-shadow:0 4px 16px rgba(255,107,53,.1)}
+.mc{background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr);cursor:pointer;transition:all .15s;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.mc:hover{border-color:var(--fo);transform:translateY(-2px);box-shadow:0 4px 16px rgba(91,79,207,.15)}
 .mc.done-card{border-left:3px solid var(--fgr)}
 .tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
 .tag-bl{background:var(--fbll);color:var(--fbl)}
@@ -118,7 +120,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .eval-dots{display:flex;gap:4px;flex:1}
 .eval-dot{flex:1;height:4px;border-radius:2px;background:var(--fgl)}
 .eval-dot.done{background:var(--fo)}
-.eval-dot.cur{background:rgba(255,107,53,.4)}
+.eval-dot.cur{background:rgba(91,79,207,.4)}
 .qblock{background:var(--fgb);border-radius:var(--fr);padding:18px;margin-bottom:14px;border:1px solid var(--fbr)}
 .q-n{font-size:11px;color:var(--fg);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
 .q-t{font-size:14px;font-weight:500;color:var(--fn);margin-bottom:16px;line-height:1.5}
@@ -158,7 +160,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 #cert-canvas{border-radius:var(--fr);max-width:100%;border:1px solid var(--fbr)}
 
 /* TABLE */
-.tbl-wrap{background:var(--fw);border-radius:var(--frlg);border:1px solid var(--fbr);overflow:hidden;margin-bottom:20px}
+.tbl-wrap{background:var(--fw);border-radius:var(--frlg);border:1px solid var(--fbr);overflow:hidden;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
 .tbl-wrap table{width:100%;border-collapse:collapse;font-size:13px}
 .tbl-wrap th{text-align:left;padding:11px 16px;font-size:11px;color:var(--fg);font-weight:500;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--fbr);background:var(--fgb)}
 .tbl-wrap td{padding:12px 16px;border-bottom:1px solid var(--fbr);color:var(--fn)}
@@ -172,7 +174,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(17,24,39,.5);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:100;overflow-y:auto}
 .modal-bg.open{display:flex}
-.modal{background:var(--fw);border-radius:var(--frlg);width:100%;max-width:520px;border:1px solid var(--fbr);box-shadow:0 20px 60px rgba(0,0,0,.15);margin:auto}
+.modal{background:var(--fw);border-radius:var(--frlg);width:100%;max-width:520px;border:1px solid var(--fbr);box-shadow:0 20px 60px rgba(0,0,0,.15),0 1px 4px rgba(0,0,0,.08);margin:auto}
 .modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--fbr)}
 .modal-title{font-size:15px;font-weight:500;color:var(--fn)}
 .modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--fg);line-height:1;padding:2px 6px}
@@ -215,13 +217,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="login-card">
     <div style="text-align:center;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--fbr)">
       <div style="background:#1C1C2E;border-radius:8px;padding:12px 24px;margin-bottom:8px;display:inline-block">
-        <span style="font-size:26px;font-weight:900;color:#FF6B35;font-family:Arial,sans-serif">MERA</span>
+        <span style="font-size:26px;font-weight:900;color:#7B6FE8;font-family:Arial,sans-serif">MERA</span>
         <span style="font-size:11px;color:#9CA3AF;margin-left:10px;vertical-align:middle">SOLUTIONS · ACADEMY</span>
       </div>
       <div style="font-size:11px;color:var(--fg);text-transform:uppercase;letter-spacing:.08em">Plataforma de Capacitacion Interna</div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:20px">
-      <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:var(--fol);color:var(--fo);font-size:13px;cursor:pointer;font-weight:500;border-color:var(--fo)" id="rb-col" onclick="setRole('col')">Colaborador</button>
+      <button style="flex:1;padding:9px;border:1px solid;border-radius:var(--fr);background:var(--fol);color:var(--fo);font-size:13px;cursor:pointer;font-weight:500;border-color:var(--fo)" id="rb-col" onclick="setRole('col')">Colaborador</button>
       <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:none;color:var(--fg);font-size:13px;cursor:pointer" id="rb-adm" onclick="setRole('adm')">Administrador</button>
     </div>
     <div style="margin-bottom:14px">
@@ -351,11 +353,11 @@ window.setRole = function(r) {
   const adm = document.getElementById('rb-adm');
   if(!col||!adm) return;
   if(r==='col'){
-    col.style.cssText='flex:1;padding:9px;border:1px solid;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;background:#FFF3EE;color:#FF6B35;border-color:#FF6B35';
-    adm.style.cssText='flex:1;padding:9px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;cursor:pointer;background:none;color:#6B7280';
+    col.style.cssText='flex:1;padding:9px;border:1px solid;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;background:#EEF0FF;color:#5B4FCF;border-color:#5B4FCF';
+    adm.style.cssText='flex:1;padding:9px;border:1px solid #DDE1F0;border-radius:8px;font-size:13px;cursor:pointer;background:none;color:#6B7280';
   } else {
-    adm.style.cssText='flex:1;padding:9px;border:1px solid;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;background:#FFF3EE;color:#FF6B35;border-color:#FF6B35';
-    col.style.cssText='flex:1;padding:9px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;cursor:pointer;background:none;color:#6B7280';
+    adm.style.cssText='flex:1;padding:9px;border:1px solid;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;background:#EEF0FF;color:#5B4FCF;border-color:#5B4FCF';
+    col.style.cssText='flex:1;padding:9px;border:1px solid #DDE1F0;border-radius:8px;font-size:13px;cursor:pointer;background:none;color:#6B7280';
   }
 };
 window.doLogin = async function() {
