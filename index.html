@@ -16,6 +16,14 @@
   --fbl:#3B82F6;--fbll:#EFF6FF;
   --fr:8px;--frlg:12px;
 }
+[data-theme="dark"]{
+  --fo:#FF6B35;--fol:#2D1A0E;--fod:#E55A27;
+  --fn:#F3F4F6;--fg:#9CA3AF;--fgl:#374151;--fgb:#111827;
+  --fw:#1F2937;--fbr:#374151;
+  --fgr:#10B981;--fgrl:#064E3B;
+  --frd:#EF4444;--frdl:#450A0A;
+  --fbl:#3B82F6;--fbll:#1E3A5F;
+}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--fgb);color:var(--fn);min-height:100vh}
 .hidden{display:none!important}
 
@@ -260,6 +268,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--fg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <div id="search-results" style="position:absolute;top:38px;left:0;right:0;background:var(--fw);border:1px solid var(--fbr);border-radius:var(--fr);box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:50;max-height:300px;overflow-y:auto;display:none"></div>
         </div>
+        <button id="dark-toggle" onclick="toggleDark()" title="Cambiar tema" style="background:none;border:1px solid var(--fbr);border-radius:var(--fr);padding:6px 10px;cursor:pointer;font-size:16px;line-height:1;color:var(--fg)">🌙</button>
         <div class="tb-right" id="tb-right"></div>
       </div>
     </div>
@@ -418,6 +427,10 @@ function logout() {
 function buildShell() {
   const u = S.user;
   const ini = u.full_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  // Sync dark mode button icon with saved preference
+  const savedTheme = localStorage.getItem('mera-theme');
+  const btn = document.getElementById('dark-toggle');
+  if (btn) btn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
   document.getElementById('sb-user').innerHTML = `
     <div class="su-row">
       <div class="su-av">${ini}</div>
@@ -776,12 +789,24 @@ async function renderDash() {
   document.getElementById('page').innerHTML = h;
 }
 
-async function renderMods() {
+async function renderMods(filterCamp) {
   loading();
-  const { data: mods } = await sb.from('modules').select('*, questions(count)').order('campaign').order('sort_order');
-  const { data: comps } = await sb.from('completions').select('module_id');
-  let h = `<div class="tbl-wrap"><table><thead><tr><th>Orden</th><th>Título</th><th>Campaña</th><th>Días límite</th><th>Obligatorio</th><th>Preguntas</th><th>Completados</th><th></th></tr></thead><tbody>`;
-  (mods || []).forEach(m => {
+  const [{ data: mods }, { data: comps }] = await Promise.all([
+    sb.from('modules').select('*, questions(count)').order('campaign').order('sort_order'),
+    sb.from('completions').select('module_id')
+  ]);
+  const camps = [...new Set((mods||[]).map(m => m.campaign).filter(Boolean))].sort();
+  const active = filterCamp !== undefined ? filterCamp : '';
+  const filtered = active ? (mods||[]).filter(m => m.campaign === active) : (mods||[]);
+
+  let bar = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">`;
+  bar += `<span style="font-size:12px;color:var(--fg);font-weight:500;margin-right:4px">Campaña:</span>`;
+  bar += `<button onclick="renderMods('')" class="btn-sm ${!active?'btn-p':'btn-s'}" style="padding:5px 12px;font-size:12px">Todas</button>`;
+  camps.forEach(c => bar += `<button onclick="renderMods('${c}')" class="btn-sm ${active===c?'btn-p':'btn-s'}" style="padding:5px 12px;font-size:12px">${c}</button>`);
+  bar += `</div>`;
+
+  let h = bar + `<div class="tbl-wrap"><table><thead><tr><th>Orden</th><th>Título</th><th>Campaña</th><th>Días límite</th><th>Obligatorio</th><th>Preguntas</th><th>Completados</th><th></th></tr></thead><tbody>`;
+  filtered.forEach(m => {
     const co = comps?.filter(c => c.module_id === m.id).length || 0;
     const tagClass = m.campaign === 'General' ? 'tag-gr' : m.campaign === 'EDESUR' ? 'tag-bl' : 'tag-gn';
     h += `<tr>
@@ -794,25 +819,74 @@ async function renderMods() {
       <td style="text-align:center">${co}</td>
       <td><button class="btn-s btn-sm" onclick="openEditMod('${m.id}')">Editar</button></td></tr>`;
   });
+  if (!filtered.length) h += `<tr><td colspan="8" style="text-align:center;color:var(--fg);padding:24px">No hay módulos</td></tr>`;
   h += `</tbody></table></div>`;
   document.getElementById('page').innerHTML = h;
-  document.getElementById('tb-right').innerHTML += `<button class="btn-s btn-sm" onclick="exportRepCSV('${camp}')" style="margin-left:8px">Exportar CSV</button>`;
 }
 
-async function renderUsrs() {
+async function renderUsrs(filterCamp) {
   loading();
-  const { data: users } = await sb.from('users').select('*').eq('role', 'col').order('campaign').order('full_name');
-  let h = `<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th></th></tr></thead><tbody>`;
-  (users || []).forEach(u => {
+  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
+    sb.from('users').select('*').eq('role', 'col').order('campaign').order('full_name'),
+    sb.from('modules').select('id,campaign'),
+    sb.from('completions').select('user_id,module_id,passed')
+  ]);
+  const camps = [...new Set((users||[]).map(u => u.campaign).filter(Boolean))].sort();
+  const active = filterCamp || camps[0] || '';
+  const filtered = (users||[]).filter(u => !active || u.campaign === active);
+
+  // filter bar + export button
+  let bar = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">`;
+  bar += `<span style="font-size:12px;color:var(--fg);font-weight:500;margin-right:4px">Campaña:</span>`;
+  bar += `<button onclick="renderUsrs('')" class="btn-sm ${!active?'btn-p':'btn-s'}" style="padding:5px 12px;font-size:12px">Todas</button>`;
+  camps.forEach(c => bar += `<button onclick="renderUsrs('${c}')" class="btn-sm ${active===c?'btn-p':'btn-s'}" style="padding:5px 12px;font-size:12px">${c}</button>`);
+  bar += `<button onclick="exportUsrsCSV('${active}')" class="btn-s btn-sm" style="margin-left:auto">Exportar CSV</button>`;
+  bar += `</div>`;
+
+  let h = bar + `<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th>Progreso</th><th></th></tr></thead><tbody>`;
+  filtered.forEach(u => {
+    const userMods = (mods||[]).filter(m => m.campaign === u.campaign || m.campaign === 'General');
+    const total = userMods.length;
+    const passed = (comps||[]).filter(c => c.user_id === u.id && c.passed && userMods.find(m => m.id === c.module_id)).length;
+    const pct = total ? Math.round(passed / total * 100) : 0;
+    const barColor = pct >= 80 ? 'var(--fgr)' : pct >= 40 ? 'var(--fo)' : 'var(--frd)';
     h += `<tr>
       <td style="font-weight:500">${u.full_name}</td>
       <td style="color:var(--fg)">${u.username}</td>
       <td>${u.campaign || '—'}</td>
+      <td style="min-width:130px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:6px;background:var(--fgl);border-radius:3px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;transition:width .3s"></div>
+          </div>
+          <span style="font-size:11px;color:var(--fg);min-width:32px">${passed}/${total}</span>
+        </div>
+      </td>
       <td><button class="btn-s btn-sm" onclick="openEditUsr('${u.id}','${u.full_name.replace(/'/g,"\\'")}','${u.username}','${u.campaign||''}')">Editar</button></td></tr>`;
   });
-  if (!users || users.length === 0) h += `<tr><td colspan="4" style="text-align:center;color:var(--fg);padding:24px">No hay colaboradores aún</td></tr>`;
+  if (!filtered.length) h += `<tr><td colspan="5" style="text-align:center;color:var(--fg);padding:24px">No hay colaboradores</td></tr>`;
   h += `</tbody></table></div>`;
   document.getElementById('page').innerHTML = h;
+}
+
+async function exportUsrsCSV(camp) {
+  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
+    sb.from('users').select('*').eq('role','col').order('campaign').order('full_name'),
+    sb.from('modules').select('id,title,campaign'),
+    sb.from('completions').select('user_id,module_id,passed,score')
+  ]);
+  const filtered = camp ? (users||[]).filter(u => u.campaign === camp) : (users||[]);
+  const rows = [['Nombre','Usuario','Campaña','Módulos aprobados','Total módulos','Progreso %']];
+  filtered.forEach(u => {
+    const userMods = (mods||[]).filter(m => m.campaign === u.campaign || m.campaign === 'General');
+    const total = userMods.length;
+    const passed = (comps||[]).filter(c => c.user_id === u.id && c.passed && userMods.find(m => m.id === c.module_id)).length;
+    rows.push([u.full_name, u.username, u.campaign||'', passed, total, total ? Math.round(passed/total*100)+'%' : '0%']);
+  });
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.download = `colaboradores_${camp||'todos'}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
 }
 
 async function renderRes() {
@@ -1694,6 +1768,21 @@ async function renderSurv() {
 
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function toggleDark() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('dark-toggle').textContent = isDark ? '🌙' : '☀️';
+  localStorage.setItem('mera-theme', isDark ? 'light' : 'dark');
+}
+// Apply saved theme on load
+(function() {
+  const t = localStorage.getItem('mera-theme');
+  if (t === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    // Button is not rendered yet at this point; will be set when buildShell runs
+  }
+})();
 </script>
 
 <!-- MODAL ENCUESTA -->
