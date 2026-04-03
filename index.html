@@ -929,7 +929,7 @@ async function renderUsrs(filterCamp) {
     sb.from('completions').select('user_id,module_id,passed')
   ]);
   const camps = [...new Set((users||[]).map(u => u.campaign).filter(Boolean))].sort();
-  const active = filterCamp || camps[0] || '';
+  const active = filterCamp !== undefined ? filterCamp : '';
   const filtered = (users||[]).filter(u => !active || u.campaign === active);
 
   // filter bar + export button
