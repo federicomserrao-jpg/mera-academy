@@ -213,8 +213,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="font-size:11px;color:var(--fg);text-transform:uppercase;letter-spacing:.08em">Plataforma de Capacitacion Interna</div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:20px">
-      <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:var(--fol);color:var(--fo);font-size:13px;cursor:pointer;font-weight:500;border-color:var(--fo)" id="rb-col" onclick="setRole('col')">Colaborador</button>
-      <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:none;color:var(--fg);font-size:13px;cursor:pointer" id="rb-adm" onclick="setRole('adm')">Administrador</button>
+      <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:var(--fol);color:var(--fo);font-size:13px;cursor:pointer;font-weight:500;border-color:var(--fo)" id="rb-col" onclick="if(window.setRole)setRole('col')">Colaborador</button>
+      <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:none;color:var(--fg);font-size:13px;cursor:pointer" id="rb-adm" onclick="if(window.setRole)setRole('adm')">Administrador</button>
     </div>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Usuario</label>
@@ -222,10 +222,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Contrasena</label>
-      <input type="password" id="inp-p" placeholder="••••••" autocomplete="current-password" style="width:100%;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <input type="password" id="inp-p" placeholder="••••••" autocomplete="current-password" style="width:100%;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit" onkeydown="if(event.key==='Enter'&&window.doLogin)doLogin()"/>
     </div>
     <div id="err-msg" style="font-size:12px;color:var(--frd);margin-bottom:8px;display:none">Usuario o contrasena incorrectos</div>
-    <button id="btn-login" onclick="doLogin()" style="width:100%;background:var(--fo);color:#fff;border:none;border-radius:var(--fr);padding:11px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">Ingresar</button>
+    <button id="btn-login" onclick="if(window.doLogin)doLogin()" style="width:100%;background:var(--fo);color:#fff;border:none;border-radius:var(--fr);padding:11px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">Ingresar</button>
   </div>
 </div>
 </div>
@@ -335,8 +335,47 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
+// Make functions globally available immediately
+window.setRole = function(r) {
+  if(!window.S) return;
+  S.role = r;
+  const col = document.getElementById('rb-col');
+  const adm = document.getElementById('rb-adm');
+  if(!col||!adm) return;
+  if(r==='col'){
+    col.style.cssText='flex:1;padding:9px;border:1px solid;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;background:#FFF3EE;color:#FF6B35;border-color:#FF6B35';
+    adm.style.cssText='flex:1;padding:9px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;cursor:pointer;background:none;color:#6B7280';
+  } else {
+    adm.style.cssText='flex:1;padding:9px;border:1px solid;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;background:#FFF3EE;color:#FF6B35;border-color:#FF6B35';
+    col.style.cssText='flex:1;padding:9px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;cursor:pointer;background:none;color:#6B7280';
+  }
+};
+window.doLogin = async function() {
+  if(!window.sb) { alert('Error: base de datos no conectada'); return; }
+  const u = document.getElementById('inp-u').value.trim();
+  const p = document.getElementById('inp-p').value.trim();
+  const err = document.getElementById('err-msg');
+  const btn = document.getElementById('btn-login');
+  if (!u || !p) { err.style.display='block'; err.textContent='Completa usuario y contrasena'; return; }
+  btn.disabled=true; btn.textContent='Ingresando...';
+  err.style.display='none';
+  try {
+    const { data, error } = await sb.from('users').select('*').eq('username',u).eq('password',p).eq('role',S.role).single();
+    if (error||!data) { err.style.display='block'; err.textContent='Usuario o contrasena incorrectos'; return; }
+    S.user=data;
+    document.getElementById('sc-login').classList.add('hidden');
+    document.getElementById('sc-app').classList.remove('hidden');
+    buildShell();
+    if(S.user.role==='adm'){ showSearch(true); loadSearchCache(); aSection('dash'); }
+    else { renderColList(); }
+  } catch(e) {
+    err.style.display='block'; err.textContent='Error de conexion: '+e.message;
+  } finally {
+    btn.disabled=false; btn.textContent='Ingresar';
+  }
+};
 // ============================================================
-// CONFIGURACIÓN SUPABASE — reemplazar con tus datos reales
+// CONFIGURACIÓN SUPABASE
 // ============================================================
 const SUPABASE_URL = 'https://scgjdqszhebfqjxupzkd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjZ2pkcXN6aGViZnFqeHVwemtkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTEzMDk0NSwiZXhwIjoyMDkwNzA2OTQ1fQ.d-Alh7JNv5KkLmdJyM-CTyBbceHpBwWMU146BISYZvU';
@@ -360,48 +399,13 @@ const S = {
 // ============================================================
 // LOGIN
 // ============================================================
-function setRole(r) {
-  S.role = r;
-  const col = document.getElementById('rb-col');
-  const adm = document.getElementById('rb-adm');
-  if(r==='col'){
-    col.style.background='var(--fol)'; col.style.color='var(--fo)'; col.style.borderColor='var(--fo)'; col.style.fontWeight='500';
-    adm.style.background='none'; adm.style.color='var(--fg)'; adm.style.borderColor='var(--fbr)'; adm.style.fontWeight='400';
-  } else {
+// setRole moved to window.setRole above else {
     adm.style.background='var(--fol)'; adm.style.color='var(--fo)'; adm.style.borderColor='var(--fo)'; adm.style.fontWeight='500';
     col.style.background='none'; col.style.color='var(--fg)'; col.style.borderColor='var(--fbr)'; col.style.fontWeight='400';
   }
 }
 
-async function doLogin() {
-  const u = document.getElementById('inp-u').value.trim();
-  const p = document.getElementById('inp-p').value.trim();
-  const err = document.getElementById('err-msg');
-  const btn = document.getElementById('btn-login');
-  if (!u || !p) { err.style.display = 'block'; err.textContent = 'Completá usuario y contraseña'; return; }
-  btn.disabled = true; btn.textContent = 'Ingresando...';
-  err.style.display = 'none';
-  try {
-    const { data, error } = await sb.from('users')
-      .select('*').eq('username', u).eq('password', p).eq('role', S.role).single();
-    if (error || !data) { err.style.display = 'block'; err.textContent = 'Usuario o contraseña incorrectos'; return; }
-    S.user = data;
-    document.getElementById('sc-login').classList.add('hidden');
-    document.getElementById('sc-app').classList.remove('hidden');
-    buildShell();
-    if (S.user.role === 'adm') {
-    showSearch(true);
-    loadSearchCache();
-    aSection('dash');
-  } else {
-    renderColList();
-  }
-  } catch(e) {
-    err.style.display = 'block'; err.textContent = 'Error de conexión. Verificá la configuración.';
-  } finally {
-    btn.disabled = false; btn.textContent = 'Ingresar';
-  }
-}
+// doLogin moved to window.doLogin above
 
 function logout() {
   S.user = null;
