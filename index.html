@@ -337,7 +337,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 // Make functions globally available immediately
 window.setRole = function(r) {
-  if(window.S) S.role = r;
+  S.role = r;
   const col = document.getElementById('rb-col');
   const adm = document.getElementById('rb-adm');
   if(!col||!adm) return;
