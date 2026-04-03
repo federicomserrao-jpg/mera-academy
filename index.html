@@ -359,7 +359,7 @@ window.doLogin = async function() {
   btn.disabled=true; btn.textContent='Ingresando...';
   err.style.display='none';
   try {
-    const { data, error } = await sb.from('users').select('*').eq('username',u).eq('password',p).eq('role',S.role).single();
+    const { data, error } = await sb.from('users').select('*').eq('username',u).eq('password',p).eq('role',S.role).maybeSingle();
     if (error||!data) { err.style.display='block'; err.textContent='Usuario o contrasena incorrectos'; return; }
     S.user=data;
     document.getElementById('sc-login').classList.add('hidden');
