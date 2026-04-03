@@ -302,7 +302,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
     </div>
     <div class="fl"><label>URL Video YouTube (embed)</label><input type="text" id="m-video" placeholder="https://www.youtube.com/embed/ID"/></div>
     <div class="fl"><label>Link sesión en vivo (Zoom/Meet) — opcional</label><input type="text" id="m-meeting" placeholder="https://zoom.us/j/..."/></div>
-    <div class="fl"><label>URL de material PDF (opcional)</label><input type="text" id="m-pdf" placeholder="https://..."/></div>
+    <div class="fl">
+      <label>Material adjunto (PDF, Word, PPT…) — opcional</label>
+      <input type="file" id="m-pdf-file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" style="width:100%;padding:7px 0;font-size:13px;font-family:inherit"/>
+      <div id="m-pdf-current" style="font-size:12px;color:var(--fg);margin-top:5px"></div>
+      <input type="hidden" id="m-pdf"/>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
       <div class="fl"><label>Orden en la campaña</label><input type="number" id="m-order" min="1" value="1" placeholder="1"/></div>
       <div class="fl"><label>Días límite</label><input type="number" id="m-days" min="1" value="7" placeholder="7"/></div>
@@ -1130,6 +1135,8 @@ function makeQ() { return { id: null, question_text: '', option_a: '', option_b:
 async function openNewMod() {
   S.editModId = null; editQs = [makeQ()];
   ['m-title', 'm-desc', 'm-video', 'm-meeting', 'm-pdf'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('m-pdf-file').value = '';
+  document.getElementById('m-pdf-current').innerHTML = '';
   document.getElementById('m-camp').value = 'Edesur';
   document.getElementById('mmod-title').textContent = 'Nuevo módulo';
   document.getElementById('btn-del-mod').style.display = 'none';
@@ -1146,6 +1153,10 @@ async function openEditMod(id) {
   document.getElementById('m-video').value = m.video_url;
   document.getElementById('m-meeting').value = m.meeting_url || '';
   document.getElementById('m-pdf').value = m.pdf_url || '';
+  document.getElementById('m-pdf-file').value = '';
+  document.getElementById('m-pdf-current').innerHTML = m.pdf_url
+    ? `<span>Archivo actual: <a href="${m.pdf_url}" target="_blank" style="color:var(--fo)">ver archivo</a> · Subí uno nuevo para reemplazarlo</span>`
+    : '';
   document.getElementById('m-camp').value = m.campaign;
   document.getElementById('m-order').value = m.sort_order || 1;
   document.getElementById('m-days').value = m.days_limit || 7;
@@ -1203,7 +1214,20 @@ function removeQ(i) { editQs.splice(i, 1); renderQList(); }
 async function saveModule() {
   const title = document.getElementById('m-title').value.trim();
   if (!title) { alert('El título es obligatorio'); return; }
-  const modData = { title, description: document.getElementById('m-desc').value.trim(), campaign: document.getElementById('m-camp').value, video_url: document.getElementById('m-video').value.trim(), meeting_url: document.getElementById('m-meeting').value.trim(), pdf_url: document.getElementById('m-pdf').value.trim(), sort_order: parseInt(document.getElementById('m-order').value)||1, days_limit: parseInt(document.getElementById('m-days').value)||7, is_required: document.getElementById('m-required').checked, max_attempts: parseInt(document.getElementById('m-attempts').value)||3 };
+  // Upload file if selected
+  let pdf_url = document.getElementById('m-pdf').value.trim();
+  const pdfFile = document.getElementById('m-pdf-file').files[0];
+  if (pdfFile) {
+    const safeName = pdfFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `materials/${Date.now()}_${safeName}`;
+    // Ensure bucket exists (ignore error if already exists)
+    await sb.storage.createBucket('materials', { public: true }).catch(() => {});
+    const { error: upErr } = await sb.storage.from('materials').upload(path, pdfFile, { upsert: true });
+    if (upErr) { alert('Error al subir el archivo: ' + upErr.message); return; }
+    const { data: urlData } = sb.storage.from('materials').getPublicUrl(path);
+    pdf_url = urlData.publicUrl;
+  }
+  const modData = { title, description: document.getElementById('m-desc').value.trim(), campaign: document.getElementById('m-camp').value, video_url: document.getElementById('m-video').value.trim(), meeting_url: document.getElementById('m-meeting').value.trim(), pdf_url, sort_order: parseInt(document.getElementById('m-order').value)||1, days_limit: parseInt(document.getElementById('m-days').value)||7, is_required: document.getElementById('m-required').checked, max_attempts: parseInt(document.getElementById('m-attempts').value)||3 };
   let modId = S.editModId;
   if (modId) {
     await sb.from('modules').update(modData).eq('id', modId);
