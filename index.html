@@ -213,8 +213,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="font-size:11px;color:var(--fg);text-transform:uppercase;letter-spacing:.08em">Plataforma de Capacitacion Interna</div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:20px">
-      <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:var(--fol);color:var(--fo);font-size:13px;cursor:pointer;font-weight:500;border-color:var(--fo)" id="rb-col" onclick="if(window.setRole)setRole('col')">Colaborador</button>
-      <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:none;color:var(--fg);font-size:13px;cursor:pointer" id="rb-adm" onclick="if(window.setRole)setRole('adm')">Administrador</button>
+      <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:var(--fol);color:var(--fo);font-size:13px;cursor:pointer;font-weight:500;border-color:var(--fo)" id="rb-col" onclick="setRole('col')">Colaborador</button>
+      <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:none;color:var(--fg);font-size:13px;cursor:pointer" id="rb-adm" onclick="setRole('adm')">Administrador</button>
     </div>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Usuario</label>
@@ -222,10 +222,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Contrasena</label>
-      <input type="password" id="inp-p" placeholder="••••••" autocomplete="current-password" style="width:100%;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit" onkeydown="if(event.key==='Enter'&&window.doLogin)doLogin()"/>
+      <input type="password" id="inp-p" placeholder="••••••" autocomplete="current-password" style="width:100%;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit" onkeydown="if(event.key==='Enter')doLogin()"/>
     </div>
     <div id="err-msg" style="font-size:12px;color:var(--frd);margin-bottom:8px;display:none">Usuario o contrasena incorrectos</div>
-    <button id="btn-login" onclick="if(window.doLogin)doLogin()" style="width:100%;background:var(--fo);color:#fff;border:none;border-radius:var(--fr);padding:11px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">Ingresar</button>
+    <button id="btn-login" onclick="doLogin()" style="width:100%;background:var(--fo);color:#fff;border:none;border-radius:var(--fr);padding:11px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">Ingresar</button>
   </div>
 </div>
 </div>
@@ -337,8 +337,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <script>
 // Make functions globally available immediately
 window.setRole = function(r) {
-  if(!window.S) return;
-  S.role = r;
+  if(window.S) S.role = r;
   const col = document.getElementById('rb-col');
   const adm = document.getElementById('rb-adm');
   if(!col||!adm) return;
@@ -399,11 +398,7 @@ const S = {
 // ============================================================
 // LOGIN
 // ============================================================
-// setRole moved to window.setRole above else {
-    adm.style.background='var(--fol)'; adm.style.color='var(--fo)'; adm.style.borderColor='var(--fo)'; adm.style.fontWeight='500';
-    col.style.background='none'; col.style.color='var(--fg)'; col.style.borderColor='var(--fbr)'; col.style.fontWeight='400';
-  }
-}
+// setRole defined as window.setRole above
 
 // doLogin moved to window.doLogin above
 
