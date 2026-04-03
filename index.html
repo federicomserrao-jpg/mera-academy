@@ -350,7 +350,7 @@ window.setRole = function(r) {
   }
 };
 window.doLogin = async function() {
-  if(!window.sb) { alert('Error: base de datos no conectada'); return; }
+  if(!window.sb) { console.log('Supabase not ready yet, retrying...'); setTimeout(window.doLogin, 500); return; }
   const u = document.getElementById('inp-u').value.trim();
   const p = document.getElementById('inp-p').value.trim();
   const err = document.getElementById('err-msg');
