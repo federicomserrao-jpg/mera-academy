@@ -379,6 +379,7 @@ window.doLogin = async function() {
 const SUPABASE_URL = 'https://scgjdqszhebfqjxupzkd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjZ2pkcXN6aGViZnFqeHVwemtkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTEzMDk0NSwiZXhwIjoyMDkwNzA2OTQ1fQ.d-Alh7JNv5KkLmdJyM-CTyBbceHpBwWMU146BISYZvU';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.sb = sb;
 
 // ============================================================
 // ESTADO GLOBAL
