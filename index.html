@@ -799,6 +799,22 @@ async function renderMods() {
   document.getElementById('tb-right').innerHTML += `<button class="btn-s btn-sm" onclick="exportRepCSV('${camp}')" style="margin-left:8px">Exportar CSV</button>`;
 }
 
+async function renderUsrs() {
+  loading();
+  const { data: users } = await sb.from('users').select('*').eq('role', 'col').order('campaign').order('full_name');
+  let h = `<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th></th></tr></thead><tbody>`;
+  (users || []).forEach(u => {
+    h += `<tr>
+      <td style="font-weight:500">${u.full_name}</td>
+      <td style="color:var(--fg)">${u.username}</td>
+      <td>${u.campaign || '—'}</td>
+      <td><button class="btn-s btn-sm" onclick="openEditUsr('${u.id}','${u.full_name.replace(/'/g,"\\'")}','${u.username}','${u.campaign||''}')">Editar</button></td></tr>`;
+  });
+  if (!users || users.length === 0) h += `<tr><td colspan="4" style="text-align:center;color:var(--fg);padding:24px">No hay colaboradores aún</td></tr>`;
+  h += `</tbody></table></div>`;
+  document.getElementById('page').innerHTML = h;
+}
+
 async function renderRes() {
   loading();
   const { data: comps } = await sb.from('completions').select('*').order('created_at', { ascending: false });
