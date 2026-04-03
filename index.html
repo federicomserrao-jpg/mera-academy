@@ -201,11 +201,16 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .section-title{font-size:14px;font-weight:500;color:var(--fn)}
 
 @media(max-width:768px){
-  .sb{transform:translateX(-100%);transition:transform .2s}
+  .sb{transform:translateX(-100%);transition:transform .2s;z-index:20}
   .sb.open{transform:translateX(0)}
   .main{margin-left:0}
   .stats{grid-template-columns:repeat(2,1fr)}
   .page{padding:16px}
+  .topbar{padding:12px 16px}
+  .tbl-wrap{overflow-x:auto}
+  .tbl-wrap table{min-width:500px}
+  .mods{grid-template-columns:1fr}
+  #mob-menu{display:block!important}
 }
 </style>
 </head>
@@ -259,6 +264,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   </div>
   <div class="main">
     <div class="topbar">
+      <button id="mob-menu" onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none;background:none;border:none;cursor:pointer;padding:4px;margin-right:12px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <div>
         <div class="tb-title" id="tb-title">Dashboard</div>
         <div class="tb-sub" id="tb-sub"></div>
@@ -293,6 +301,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
       <select id="m-camp"><option>VISA</option><option>TLMK</option><option>EDESUR</option><option>FARMACITY</option><option>MATER DEI</option><option>ADT</option><option>STRIX</option><option>CAR ONE</option><option>PRO JUBILAR</option><option>AYSA</option><option>RIO GAS</option><option>MIRGOR</option><option>General</option><option>Onboarding</option></select>
     </div>
     <div class="fl"><label>URL Video YouTube (embed)</label><input type="text" id="m-video" placeholder="https://www.youtube.com/embed/ID"/></div>
+    <div class="fl"><label>Link sesión en vivo (Zoom/Meet) — opcional</label><input type="text" id="m-meeting" placeholder="https://zoom.us/j/..."/></div>
+    <div class="fl"><label>URL de material PDF (opcional)</label><input type="text" id="m-pdf" placeholder="https://..."/></div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
       <div class="fl"><label>Orden en la campaña</label><input type="number" id="m-order" min="1" value="1" placeholder="1"/></div>
       <div class="fl"><label>Días límite</label><input type="number" id="m-days" min="1" value="7" placeholder="7"/></div>
@@ -541,6 +551,7 @@ async function renderColList() {
 
   const cardHtml = (m, idx, locked) => {
     const comp = comps?.find(c => c.module_id===m.id);
+    const isComp = comp?.passed;
     const tagClass = m.campaign==='General'?'tag-gr':m.campaign==='EDESUR'?'tag-bl':'tag-gn';
     const dl = m.days_limit||7;
     const left = dl - daysSinceStart;
@@ -552,6 +563,22 @@ async function renderColList() {
       : urgent ? `<span class="mc-st" style="color:#D97706">Vence en ${left} dia(s)</span>`
       : comp ? `<span class="mc-st st-fail">Desaprobado - ${comp.score}%</span>`
       : `<span class="mc-st st-pend">Pendiente - ${left} dia(s) restantes</span>`;
+    // Calcular días restantes con fecha de ingreso real
+    const u_start = S.user.start_date || null;
+    let daysInfo = '';
+    if (u_start && m.days_limit && !isComp) {
+      const start = new Date(u_start);
+      const deadline = new Date(start.getTime() + m.days_limit * 86400000);
+      const today = new Date();
+      const diff = Math.ceil((deadline - today) / 86400000);
+      if (diff < 0) {
+        daysInfo = `<div style="font-size:11px;color:var(--frd);margin-top:4px">⚠️ Vencido hace ${Math.abs(diff)} días</div>`;
+      } else if (diff <= 3) {
+        daysInfo = `<div style="font-size:11px;color:#D97706;margin-top:4px">⏰ Vence en ${diff} día${diff!==1?'s':''}</div>`;
+      } else {
+        daysInfo = `<div style="font-size:11px;color:var(--fg);margin-top:4px">📅 ${diff} días restantes</div>`;
+      }
+    }
     const ord = `<span style="font-size:10px;color:var(--fg);background:var(--fgl);padding:2px 7px;border-radius:10px">N${m.sort_order||idx+1}</span>`;
     const req = m.is_required ? `<span style="font-size:10px;color:var(--fo);background:var(--fol);padding:2px 7px;border-radius:10px">Obligatorio</span>` : '';
     if(locked) return `<div class="mc" style="opacity:.5;cursor:not-allowed;background:var(--fgb)">
@@ -564,7 +591,7 @@ async function renderColList() {
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><span class="tag ${tagClass}">${m.campaign}</span>${ord}${req}</div>
       <div class="mc-title">${m.title}</div>
       <div class="mc-desc">${m.description}</div>
-      <div>${badge}</div></div>`;
+      <div>${badge}</div>${daysInfo}</div>`;
   };
 
   const dashStats = await renderColDashboard(mods, comps, startDate);
@@ -587,6 +614,35 @@ async function renderColList() {
 async function openMod(id, studyMode = false) {
   loading();
   const { data: m } = await sb.from('modules').select('*, questions(*)').eq('id', id).single();
+  // Verificar prerequisito: módulo anterior completado
+  if (!studyMode && m.sort_order > 1) {
+    const { data: prevMods } = await sb.from('modules')
+      .select('id,title,sort_order')
+      .eq('campaign', m.campaign)
+      .eq('is_required', true)
+      .lt('sort_order', m.sort_order)
+      .order('sort_order', { ascending: false })
+      .limit(1);
+    if (prevMods?.length) {
+      const prev = prevMods[0];
+      const { data: prevComp } = await sb.from('completions')
+        .select('id')
+        .eq('user_id', S.user.id)
+        .eq('module_id', prev.id)
+        .eq('passed', true)
+        .limit(1);
+      if (!prevComp?.length) {
+        document.getElementById('page').innerHTML = `
+          <button class="back-btn" onclick="renderColList()">← Volver</button>
+          <div style="background:var(--fw);border-radius:var(--frlg);padding:32px;text-align:center;border:1px solid var(--fbr)">
+            <div style="font-size:32px;margin-bottom:12px">🔒</div>
+            <div style="font-size:16px;font-weight:500;color:var(--fn);margin-bottom:8px">Módulo bloqueado</div>
+            <div style="font-size:13px;color:var(--fg)">Primero debés aprobar: <strong>${prev.title}</strong></div>
+          </div>`;
+        return;
+      }
+    }
+  }
   const comp = await sb.from('completions').select('*').eq('user_id', S.user.id).eq('module_id', id).order('created_at', { ascending: false }).limit(1);
   S.activeModule = m;
   // Feature D: shuffle questions
@@ -608,6 +664,16 @@ async function openMod(id, studyMode = false) {
 
   h += `<div class="vid-box"><iframe src="${m.video_url}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>`;
 
+  if (m.meeting_url) {
+    h += `<a href="${m.meeting_url}" target="_blank" class="btn-p btn-sm" style="display:inline-block;text-decoration:none;margin-bottom:16px">📹 Unirse a sesión en vivo</a>`;
+  }
+  if (m.pdf_url) {
+    h += `<div style="margin-bottom:20px">
+      <div style="font-size:13px;font-weight:500;color:var(--fn);margin-bottom:8px">Material de lectura</div>
+      <a href="${m.pdf_url}" target="_blank" class="btn-s btn-sm">📄 Abrir PDF / Material</a>
+    </div>`;
+  }
+
   const lastComp = comp.data?.[0];
   if (!studyMode) {
     if (lastComp) {
@@ -620,15 +686,33 @@ async function openMod(id, studyMode = false) {
       <button class="btn-s btn-sm" onclick="openMod('${m.id}', true)" style="margin-left:auto">📖 Repasar contenido</button>
     </div>
     <div id="eval-area"></div>`;
+    h += `<div style="margin-top:24px">
+      <div style="font-size:14px;font-weight:500;color:var(--fn);margin-bottom:12px">💬 Preguntas y comentarios</div>
+      <div id="comments-box" style="margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="comment-input" placeholder="Escribí tu pregunta o comentario..." style="flex:1;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:13px;font-family:inherit"/>
+        <button class="btn-p btn-sm" onclick="postComment('${m.id}')">Enviar</button>
+      </div>
+    </div>`;
     document.getElementById('page').innerHTML = h;
     renderQ();
+    setTimeout(() => loadComments(m.id), 100);
   } else {
     h += `<div style="text-align:center;padding:24px;background:var(--fw);border-radius:var(--frlg);border:1px solid var(--fbr);margin-top:16px">
       <div style="font-size:14px;font-weight:500;color:var(--fn);margin-bottom:8px">¿Listo para evaluarte?</div>
       <div style="font-size:13px;color:var(--fg);margin-bottom:16px">Cuando termines de repasar el video, podés ir a la evaluación oficial.</div>
       <button class="btn-p btn-sm" onclick="openMod('${m.id}')">Ir a la evaluación</button>
     </div>`;
+    h += `<div style="margin-top:24px">
+      <div style="font-size:14px;font-weight:500;color:var(--fn);margin-bottom:12px">💬 Preguntas y comentarios</div>
+      <div id="comments-box" style="margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="comment-input" placeholder="Escribí tu pregunta o comentario..." style="flex:1;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:13px;font-family:inherit"/>
+        <button class="btn-p btn-sm" onclick="postComment('${m.id}')">Enviar</button>
+      </div>
+    </div>`;
     document.getElementById('page').innerHTML = h;
+    setTimeout(() => loadComments(m.id), 100);
   }
 }
 
@@ -1045,7 +1129,7 @@ function makeQ() { return { id: null, question_text: '', option_a: '', option_b:
 
 async function openNewMod() {
   S.editModId = null; editQs = [makeQ()];
-  ['m-title', 'm-desc', 'm-video'].forEach(id => document.getElementById(id).value = '');
+  ['m-title', 'm-desc', 'm-video', 'm-meeting', 'm-pdf'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('m-camp').value = 'Edesur';
   document.getElementById('mmod-title').textContent = 'Nuevo módulo';
   document.getElementById('btn-del-mod').style.display = 'none';
@@ -1060,6 +1144,8 @@ async function openEditMod(id) {
   document.getElementById('m-title').value = m.title;
   document.getElementById('m-desc').value = m.description;
   document.getElementById('m-video').value = m.video_url;
+  document.getElementById('m-meeting').value = m.meeting_url || '';
+  document.getElementById('m-pdf').value = m.pdf_url || '';
   document.getElementById('m-camp').value = m.campaign;
   document.getElementById('m-order').value = m.sort_order || 1;
   document.getElementById('m-days').value = m.days_limit || 7;
@@ -1074,15 +1160,35 @@ function renderQList() {
   const opts = ['a', 'b', 'c', 'd'];
   let h = '';
   editQs.forEach((q, i) => {
+    const qType = q.type || 'multi';
     h += `<div class="qe-block"><div style="font-size:11px;color:var(--fg);font-weight:500;margin-bottom:7px">Pregunta ${i + 1}</div>
       <input type="text" value="${q.question_text}" placeholder="Texto de la pregunta" oninput="editQs[${i}].question_text=this.value" style="margin-bottom:8px"/>`;
-    opts.forEach((opt, j) => {
-      const labels = ['A', 'B', 'C', 'D'];
+    h += `<div style="margin-bottom:6px;display:flex;gap:8px;align-items:center">
+      <span style="font-size:11px;color:var(--fg)">Tipo:</span>
+      <select onchange="editQs[${i}].type=this.value;renderQList()" style="padding:4px 8px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:12px;font-family:inherit">
+        <option value="multi" ${qType==='multi'?'selected':''}>Múltiple opción</option>
+        <option value="tf" ${qType==='tf'?'selected':''}>Verdadero/Falso</option>
+      </select>
+    </div>`;
+    if (qType === 'tf') {
+      q.option_a = 'Verdadero'; q.option_b = 'Falso';
       h += `<div class="opt-row">
-        <input type="radio" name="cr${i}" ${q.correct_option === opt ? 'checked' : ''} onchange="editQs[${i}].correct_option='${opt}'" title="Respuesta correcta">
-        <input type="text" value="${q['option_' + opt] || ''}" placeholder="Opción ${labels[j]}" oninput="editQs[${i}]['option_${opt}']=this.value"/>
+        <input type="radio" name="cr${i}" ${q.correct_option==='a'?'checked':''} onchange="editQs[${i}].correct_option='a'" title="Respuesta correcta">
+        <input type="text" value="Verdadero" readonly style="background:var(--fgb)"/>
+      </div>
+      <div class="opt-row">
+        <input type="radio" name="cr${i}" ${q.correct_option==='b'?'checked':''} onchange="editQs[${i}].correct_option='b'" title="Respuesta correcta">
+        <input type="text" value="Falso" readonly style="background:var(--fgb)"/>
       </div>`;
-    });
+    } else {
+      opts.forEach((opt, j) => {
+        const labels = ['A', 'B', 'C', 'D'];
+        h += `<div class="opt-row">
+          <input type="radio" name="cr${i}" ${q.correct_option === opt ? 'checked' : ''} onchange="editQs[${i}].correct_option='${opt}'" title="Respuesta correcta">
+          <input type="text" value="${q['option_' + opt] || ''}" placeholder="Opción ${labels[j]}" oninput="editQs[${i}]['option_${opt}']=this.value"/>
+        </div>`;
+      });
+    }
     h += `<div class="qe-hint">● = respuesta correcta</div>
       <textarea class="exp-inp" placeholder="Explicación si se equivoca (opcional)" oninput="editQs[${i}].explanation=this.value">${q.explanation || ''}</textarea>
       ${editQs.length > 1 ? `<button class="add-q" onclick="removeQ(${i})" style="color:var(--frd);margin-top:5px">Eliminar pregunta</button>` : ''}
@@ -1097,7 +1203,7 @@ function removeQ(i) { editQs.splice(i, 1); renderQList(); }
 async function saveModule() {
   const title = document.getElementById('m-title').value.trim();
   if (!title) { alert('El título es obligatorio'); return; }
-  const modData = { title, description: document.getElementById('m-desc').value.trim(), campaign: document.getElementById('m-camp').value, video_url: document.getElementById('m-video').value.trim(), sort_order: parseInt(document.getElementById('m-order').value)||1, days_limit: parseInt(document.getElementById('m-days').value)||7, is_required: document.getElementById('m-required').checked, max_attempts: parseInt(document.getElementById('m-attempts').value)||3 };
+  const modData = { title, description: document.getElementById('m-desc').value.trim(), campaign: document.getElementById('m-camp').value, video_url: document.getElementById('m-video').value.trim(), meeting_url: document.getElementById('m-meeting').value.trim(), pdf_url: document.getElementById('m-pdf').value.trim(), sort_order: parseInt(document.getElementById('m-order').value)||1, days_limit: parseInt(document.getElementById('m-days').value)||7, is_required: document.getElementById('m-required').checked, max_attempts: parseInt(document.getElementById('m-attempts').value)||3 };
   let modId = S.editModId;
   if (modId) {
     await sb.from('modules').update(modData).eq('id', modId);
@@ -1164,6 +1270,24 @@ async function saveUser() {
     const pass = document.getElementById('u-pass').value.trim();
     if (!pass) { alert('La contraseña es obligatoria'); return; }
     await sb.from('users').insert({ full_name: name, username, password: pass, campaign: camp, role: 'col' });
+    // Auto-asignar módulos obligatorios de su campaña
+    const { data: newUser } = await sb.from('users').select('id').eq('username', username).single();
+    if (newUser) {
+      const { data: campMods } = await sb.from('modules')
+        .select('id')
+        .or(`campaign.eq.${camp},campaign.eq.General`)
+        .eq('is_required', true);
+      if (campMods?.length) {
+        const assignments = campMods.map(m => ({ user_id: newUser.id, module_id: m.id }));
+        await sb.from('module_assignments').upsert(assignments, { onConflict: 'user_id,module_id' });
+      }
+      // Log onboarding
+      await sb.from('module_logs').insert({
+        user_id: newUser.id,
+        action: 'Onboarding',
+        details: `Colaborador creado y módulos obligatorios asignados automáticamente (campaña: ${camp})`
+      });
+    }
   }
   closeModal('modal-usr'); renderUsrs();
 }
@@ -1389,11 +1513,16 @@ async function renderColDashboard(mods, comps, startDate) {
   const surveys = await sb.from('surveys').select('rating').eq('user_id',S.user.id);
   const avgRating = surveys.data?.length ? (surveys.data.reduce((s,x)=>s+x.rating,0)/surveys.data.length).toFixed(1) : '—';
 
+  // Calcular puntos de gamificación
+  const passedComps = (comps||[]).filter(c=>c.passed);
+  let totalPoints = passedComps.length * 10;
+  passedComps.forEach(c => { if (c.score >= 90) totalPoints += 5; });
+
   return `<div class="stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
     <div class="sc"><div class="sc-icon" style="background:var(--fol)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--fo)"><path d="M12 20V10M18 20V4M6 20v-6"/></svg></div><div class="sc-val">${pct}%</div><div class="sc-lbl">Progreso general</div></div>
     <div class="sc"><div class="sc-icon" style="background:var(--fgrl)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--fgr)"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div class="sc-val">${passed}</div><div class="sc-lbl">Modulos aprobados</div></div>
     <div class="sc"><div class="sc-icon" style="background:var(--frdl)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--frd)"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/></svg></div><div class="sc-val">${vencidos}</div><div class="sc-lbl">Vencidos</div></div>
-    <div class="sc"><div class="sc-icon" style="background:#FEF3C7"><span style="font-size:16px">⭐</span></div><div class="sc-val">${avgRating}</div><div class="sc-lbl">Mi satisfaccion</div></div>
+    <div class="sc"><div class="sc-icon" style="background:#FEF3C7"><span style="font-size:16px">⚡</span></div><div class="sc-val">${totalPoints}</div><div class="sc-lbl">Mis puntos</div></div>
   </div>`;
 }
 
@@ -1726,6 +1855,31 @@ async function openProfile(userId, userName) {
     });
   }
 
+  // Calcular badges
+  const badges = [];
+  const passedCount = (comps||[]).filter(c=>c.passed).length;
+  if (passedCount >= 1) badges.push({icon:'🎯', name:'Primer módulo', desc:'Completaste tu primer módulo'});
+  if (passedCount >= 5) badges.push({icon:'⭐', name:'5 módulos', desc:'Completaste 5 módulos'});
+  if (passedCount >= 10) badges.push({icon:'🏆', name:'10 módulos', desc:'Completaste 10 módulos'});
+  const perfectScores = (comps||[]).filter(c=>c.score===100).length;
+  if (perfectScores >= 1) badges.push({icon:'💎', name:'Perfecto', desc:'Obtuviste 100% en un módulo'});
+  const avgScore = passedCount ? Math.round((comps||[]).filter(c=>c.passed).reduce((s,c)=>s+c.score,0)/passedCount) : 0;
+  if (avgScore >= 90) badges.push({icon:'🌟', name:'Alto rendimiento', desc:'Promedio mayor al 90%'});
+
+  let badgeHtml = '';
+  if (badges.length) {
+    badgeHtml = `<div style="margin-top:16px">
+      <div style="font-size:13px;font-weight:500;color:var(--fn);margin-bottom:10px">Logros obtenidos</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${badges.map(b => `<div style="background:var(--fol);border-radius:var(--fr);padding:8px 12px;text-align:center;min-width:80px">
+          <div style="font-size:24px">${b.icon}</div>
+          <div style="font-size:11px;font-weight:500;color:var(--fo);margin-top:4px">${b.name}</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+  h += badgeHtml;
+
   document.getElementById('profile-body').innerHTML = h;
 }
 
@@ -1786,6 +1940,29 @@ async function renderRep() {
       <td><span class="pill ${color}">${modPct}%</span></td></tr>`;
   });
   h += `</tbody></table></div>`;
+
+  // Módulos obligatorios por campaña
+  const mandatoryMods = (mods||[]).filter(m=>m.is_required!==false);
+  const complianceCamps = [...new Set((users||[]).map(u=>u.campaign))].sort();
+  let compH = `<div class="section-hdr" style="margin-top:24px"><span class="section-title">Cumplimiento de módulos obligatorios</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Campaña</th><th>Módulos obligatorios</th><th>Colaboradores</th><th>Cumplimiento total</th><th>Estado</th></tr></thead><tbody>`;
+  complianceCamps.forEach(camp => {
+    const campUsers = (users||[]).filter(u=>u.campaign===camp);
+    const campMandatory = mandatoryMods.filter(m=>m.campaign===camp||m.campaign==='General');
+    const total = campUsers.length * campMandatory.length;
+    const completed = (comps||[]).filter(c=>{
+      const u = campUsers.find(x=>x.id===c.user_id);
+      const m = campMandatory.find(x=>x.id===c.module_id);
+      return u && m && c.passed;
+    }).length;
+    const pct = total ? Math.round(completed/total*100) : 0;
+    const status = pct>=100 ? '<span class="pill p-ok">✓ Completo</span>' : pct>=80 ? '<span class="pill p-pe">En progreso</span>' : '<span class="pill p-fl">⚠ Bajo</span>';
+    compH += `<tr><td style="font-weight:500">${camp}</td><td style="text-align:center">${campMandatory.length}</td><td style="text-align:center">${campUsers.length}</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:6px;background:var(--fgl);border-radius:3px"><div style="width:${pct}%;height:100%;background:${pct>=80?'var(--fgr)':pct>=50?'var(--fo)':'var(--frd)'};border-radius:3px"></div></div><span style="font-size:11px;min-width:32px">${pct}%</span></div></td>
+      <td>${status}</td></tr>`;
+  });
+  compH += `</tbody></table></div>`;
+  h += compH;
 
   document.getElementById('page').innerHTML = h;
 }
@@ -1919,6 +2096,50 @@ async function renderRank() {
     h += `</tbody></table></div></div>`;
   });
   document.getElementById('page').innerHTML = h || '<div style="text-align:center;padding:60px;color:var(--fg)">No hay datos</div>';
+}
+
+// ============================================================
+// FORO / COMENTARIOS POR MÓDULO
+// ============================================================
+async function loadComments(moduleId) {
+  const { data: logs } = await sb.from('module_logs')
+    .select('*')
+    .eq('module_id', moduleId)
+    .eq('action', 'Comentario')
+    .order('created_at', { ascending: true });
+
+  const uids = [...new Set((logs||[]).map(l=>l.user_id))];
+  const { data: usersData } = uids.length ? await sb.from('users').select('id,full_name').in('id', uids) : { data: [] };
+
+  const box = document.getElementById('comments-box');
+  if (!box) return;
+  if (!logs?.length) { box.innerHTML = `<div style="font-size:13px;color:var(--fg);padding:8px 0">Aún no hay comentarios. ¡Sé el primero!</div>`; return; }
+
+  box.innerHTML = (logs||[]).map(l => {
+    const u = usersData?.find(x=>x.id===l.user_id);
+    const ini = (u?.full_name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    return `<div style="display:flex;gap:10px;margin-bottom:12px;padding:10px;background:var(--fgb);border-radius:var(--fr)">
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--fol);color:var(--fo);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${ini}</div>
+      <div>
+        <div style="font-size:12px;font-weight:500;color:var(--fn)">${u?.full_name||'Usuario'} <span style="color:var(--fg);font-weight:400">· ${l.created_at?.slice(0,10)||''}</span></div>
+        <div style="font-size:13px;color:var(--fn);margin-top:3px">${l.details}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function postComment(moduleId) {
+  const input = document.getElementById('comment-input');
+  const text = input?.value?.trim();
+  if (!text) return;
+  await sb.from('module_logs').insert({
+    module_id: moduleId,
+    user_id: S.user.id,
+    action: 'Comentario',
+    details: text
+  });
+  input.value = '';
+  loadComments(moduleId);
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
