@@ -1,0 +1,455 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── EMPRESA ──────────────────────────────────────────────────────────────────
+
+model Empresa {
+  id           String     @id @default(cuid())
+  nombre       String
+  cif          String?    @unique
+  logo         String?
+  pais         String     @default("España")
+  timezone     String     @default("Europe/Madrid")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  empleados    Empleado[]
+  departamentos Departamento[]
+  anuncios     Anuncio[]
+}
+
+// ─── DEPARTAMENTOS ────────────────────────────────────────────────────────────
+
+model Departamento {
+  id        String     @id @default(cuid())
+  nombre    String
+  color     String?
+  empresaId String
+  empresa   Empresa    @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  empleados Empleado[]
+  createdAt DateTime   @default(now())
+
+  @@index([empresaId])
+}
+
+// ─── EMPLEADOS ────────────────────────────────────────────────────────────────
+
+model Empleado {
+  id              String        @id @default(cuid())
+  userId          String?       @unique // Supabase auth user id
+  empresaId       String
+  empresa         Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  departamentoId  String?
+  departamento    Departamento? @relation(fields: [departamentoId], references: [id])
+  managerId       String?
+  manager         Empleado?     @relation("Manager", fields: [managerId], references: [id])
+  subordinados    Empleado[]    @relation("Manager")
+
+  // Info personal
+  nombre          String
+  apellidos       String
+  email           String        @unique
+  telefono        String?
+  avatar          String?
+  fechaNacimiento DateTime?
+  nif             String?       @unique
+  genero          Genero?
+  nacionalidad    String?
+  direccion       String?
+
+  // Info laboral
+  puesto          String?
+  rol             Rol           @default(EMPLEADO)
+  estado          EstadoEmpleado @default(ACTIVO)
+  fechaAlta       DateTime      @default(now())
+  fechaBaja       DateTime?
+  salarioBruto    Float?
+  tipoContrato    TipoContrato?
+  jornadaHoras    Float         @default(40)
+  numeroCuenta    String?
+  numSS           String?
+
+  // Relaciones
+  ausencias       Ausencia[]
+  fichajesHorario Fichaje[]
+  nominas         Nomina[]
+  evaluaciones    Evaluacion[]
+  turnosAsignados TurnoAsignado[]
+  onboardingTareas OnboardingTarea[]
+  documentos      Documento[]
+  candidaturas    Candidatura[]
+  anunciosLeidos  AnuncioLeido[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([empresaId])
+  @@index([departamentoId])
+}
+
+enum Genero {
+  MASCULINO
+  FEMENINO
+  NO_BINARIO
+  PREFIERO_NO_DECIR
+}
+
+enum Rol {
+  SUPERADMIN
+  ADMIN
+  MANAGER
+  EMPLEADO
+}
+
+enum EstadoEmpleado {
+  ACTIVO
+  INACTIVO
+  BAJA
+  VACACIONES
+}
+
+enum TipoContrato {
+  INDEFINIDO
+  TEMPORAL
+  PRACTICAS
+  FORMACION
+  OBRA_SERVICIO
+  AUTONOMO
+}
+
+// ─── AUSENCIAS / VACACIONES ───────────────────────────────────────────────────
+
+model Ausencia {
+  id           String        @id @default(cuid())
+  empleadoId   String
+  empleado     Empleado      @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  tipo         TipoAusencia
+  estado       EstadoAusencia @default(PENDIENTE)
+  fechaInicio  DateTime
+  fechaFin     DateTime
+  dias         Int
+  descripcion  String?
+  aprobadoPor  String?
+  aprobadoEn   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([empleadoId])
+}
+
+enum TipoAusencia {
+  VACACIONES
+  ENFERMEDAD
+  PERSONAL
+  MATERNIDAD
+  PATERNIDAD
+  LUTO
+  BODA
+  OTRO
+}
+
+enum EstadoAusencia {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  CANCELADA
+}
+
+// ─── FICHAJE / CONTROL HORARIO ────────────────────────────────────────────────
+
+model Fichaje {
+  id           String        @id @default(cuid())
+  empleadoId   String
+  empleado     Empleado      @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  fecha        DateTime      @default(now())
+  entrada      DateTime?
+  salida       DateTime?
+  pausaInicio  DateTime?
+  pausaFin     DateTime?
+  horasTrabajadas Float?
+  horasExtra   Float?
+  tipo         TipoFichaje   @default(PRESENCIAL)
+  ubicacion    String?
+  nota         String?
+  createdAt    DateTime      @default(now())
+
+  @@index([empleadoId])
+  @@index([fecha])
+}
+
+enum TipoFichaje {
+  PRESENCIAL
+  REMOTO
+  DESPLAZAMIENTO
+}
+
+// ─── NÓMINAS ──────────────────────────────────────────────────────────────────
+
+model Nomina {
+  id              String      @id @default(cuid())
+  empleadoId      String
+  empleado        Empleado    @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  periodo         String      // "2024-01"
+  anio            Int
+  mes             Int
+  salarioBruto    Float
+  irpf            Float
+  seguridadSocial Float
+  deducciones     Float       @default(0)
+  extras          Float       @default(0)
+  salarioNeto     Float
+  estado          EstadoNomina @default(BORRADOR)
+  archivoUrl      String?
+  pagadoEn        DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([empleadoId, periodo])
+  @@index([empleadoId])
+}
+
+enum EstadoNomina {
+  BORRADOR
+  GENERADA
+  PAGADA
+}
+
+// ─── RECLUTAMIENTO ────────────────────────────────────────────────────────────
+
+model OfertaEmpleo {
+  id            String        @id @default(cuid())
+  titulo        String
+  departamento  String?
+  ubicacion     String?
+  descripcion   String
+  requisitos    String?
+  salarioMin    Float?
+  salarioMax    Float?
+  tipo          TipoContrato?
+  modalidad     Modalidad     @default(PRESENCIAL)
+  estado        EstadoOferta  @default(ABIERTA)
+  candidaturas  Candidatura[]
+  publicadoEn   DateTime      @default(now())
+  cierreEn      DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Candidatura {
+  id           String          @id @default(cuid())
+  ofertaId     String
+  oferta       OfertaEmpleo    @relation(fields: [ofertaId], references: [id], onDelete: Cascade)
+  empleadoId   String?         // Si fue contratado
+  empleado     Empleado?       @relation(fields: [empleadoId], references: [id])
+  nombre       String
+  apellidos    String
+  email        String
+  telefono     String?
+  cvUrl        String?
+  fase         FaseCandidatura @default(RECIBIDA)
+  nota         String?
+  puntuacion   Int?            // 1-5
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([ofertaId])
+}
+
+enum Modalidad {
+  PRESENCIAL
+  REMOTO
+  HIBRIDO
+}
+
+enum EstadoOferta {
+  ABIERTA
+  PAUSADA
+  CERRADA
+  ARCHIVADA
+}
+
+enum FaseCandidatura {
+  RECIBIDA
+  REVISION
+  TELEFONICA
+  ENTREVISTA
+  PRUEBA_TECNICA
+  OFERTA
+  CONTRATADO
+  DESCARTADO
+}
+
+// ─── EVALUACIONES DE DESEMPEÑO ────────────────────────────────────────────────
+
+model Evaluacion {
+  id            String          @id @default(cuid())
+  empleadoId    String
+  empleado      Empleado        @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  evaluadorId   String?
+  periodo       String          // "2024-Q1"
+  tipo          TipoEvaluacion  @default(ANUAL)
+  estado        EstadoEvaluacion @default(PENDIENTE)
+  puntuacion    Float?          // 0-10
+  objetivos     Json?           // Array de objetivos con cumplimiento
+  competencias  Json?           // Array de competencias evaluadas
+  comentarios   String?
+  planMejora    String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([empleadoId])
+}
+
+enum TipoEvaluacion {
+  ANUAL
+  SEMESTRAL
+  TRIMESTRAL
+  PROBACION
+  OKR
+}
+
+enum EstadoEvaluacion {
+  PENDIENTE
+  EN_PROGRESO
+  COMPLETADA
+  ARCHIVADA
+}
+
+// ─── TURNOS Y HORARIOS ────────────────────────────────────────────────────────
+
+model Turno {
+  id          String          @id @default(cuid())
+  nombre      String
+  color       String          @default("#5B4FCF")
+  horaInicio  String          // "09:00"
+  horaFin     String          // "17:00"
+  dias        Json            // [1,2,3,4,5] (lunes=1)
+  asignaciones TurnoAsignado[]
+  createdAt   DateTime        @default(now())
+}
+
+model TurnoAsignado {
+  id          String   @id @default(cuid())
+  turnoId     String
+  turno       Turno    @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+  empleadoId  String
+  empleado    Empleado @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  fechaInicio DateTime
+  fechaFin    DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([empleadoId])
+  @@index([turnoId])
+}
+
+// ─── ONBOARDING ───────────────────────────────────────────────────────────────
+
+model PlantillaOnboarding {
+  id       String            @id @default(cuid())
+  nombre   String
+  tareas   TareaOnboarding[]
+  createdAt DateTime         @default(now())
+}
+
+model TareaOnboarding {
+  id           String              @id @default(cuid())
+  plantillaId  String?
+  plantilla    PlantillaOnboarding? @relation(fields: [plantillaId], references: [id])
+  titulo       String
+  descripcion  String?
+  responsable  String?             // "RRHH" | "IT" | "MANAGER" | "EMPLEADO"
+  diasDesdeAlta Int               @default(0)
+  asignaciones OnboardingTarea[]
+  createdAt    DateTime            @default(now())
+}
+
+model OnboardingTarea {
+  id         String          @id @default(cuid())
+  tareaId    String
+  tarea      TareaOnboarding @relation(fields: [tareaId], references: [id], onDelete: Cascade)
+  empleadoId String
+  empleado   Empleado        @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  estado     EstadoTarea     @default(PENDIENTE)
+  completadoEn DateTime?
+  nota       String?
+  createdAt  DateTime        @default(now())
+
+  @@index([empleadoId])
+}
+
+enum EstadoTarea {
+  PENDIENTE
+  EN_PROGRESO
+  COMPLETADA
+  OMITIDA
+}
+
+// ─── DOCUMENTOS ───────────────────────────────────────────────────────────────
+
+model Documento {
+  id         String      @id @default(cuid())
+  empleadoId String
+  empleado   Empleado    @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  nombre     String
+  tipo       TipoDoc     @default(OTRO)
+  url        String
+  tamano     Int?        // bytes
+  createdAt  DateTime    @default(now())
+
+  @@index([empleadoId])
+}
+
+enum TipoDoc {
+  CONTRATO
+  NOMINA
+  DNI
+  TITULO
+  CERTIFICADO
+  FORMACION
+  OTRO
+}
+
+// ─── COMUNICADOS / ANUNCIOS ───────────────────────────────────────────────────
+
+model Anuncio {
+  id          String        @id @default(cuid())
+  empresaId   String
+  empresa     Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  autorId     String?
+  titulo      String
+  contenido   String
+  tipo        TipoAnuncio   @default(COMUNICADO)
+  fijado      Boolean       @default(false)
+  publicadoEn DateTime      @default(now())
+  expiraEn    DateTime?
+  lecturas    AnuncioLeido[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([empresaId])
+}
+
+model AnuncioLeido {
+  id         String   @id @default(cuid())
+  anuncioId  String
+  anuncio    Anuncio  @relation(fields: [anuncioId], references: [id], onDelete: Cascade)
+  empleadoId String
+  empleado   Empleado @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  leidoEn    DateTime @default(now())
+
+  @@unique([anuncioId, empleadoId])
+}
+
+enum TipoAnuncio {
+  COMUNICADO
+  NOTICIA
+  URGENTE
+  EVENTO
+  FELICITACION
+}
