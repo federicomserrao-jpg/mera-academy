@@ -237,7 +237,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
     </div>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Contrasena</label>
-      <input type="password" id="inp-p" placeholder="••••••" autocomplete="current-password" style="width:100%;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div style="position:relative">
+        <input type="password" id="inp-p" placeholder="••••••" autocomplete="current-password" style="width:100%;padding:9px 40px 9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <button type="button" onclick="togglePw('inp-p',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg);font-size:16px;padding:2px">👁</button>
+      </div>
     </div>
     <div id="err-msg" style="font-size:12px;color:var(--frd);margin-bottom:8px;display:none">Usuario o contrasena incorrectos</div>
     <button id="btn-login" onclick="doLogin()" style="width:100%;background:var(--fo);color:#fff;border:none;border-radius:var(--fr);padding:11px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">Ingresar</button>
@@ -277,6 +280,18 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
             style="padding:7px 12px 7px 32px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:13px;width:220px;background:var(--fgb);font-family:inherit"/>
           <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--fg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <div id="search-results" style="position:absolute;top:38px;left:0;right:0;background:var(--fw);border:1px solid var(--fbr);border-radius:var(--fr);box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:50;max-height:300px;overflow-y:auto;display:none"></div>
+        </div>
+        <div style="position:relative">
+          <button id="notif-btn" onclick="toggleNotifPanel()" title="Notificaciones" style="background:none;border:1px solid var(--fbr);border-radius:var(--fr);padding:6px 10px;cursor:pointer;font-size:16px;line-height:1;color:var(--fg);position:relative">
+            🔔<span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--frd);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:600;line-height:16px;text-align:center"></span>
+          </button>
+          <div id="notif-panel" style="display:none;position:absolute;top:44px;right:0;width:320px;background:var(--fw);border:1px solid var(--fbr);border-radius:var(--frlg);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:100;max-height:400px;overflow-y:auto">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--fbr);font-size:13px;font-weight:500;color:var(--fn);display:flex;justify-content:space-between;align-items:center">
+              Notificaciones
+              <button onclick="markAllRead()" style="font-size:11px;color:var(--fo);background:none;border:none;cursor:pointer">Marcar todas como leídas</button>
+            </div>
+            <div id="notif-list" style="padding:8px 0"></div>
+          </div>
         </div>
         <button id="dark-toggle" onclick="toggleDark()" title="Cambiar tema" style="background:none;border:1px solid var(--fbr);border-radius:var(--fr);padding:6px 10px;cursor:pointer;font-size:16px;line-height:1;color:var(--fg)">🌙</button>
         <div class="tb-right" id="tb-right"></div>
@@ -343,13 +358,16 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   <div class="modal-body">
     <div class="fl"><label>Nombre completo</label><input type="text" id="u-name"/></div>
     <div class="fl"><label>Usuario (para ingresar)</label><input type="text" id="u-user" autocomplete="off"/></div>
-    <div class="fl"><label>Contraseña</label><input type="password" id="u-pass" autocomplete="new-password"/></div>
+    <div class="fl"><label>Contraseña</label><div style="position:relative"><input type="password" id="u-pass" autocomplete="new-password" style="width:100%;padding:9px 40px 9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit"/><button type="button" onclick="togglePw('u-pass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg);font-size:16px;padding:2px">👁</button></div></div>
     <div class="fl"><label>Campaña / Área</label>
       <select id="u-camp"><option>VISA</option><option>TLMK</option><option>EDESUR</option><option>FARMACITY</option><option>MATER DEI</option><option>ADT</option><option>STRIX</option><option>CAR ONE</option><option>PRO JUBILAR</option><option>AYSA</option><option>RIO GAS</option><option>MIRGOR</option><option>General</option><option>Onboarding</option></select>
     </div>
+    <div class="fl"><label>Rol</label>
+      <select id="u-role"><option value="col">Colaborador</option><option value="sup">Supervisor</option></select>
+    </div>
     <div id="u-edit-fields" class="hidden">
       <div style="border-top:1px solid var(--fbr);margin:10px 0 14px"></div>
-      <div class="fl"><label>Nueva contraseña (dejar vacío para no cambiar)</label><input type="password" id="u-newpass" autocomplete="new-password"/></div>
+      <div class="fl"><label>Nueva contraseña (dejar vacío para no cambiar)</label><div style="position:relative"><input type="password" id="u-newpass" autocomplete="new-password" style="width:100%;padding:9px 40px 9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit"/><button type="button" onclick="togglePw('u-newpass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg);font-size:16px;padding:2px">👁</button></div></div>
     </div>
   </div>
   <div class="modal-footer">
@@ -395,6 +413,7 @@ window.doLogin = async function() {
     document.getElementById('sc-app').classList.remove('hidden');
     buildShell();
     if(S.user.role==='adm'){ showSearch(true); loadSearchCache(); aSection('dash'); }
+    else if(S.user.role==='sup'){ aSection('usrs'); }
     else { renderColList(); }
   } catch(e) {
     err.style.display='block'; err.textContent='Error de conexion: '+e.message;
@@ -447,6 +466,7 @@ function buildShell() {
   const u = S.user;
   const ini = u.full_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
   // Sync dark mode button icon with saved preference
+  setTimeout(() => loadNotifications(), 500);
   const savedTheme = localStorage.getItem('mera-theme');
   const btn = document.getElementById('dark-toggle');
   if (btn) btn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
@@ -459,7 +479,23 @@ function buildShell() {
     ${S.user.role==='col'?`<button class="su-out" style="color:var(--fbl)" onclick="openProfile(S.user.id,S.user.full_name)">Ver mi perfil</button>`:''}`;
 
   const isAdm = u.role === 'adm';
-  document.getElementById('sb-nav').innerHTML = isAdm ? `
+  const isSup = u.role === 'sup';
+  document.getElementById('sb-nav').innerHTML = isSup ? `
+    <div class="nav-sect">
+      <div class="nav-sect-lbl">Mi campaña — ${u.campaign}</div>
+      <div class="ni" id="ni-usrs" onclick="aSection('usrs')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 6a5 5 0 1110 0H3z"/></svg>Colaboradores
+      </div>
+      <div class="ni" id="ni-res" onclick="aSection('res')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v12H2V2zm2 3v1h8V5H4zm0 3v1h8V8H4zm0 3v1h5v-1H4z"/></svg>Resultados
+      </div>
+      <div class="ni" id="ni-rep" onclick="aSection('rep')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 13V3h2v10H2zm4-6v6H4V7h2zm4-3v9H8V4h2zm4-2v11h-2V2h2z"/></svg>Reportes
+      </div>
+      <div class="ni" id="ni-rank" onclick="aSection('rank')">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 13V3h2v10H2zm4-6v6H4V7h2zm4-3v9H8V4h2zm4-2v11h-2V2h2z"/></svg>Ranking
+      </div>
+    </div>` : isAdm ? `
     <div class="nav-sect">
       <div class="nav-sect-lbl">General</div>
       <div class="ni" id="ni-dash" onclick="aSection('dash')">
@@ -1015,8 +1051,10 @@ let _usrsData = null;
 async function renderUsrs() {
   loading();
   _usrsData = null;
+  let usrsQuery = sb.from('users').select('*').in('role', ['col','sup']).order('campaign').order('full_name');
+  if (S.user.role === 'sup') usrsQuery = usrsQuery.eq('campaign', S.user.campaign);
   const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
-    sb.from('users').select('*').eq('role', 'col').order('campaign').order('full_name'),
+    usrsQuery,
     sb.from('modules').select('id,campaign'),
     sb.from('completions').select('user_id,module_id,passed')
   ]);
@@ -1037,17 +1075,19 @@ function filterUsrs(active) {
   bar += `<button onclick="exportUsrsCSV('${active}')" class="btn-s btn-sm" style="margin-left:auto">Exportar CSV</button>`;
   bar += `</div>`;
 
-  let h = bar + `<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th>Progreso</th><th></th></tr></thead><tbody>`;
+  let h = bar + `<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th>Rol</th><th>Progreso</th><th></th></tr></thead><tbody>`;
   filtered.forEach(u => {
     const userMods = mods.filter(m => m.campaign === u.campaign || m.campaign === 'General');
     const total = userMods.length;
     const passed = comps.filter(c => c.user_id === u.id && c.passed && userMods.find(m => m.id === c.module_id)).length;
     const pct = total ? Math.round(passed / total * 100) : 0;
     const barColor = pct >= 80 ? 'var(--fgr)' : pct >= 40 ? 'var(--fo)' : 'var(--frd)';
+    const rolLabel = u.role === 'sup' ? '<span class="pill p-pe">Supervisor</span>' : '<span style="font-size:12px;color:var(--fg)">Colaborador</span>';
     h += `<tr>
       <td style="font-weight:500">${u.full_name}</td>
       <td style="color:var(--fg)">${u.username}</td>
       <td>${u.campaign || '—'}</td>
+      <td>${rolLabel}</td>
       <td style="min-width:130px">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="flex:1;height:6px;background:var(--fgl);border-radius:3px;overflow:hidden">
@@ -1056,7 +1096,7 @@ function filterUsrs(active) {
           <span style="font-size:11px;color:var(--fg);min-width:32px">${passed}/${total}</span>
         </div>
       </td>
-      <td><button class="btn-s btn-sm" onclick="openEditUsr('${u.id}','${u.full_name.replace(/'/g,"\\'")}','${u.username}','${u.campaign||''}')">Editar</button></td></tr>`;
+      <td><button class="btn-s btn-sm" onclick="openEditUsr('${u.id}','${u.full_name.replace(/'/g,"\\'")}','${u.username}','${u.campaign||''}','${u.role||'col'}')">Editar</button></td></tr>`;
   });
   if (!filtered.length) h += `<tr><td colspan="5" style="text-align:center;color:var(--fg);padding:24px">No hay colaboradores</td></tr>`;
   h += `</tbody></table></div>`;
@@ -1259,6 +1299,7 @@ function openNewUsr() {
   S.editUsrId = null;
   ['u-name', 'u-user', 'u-pass'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('u-camp').value = 'Edesur';
+  document.getElementById('u-role').value = 'col';
   document.getElementById('musr-title').textContent = 'Nuevo colaborador';
   document.getElementById('btn-del-usr').style.display = 'none';
   document.getElementById('u-edit-fields').classList.add('hidden');
@@ -1266,12 +1307,13 @@ function openNewUsr() {
   document.getElementById('modal-usr').classList.add('open');
 }
 
-function openEditUsr(id, name, username, campaign) {
+function openEditUsr(id, name, username, campaign, role) {
   S.editUsrId = id;
   document.getElementById('u-name').value = name;
   document.getElementById('u-user').value = username;
   document.getElementById('u-pass').value = '';
   document.getElementById('u-camp').value = campaign;
+  document.getElementById('u-role').value = role || 'col';
   document.getElementById('musr-title').textContent = 'Editar colaborador';
   document.getElementById('btn-del-usr').style.display = 'inline-block';
   document.getElementById('u-edit-fields').classList.remove('hidden');
@@ -1285,15 +1327,16 @@ async function saveUser() {
   const username = document.getElementById('u-user').value.trim();
   const camp = document.getElementById('u-camp').value;
   if (!name || !username) { alert('Nombre y usuario son obligatorios'); return; }
+  const role = document.getElementById('u-role').value;
   if (S.editUsrId) {
-    const upd = { full_name: name, username, campaign: camp };
+    const upd = { full_name: name, username, campaign: camp, role };
     const newpass = document.getElementById('u-newpass').value.trim();
     if (newpass) upd.password = newpass;
     await sb.from('users').update(upd).eq('id', S.editUsrId);
   } else {
     const pass = document.getElementById('u-pass').value.trim();
     if (!pass) { alert('La contraseña es obligatoria'); return; }
-    await sb.from('users').insert({ full_name: name, username, password: pass, campaign: camp, role: 'col' });
+    await sb.from('users').insert({ full_name: name, username, password: pass, campaign: camp, role });
     // Auto-asignar módulos obligatorios de su campaña
     const { data: newUser } = await sb.from('users').select('id').eq('username', username).single();
     if (newUser) {
@@ -2129,11 +2172,11 @@ async function loadComments(moduleId) {
   const { data: logs } = await sb.from('module_logs')
     .select('*')
     .eq('module_id', moduleId)
-    .eq('action', 'Comentario')
+    .in('action', ['Comentario', 'Respuesta'])
     .order('created_at', { ascending: true });
 
   const uids = [...new Set((logs||[]).map(l=>l.user_id))];
-  const { data: usersData } = uids.length ? await sb.from('users').select('id,full_name').in('id', uids) : { data: [] };
+  const { data: usersData } = uids.length ? await sb.from('users').select('id,full_name,role').in('id', uids) : { data: [] };
 
   const box = document.getElementById('comments-box');
   if (!box) return;
@@ -2142,31 +2185,162 @@ async function loadComments(moduleId) {
   box.innerHTML = (logs||[]).map(l => {
     const u = usersData?.find(x=>x.id===l.user_id);
     const ini = (u?.full_name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-    return `<div style="display:flex;gap:10px;margin-bottom:12px;padding:10px;background:var(--fgb);border-radius:var(--fr)">
-      <div style="width:30px;height:30px;border-radius:50%;background:var(--fol);color:var(--fo);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${ini}</div>
-      <div>
-        <div style="font-size:12px;font-weight:500;color:var(--fn)">${u?.full_name||'Usuario'} <span style="color:var(--fg);font-weight:400">· ${l.created_at?.slice(0,10)||''}</span></div>
+    const isReply = l.action === 'Respuesta';
+    const isAdmin = u?.role === 'adm' || u?.role === 'sup';
+    const canReply = (S.user.role === 'adm' || S.user.role === 'sup') && !isReply;
+    return `<div style="display:flex;gap:10px;margin-bottom:12px;padding:10px;background:${isReply?'var(--fol)':'var(--fgb)'};border-radius:var(--fr);${isReply?'margin-left:40px;border-left:3px solid var(--fo)':''}">
+      <div style="width:30px;height:30px;border-radius:50%;background:${isAdmin?'var(--fo)':'var(--fol)'};color:${isAdmin?'#fff':'var(--fo)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${ini}</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:500;color:var(--fn)">${u?.full_name||'Usuario'} ${isAdmin?'<span style="font-size:10px;background:var(--fo);color:#fff;padding:1px 6px;border-radius:10px;margin-left:4px">Admin</span>':''} <span style="color:var(--fg);font-weight:400">· ${l.created_at?.slice(0,10)||''}</span></div>
         <div style="font-size:13px;color:var(--fn);margin-top:3px">${l.details}</div>
+        ${canReply?`<button onclick="showReplyBox('${l.id}','${moduleId}')" style="font-size:11px;color:var(--fo);background:none;border:none;cursor:pointer;margin-top:4px;padding:0">↩ Responder</button>`:''}
+        <div id="reply-box-${l.id}" style="display:none;margin-top:8px;display:none">
+          <div style="display:flex;gap:6px">
+            <input type="text" id="reply-input-${l.id}" placeholder="Escribí tu respuesta..." style="flex:1;padding:7px 10px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:13px;font-family:inherit"/>
+            <button class="btn-p btn-sm" onclick="postReply('${l.id}','${moduleId}')">Enviar</button>
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
+}
+
+function showReplyBox(logId, moduleId) {
+  const box = document.getElementById('reply-box-' + logId);
+  if (box) { box.style.display = box.style.display === 'none' ? 'block' : 'none'; }
+}
+
+async function postReply(logId, moduleId) {
+  const input = document.getElementById('reply-input-' + logId);
+  const text = input?.value?.trim();
+  if (!text) return;
+  await sb.from('module_logs').insert({ module_id: moduleId, user_id: S.user.id, action: 'Respuesta', details: text });
+  loadComments(moduleId);
 }
 
 async function postComment(moduleId) {
   const input = document.getElementById('comment-input');
   const text = input?.value?.trim();
   if (!text) return;
-  await sb.from('module_logs').insert({
-    module_id: moduleId,
-    user_id: S.user.id,
-    action: 'Comentario',
-    details: text
-  });
+  await sb.from('module_logs').insert({ module_id: moduleId, user_id: S.user.id, action: 'Comentario', details: text });
   input.value = '';
   loadComments(moduleId);
 }
 
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ============================================================
+// NOTIFICACIONES
+// ============================================================
+let _notifs = [];
+
+async function loadNotifications() {
+  const readIds = JSON.parse(localStorage.getItem('mera-notif-read') || '[]');
+  _notifs = [];
+
+  if (S.user.role === 'col') {
+    // Módulos nuevos asignados en los últimos 7 días
+    const since = new Date(Date.now() - 7 * 86400000).toISOString();
+    const { data: newMods } = await sb.from('modules').select('id,title,created_at')
+      .or(`campaign.eq.${S.user.campaign},campaign.eq.General`)
+      .gte('created_at', since).order('created_at', { ascending: false });
+    (newMods || []).forEach(m => _notifs.push({
+      id: 'mod_' + m.id, icon: '📚', text: `Nuevo módulo disponible: <strong>${m.title}</strong>`,
+      time: m.created_at?.slice(0, 10), read: readIds.includes('mod_' + m.id)
+    }));
+
+    // Módulos próximos a vencer (≤3 días)
+    if (S.user.start_date) {
+      const { data: mods } = await sb.from('modules').select('id,title,days_limit')
+        .or(`campaign.eq.${S.user.campaign},campaign.eq.General`);
+      const { data: comps } = await sb.from('completions').select('module_id,passed').eq('user_id', S.user.id).eq('passed', true);
+      const passedIds = new Set((comps || []).map(c => c.module_id));
+      (mods || []).filter(m => !passedIds.has(m.id) && m.days_limit).forEach(m => {
+        const deadline = new Date(new Date(S.user.start_date).getTime() + m.days_limit * 86400000);
+        const diff = Math.ceil((deadline - new Date()) / 86400000);
+        if (diff <= 3 && diff >= 0) _notifs.push({
+          id: 'venc_' + m.id, icon: '⏰', text: `<strong>${m.title}</strong> vence en ${diff} día${diff !== 1 ? 's' : ''}`,
+          time: 'Hoy', read: readIds.includes('venc_' + m.id), urgent: true
+        });
+      });
+    }
+  } else {
+    // Admin/supervisor: colaboradores con módulos vencidos
+    const { data: logs } = await sb.from('module_logs').select('*').eq('action', 'Comentario')
+      .order('created_at', { ascending: false }).limit(10);
+    const uids = [...new Set((logs || []).map(l => l.user_id))];
+    const { data: users } = uids.length ? await sb.from('users').select('id,full_name').in('id', uids) : { data: [] };
+    (logs || []).forEach(l => {
+      const u = (users || []).find(x => x.id === l.user_id);
+      _notifs.push({
+        id: 'com_' + l.id, icon: '💬', text: `<strong>${u?.full_name || 'Alguien'}</strong> dejó un comentario`,
+        time: l.created_at?.slice(0, 10), read: readIds.includes('com_' + l.id)
+      });
+    });
+  }
+
+  renderNotifications();
+}
+
+function renderNotifications() {
+  const unread = _notifs.filter(n => !n.read).length;
+  const badge = document.getElementById('notif-badge');
+  if (badge) { badge.textContent = unread; badge.style.display = unread ? 'block' : 'none'; }
+
+  const list = document.getElementById('notif-list');
+  if (!list) return;
+  if (!_notifs.length) {
+    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--fg);font-size:13px">No hay notificaciones</div>`;
+    return;
+  }
+  list.innerHTML = _notifs.map(n => `
+    <div onclick="markRead('${n.id}')" style="padding:12px 16px;border-bottom:1px solid var(--fbr);cursor:pointer;background:${n.read ? 'transparent' : 'var(--fol)'};transition:background .1s" onmouseover="this.style.background='var(--fgl)'" onmouseout="this.style.background='${n.read ? 'transparent' : 'var(--fol)'}'">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <span style="font-size:18px">${n.icon}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;color:var(--fn);line-height:1.4">${n.text}</div>
+          <div style="font-size:11px;color:var(--fg);margin-top:3px">${n.time || ''}</div>
+        </div>
+        ${!n.read ? '<div style="width:7px;height:7px;border-radius:50%;background:var(--fo);margin-top:4px;flex-shrink:0"></div>' : ''}
+      </div>
+    </div>`).join('');
+}
+
+function toggleNotifPanel() {
+  const panel = document.getElementById('notif-panel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function markRead(id) {
+  const n = _notifs.find(x => x.id === id);
+  if (n) n.read = true;
+  const readIds = JSON.parse(localStorage.getItem('mera-notif-read') || '[]');
+  if (!readIds.includes(id)) readIds.push(id);
+  localStorage.setItem('mera-notif-read', JSON.stringify(readIds));
+  renderNotifications();
+}
+
+function markAllRead() {
+  _notifs.forEach(n => n.read = true);
+  const ids = _notifs.map(n => n.id);
+  localStorage.setItem('mera-notif-read', JSON.stringify(ids));
+  renderNotifications();
+}
+
+// Close notif panel on outside click
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notif-panel');
+  const btn = document.getElementById('notif-btn');
+  if (panel && btn && !panel.contains(e.target) && !btn.contains(e.target)) {
+    panel.style.display = 'none';
+  }
+});
+
+function togglePw(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁'; }
+}
 
 function toggleDark() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
