@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -22,11 +23,13 @@ export default function LoginPage() {
     setError('');
 
     const supabase = createClient();
+    setStatus('Conectando a Supabase...');
 
     let timedOut = false;
     const timer = setTimeout(() => {
       timedOut = true;
-      setError('Sin respuesta del servidor. Verificá tu conexión.');
+      setStatus('');
+      setError('TIMEOUT: Supabase no responde después de 10s. URL: ' + process.env.NEXT_PUBLIC_SUPABASE_URL);
       setLoading(false);
     }, 10000);
 
@@ -34,10 +37,12 @@ export default function LoginPage() {
     clearTimeout(timer);
     if (timedOut) return;
 
+    setStatus('');
     if (error) {
-      setError(error.message);
+      setError('ERROR: ' + error.message + ' (status: ' + error.status + ')');
       setLoading(false);
     } else {
+      setStatus('Login OK, redirigiendo...');
       router.push('/dashboard');
     }
   }
@@ -106,6 +111,10 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Accediendo...' : 'Entrar'}
             </Button>
+
+            {status && (
+              <p className="text-xs text-center text-blue-600">{status}</p>
+            )}
           </form>
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
