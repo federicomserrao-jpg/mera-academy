@@ -43,7 +43,7 @@ export default function LoginPage() {
       setLoading(false);
     } else {
       setStatus('Login OK, redirigiendo...');
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     }
   }
 
