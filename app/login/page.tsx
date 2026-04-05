@@ -22,14 +22,23 @@ export default function LoginPage() {
     setError('');
 
     const supabase = createClient();
+
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      setError('Sin respuesta del servidor. Verificá tu conexión.');
+      setLoading(false);
+    }, 10000);
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    clearTimeout(timer);
+    if (timedOut) return;
 
     if (error) {
-      setError(error.message || 'Email o contraseña incorrectos');
+      setError(error.message);
       setLoading(false);
     } else {
       router.push('/dashboard');
-      router.refresh();
     }
   }
 

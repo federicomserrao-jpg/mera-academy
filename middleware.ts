@@ -24,10 +24,10 @@ export async function middleware(request: NextRequest) {
   );
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  const isAuth = !!user;
+  const isAuth = !!session?.user;
   const isLoginPage = request.nextUrl.pathname === '/login';
   const isPublicRoute = request.nextUrl.pathname.startsWith('/api/auth');
 
