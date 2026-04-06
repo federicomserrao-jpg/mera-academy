@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<canvas id="c192" width="192" height="192"></canvas>
+<canvas id="c512" width="512" height="512"></canvas>
+<a id="dl192" download="icon-192.png">Descargar 192</a>
+<a id="dl512" download="icon-512.png">Descargar 512</a>
+<script>
+function drawIcon(canvas) {
+  const s = canvas.width;
+  const ctx = canvas.getContext('2d');
+  // Background
+  ctx.fillStyle = '#0e0800';
+  ctx.roundRect(0, 0, s, s, s * 0.18);
+  ctx.fill();
+  // Grid 4x4 de bloques
+  const pad = s * 0.12;
+  const gap = s * 0.04;
+  const cols = 4, rows = 4;
+  const cw = (s - pad*2 - gap*(cols-1)) / cols;
+  const colors = [
+    ['#75AADB','#75AADB','#3aac5e','#3aac5e'],
+    ['#75AADB','#75AADB','#F5D130','#e8564a'],
+    ['#a55eea','#F5D130','#F5D130','#e8564a'],
+    ['#a55eea','#e8922e','#e8922e','#e8922e'],
+  ];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const x = pad + c*(cw+gap);
+      const y = pad + r*(cw+gap);
+      ctx.fillStyle = colors[r][c];
+      ctx.beginPath();
+      ctx.roundRect(x, y, cw, cw, cw * 0.14);
+      ctx.fill();
+      // Shine
+      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      ctx.beginPath();
+      ctx.roundRect(x+cw*0.1, y+cw*0.08, cw*0.8, cw*0.28, cw*0.08);
+      ctx.fill();
+    }
+  }
+}
+const c192 = document.getElementById('c192');
+const c512 = document.getElementById('c512');
+drawIcon(c192);
+drawIcon(c512);
+document.getElementById('dl192').href = c192.toDataURL('image/png');
+document.getElementById('dl512').href = c512.toDataURL('image/png');
+</script>
+</body>
+</html>

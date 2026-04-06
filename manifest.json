@@ -1,0 +1,16 @@
+{
+  "name": "MATE BLAST!",
+  "short_name": "MATE BLAST",
+  "description": "El juego de bloques mas argento. Arrastra, completa filas y rompe tu record.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e0800",
+  "theme_color": "#0e0800",
+  "lang": "es",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

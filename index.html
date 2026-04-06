@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="MATE BLAST!"/>
+<meta name="theme-color" content="#0e0800"/>
+<meta name="description" content="El juego de bloques mas argento. Arrastra, completa filas y rompe tu record."/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
 <title>MATE BLAST!</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
@@ -181,6 +186,26 @@ body{
     <div class="slot" id="s2"></div>
   </div>
   <div id="hint">Arrasta las piezas al tablero</div>
+</div>
+
+<!-- Install banner (Android Chrome) -->
+<div id="installbanner" style="display:none;position:fixed;bottom:0;left:0;right:0;
+  background:linear-gradient(135deg,#1a1000,#0e0800);border-top:1px solid rgba(117,170,219,.3);
+  padding:12px 16px;z-index:1000;align-items:center;gap:10px;justify-content:space-between;">
+  <div style="font-size:13px;color:rgba(255,255,255,.85);line-height:1.4;">
+    <strong style="color:#75AADB;">Instalar MATE BLAST!</strong><br/>
+    <span style="font-size:11px;color:rgba(255,255,255,.5);">Agregar a pantalla de inicio, gratis</span>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button id="dismissbtn" style="background:transparent;border:1px solid rgba(255,255,255,.2);
+      color:rgba(255,255,255,.5);padding:7px 14px;border-radius:20px;font-size:12px;cursor:pointer;">
+      Ahora no
+    </button>
+    <button id="installbtn" style="background:linear-gradient(135deg,#75AADB,#4a8ac3);border:none;
+      color:#fff;padding:7px 18px;border-radius:20px;font-size:12px;font-weight:900;cursor:pointer;">
+      Instalar
+    </button>
+  </div>
 </div>
 
 <div id="fp"></div>
@@ -629,6 +654,38 @@ document.getElementById('rbtn').addEventListener('click', initGame);
 
 // ─── START ──────────────────────────────────────────────────────────────────
 initGame();
+
+// ─── PWA SERVICE WORKER ─────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+// ─── INSTALL PROMPT ─────────────────────────────────────────────────────────
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner(){
+  const b = document.getElementById('installbanner');
+  if(b) b.style.display = 'flex';
+}
+
+document.getElementById('installbtn')?.addEventListener('click', async ()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installbanner').style.display='none';
+});
+
+document.getElementById('dismissbtn')?.addEventListener('click', ()=>{
+  document.getElementById('installbanner').style.display='none';
+});
 </script>
 </body>
 </html>
