@@ -2,2408 +2,473 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MERA Academy</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>MATE BLAST!</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --fo:#5B4FCF;--fol:#EEF0FF;--fod:#4A3FB8;
-  --fn:#1A1D2E;--fg:#6B7280;--fgl:#F0F1F8;--fgb:#F7F8FC;
-  --fw:#FFFFFF;--fbr:#DDE1F0;
-  --fgr:#16A34A;--fgrl:#DCFCE7;
-  --frd:#DC2626;--frdl:#FEE2E2;
-  --fbl:#2563EB;--fbll:#EFF6FF;
-  --fr:8px;--frlg:12px;
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none;}
+body{
+  background:#0e0800;
+  display:flex;flex-direction:column;align-items:center;
+  min-height:100vh;height:100vh;overflow:hidden;
+  font-family:'Arial Rounded MT Bold',Arial,sans-serif;
+  color:#fff;touch-action:none;
 }
-[data-theme="dark"]{
-  --fo:#7B6FE8;--fol:#1E1B4B;--fod:#6C5FD9;
-  --fn:#F1F5F9;--fg:#94A3B8;--fgl:#1E293B;--fgb:#0F172A;
-  --fw:#1E293B;--fbr:#334155;
-  --fgr:#16A34A;--fgrl:#052E16;
-  --frd:#DC2626;--frdl:#450A0A;
-  --fbl:#3B82F6;--fbll:#1E3A5F;
+
+/* HEADER */
+#hdr{
+  width:100%;max-width:440px;
+  padding:10px 16px 6px;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-shrink:0;
 }
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--fgb);color:var(--fn);min-height:100vh}
-.hidden{display:none!important}
+#logo{font-size:26px;font-weight:900;letter-spacing:3px;color:#75AADB;
+  text-shadow:0 0 18px rgba(117,170,219,.55);}
+#logo span{color:#F5D130;}
+#scores{display:flex;gap:10px;}
+.sbox{text-align:center;background:rgba(255,255,255,.08);border-radius:8px;padding:3px 12px;}
+.slbl{font-size:8px;letter-spacing:1px;color:rgba(255,255,255,.5);text-transform:uppercase;}
+.sval{font-size:17px;font-weight:900;color:#F5D130;}
 
-/* LOGIN */
-.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--fgb);padding:20px;position:relative;z-index:1}
-.login-card{background:var(--fw);border-radius:var(--frlg);padding:32px;width:100%;max-width:380px;border:1px solid var(--fbr);box-shadow:0 4px 24px rgba(0,0,0,.06);position:relative;z-index:2}
-.login-logo{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--fbr)}
-.login-logo-title{font-size:22px;font-weight:700;color:var(--fo);letter-spacing:-.5px}
-.login-logo-sub{font-size:11px;color:var(--fg);text-transform:uppercase;letter-spacing:.08em}
-.role-row{display:flex;gap:8px;margin-bottom:20px}
-.role-btn{flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:none;color:var(--fg);font-size:13px;cursor:pointer;transition:all .12s}
-.role-btn.on{border-color:var(--fo);color:var(--fo);background:var(--fol);font-weight:500}
-.fl{margin-bottom:14px}
-.fl label{display:block;font-size:11px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px}
-.fl input,.fl select,.fl textarea{width:100%;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit;transition:border-color .12s}
-.fl input:focus,.fl select:focus,.fl textarea:focus{border-color:var(--fo);outline:none}
-.fl textarea{resize:vertical;min-height:70px}
-.err-msg{font-size:12px;color:var(--frd);margin-top:8px;display:none}
-.btn-p{background:var(--fo);color:#fff;border:none;border-radius:var(--fr);padding:10px 18px;font-size:14px;font-weight:500;cursor:pointer;transition:background .12s;font-family:inherit}
-.btn-p:hover{background:var(--fod)}
-.btn-p:disabled{opacity:.6;cursor:not-allowed}
-.btn-s{background:var(--fw);color:var(--fn);border:1px solid var(--fbr);border-radius:var(--fr);padding:9px 14px;font-size:13px;cursor:pointer;transition:all .12s;font-family:inherit}
-.btn-s:hover{border-color:var(--fo);color:var(--fo)}
-.btn-sm{padding:7px 13px;font-size:12px}
-.btn-danger{background:var(--frd);color:#fff;border:none;border-radius:var(--fr);padding:7px 13px;font-size:12px;cursor:pointer;font-family:inherit}
-
-/* SHELL */
-.shell{display:flex;min-height:100vh}
-
-/* SIDEBAR */
-.sb{width:240px;background:var(--fw);border-right:1px solid var(--fbr);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:10}
-.sb-logo{padding:20px 16px 16px;border-bottom:1px solid var(--fbr)}
-.sb-logo-title{font-size:20px;font-weight:700;color:var(--fo)}
-.sb-logo-sub{font-size:10px;color:var(--fg);text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
-.sb-nav{padding:12px 8px;flex:1;overflow-y:auto}
-.nav-sect{margin-bottom:20px}
-.nav-sect-lbl{font-size:10px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.07em;padding:0 8px;margin-bottom:6px}
-.ni{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--fr);font-size:13px;color:var(--fg);cursor:pointer;transition:all .12s;margin-bottom:2px;user-select:none}
-.ni:hover{background:var(--fgb);color:var(--fn)}
-.ni.on{background:var(--fol);color:var(--fo);font-weight:500}
-.ni svg{width:16px;height:16px;flex-shrink:0}
-.sb-user{padding:14px 16px;border-top:1px solid var(--fbr)}
-.su-row{display:flex;align-items:center;gap:10px}
-.su-av{width:32px;height:32px;border-radius:50%;background:var(--fol);color:var(--fo);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
-.su-name{font-size:13px;font-weight:500;color:var(--fn);line-height:1.3}
-.su-role{font-size:11px;color:var(--fg)}
-.su-out{font-size:12px;color:var(--fg);background:none;border:none;cursor:pointer;padding:3px 0;margin-top:4px;display:block;font-family:inherit}
-.su-out:hover{color:var(--fo)}
-
-/* MAIN */
-.main{flex:1;margin-left:240px;display:flex;flex-direction:column;min-height:100vh}
-.topbar{background:var(--fw);border-bottom:1px solid var(--fbr);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
-.tb-title{font-size:17px;font-weight:500;color:var(--fn)}
-.tb-sub{font-size:12px;color:var(--fg);margin-top:2px}
-.tb-right{display:flex;gap:8px;align-items:center}
-.page{padding:28px;flex:1}
-
-/* STATS */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
-.sc{background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr);box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.sc-icon{width:36px;height:36px;border-radius:var(--fr);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
-.sc-val{font-size:28px;font-weight:600;color:var(--fn);line-height:1}
-.sc-lbl{font-size:12px;color:var(--fg);margin-top:4px}
-
-/* MODULES */
-.mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-.mc{background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr);cursor:pointer;transition:all .15s;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.mc:hover{border-color:var(--fo);transform:translateY(-2px);box-shadow:0 4px 16px rgba(91,79,207,.15)}
-.mc.done-card{border-left:3px solid var(--fgr)}
-.tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
-.tag-bl{background:var(--fbll);color:var(--fbl)}
-.tag-or{background:var(--fol);color:var(--fo)}
-.tag-gr{background:var(--fgl);color:var(--fg)}
-.tag-gn{background:var(--fgrl);color:#065F46}
-.mc-title{font-size:14px;font-weight:500;color:var(--fn);margin:10px 0 5px;line-height:1.4}
-.mc-desc{font-size:12px;color:var(--fg);line-height:1.5;margin-bottom:14px}
-.mc-st{font-size:12px;font-weight:500}
-.st-done{color:var(--fgr)}
-.st-pend{color:var(--fg)}
-.st-fail{color:var(--frd)}
-.pbar{height:4px;background:var(--fgl);border-radius:2px;margin-top:10px}
-.pfill{height:100%;border-radius:2px;background:var(--fgr);transition:width .3s}
-
-/* VIDEO */
-.back-btn{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--fg);background:none;border:none;cursor:pointer;margin-bottom:18px;padding:0;font-family:inherit}
-.back-btn:hover{color:var(--fn)}
-.vid-box{background:#0a1628;border-radius:var(--frlg);overflow:hidden;position:relative;padding-bottom:45%;margin-bottom:20px}
-.vid-box iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
-
-/* EVAL */
-.eval-hdr{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.eval-dots{display:flex;gap:4px;flex:1}
-.eval-dot{flex:1;height:4px;border-radius:2px;background:var(--fgl)}
-.eval-dot.done{background:var(--fo)}
-.eval-dot.cur{background:rgba(91,79,207,.4)}
-.qblock{background:var(--fgb);border-radius:var(--fr);padding:18px;margin-bottom:14px;border:1px solid var(--fbr)}
-.q-n{font-size:11px;color:var(--fg);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
-.q-t{font-size:14px;font-weight:500;color:var(--fn);margin-bottom:16px;line-height:1.5}
-.opt{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--fr);border:1px solid var(--fbr);background:var(--fw);margin-bottom:7px;cursor:pointer;font-size:13px;color:var(--fn);transition:all .1s;user-select:none}
-.opt:hover{border-color:var(--fo)}
-.opt.sel{border-color:var(--fo);background:var(--fol);color:var(--fo);font-weight:500}
-.opt.correct{border-color:var(--fgr);background:var(--fgrl);color:#065F46}
-.opt.wrong{border-color:var(--frd);background:var(--frdl);color:#7F1D1D}
-.opt input[type=radio]{accent-color:var(--fo);margin:0;flex-shrink:0}
-.nav-row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
-
-/* REVIEW */
-.score-card{background:var(--fw);border-radius:var(--frlg);padding:24px;border:1px solid var(--fbr);text-align:center;margin-bottom:20px}
-.score-ring{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;margin:0 auto 12px}
-.r-pass{background:var(--fgrl);color:var(--fgr)}
-.r-fail{background:var(--frdl);color:var(--frd)}
-.score-title{font-size:16px;font-weight:500;color:var(--fn)}
-.score-sub{font-size:13px;color:var(--fg);margin-top:4px}
-.rev-item{background:var(--fw);border-radius:var(--fr);padding:14px;margin-bottom:10px;border:1px solid var(--fbr);border-left:3px solid var(--fbr)}
-.rev-item.ok{border-left-color:var(--fgr)}
-.rev-item.err{border-left-color:var(--frd)}
-.rev-top{display:flex;gap:8px;margin-bottom:8px}
-.rev-badge{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:1px}
-.rb-ok{background:var(--fgrl);color:#065F46}
-.rb-err{background:var(--frdl);color:#7F1D1D}
-.rev-q{font-size:13px;font-weight:500;color:var(--fn);line-height:1.4}
-.rev-ans{font-size:12px;margin-top:6px}
-.ans-row{display:flex;gap:6px;margin-bottom:4px}
-.ans-lbl{color:var(--fg);min-width:110px;flex-shrink:0}
-.ans-ok{color:var(--fgr);font-weight:500}
-.ans-err{color:var(--frd)}
-.why{margin-top:8px;background:var(--fbll);border-radius:var(--fr);padding:9px 12px;font-size:12px;color:#1E40AF;line-height:1.5}
-
-/* CERT */
-.cert-area{background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr);text-align:center;margin-top:20px}
-.cert-lbl{font-size:11px;color:var(--fg);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
-#cert-canvas{border-radius:var(--fr);max-width:100%;border:1px solid var(--fbr)}
-
-/* TABLE */
-.tbl-wrap{background:var(--fw);border-radius:var(--frlg);border:1px solid var(--fbr);overflow:hidden;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-.tbl-wrap table{width:100%;border-collapse:collapse;font-size:13px}
-.tbl-wrap th{text-align:left;padding:11px 16px;font-size:11px;color:var(--fg);font-weight:500;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--fbr);background:var(--fgb)}
-.tbl-wrap td{padding:12px 16px;border-bottom:1px solid var(--fbr);color:var(--fn)}
-.tbl-wrap tr:last-child td{border-bottom:none}
-.tbl-wrap tr:hover td{background:var(--fgb)}
-.pill{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
-.p-ok{background:var(--fgrl);color:#065F46}
-.p-fl{background:var(--frdl);color:#7F1D1D}
-.p-pe{background:#FEF3C7;color:#92400E}
-
-/* MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(17,24,39,.5);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:100;overflow-y:auto}
-.modal-bg.open{display:flex}
-.modal{background:var(--fw);border-radius:var(--frlg);width:100%;max-width:520px;border:1px solid var(--fbr);box-shadow:0 20px 60px rgba(0,0,0,.15),0 1px 4px rgba(0,0,0,.08);margin:auto}
-.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--fbr)}
-.modal-title{font-size:15px;font-weight:500;color:var(--fn)}
-.modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--fg);line-height:1;padding:2px 6px}
-.modal-body{padding:20px;max-height:60vh;overflow-y:auto}
-.modal-footer{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--fbr)}
-.qe-block{background:var(--fgb);border-radius:var(--fr);padding:12px;margin-bottom:10px;border:1px solid var(--fbr)}
-.qe-block input[type=text]{width:100%;padding:7px 10px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:13px;color:var(--fn);background:var(--fw);font-family:inherit;margin-bottom:7px}
-.opt-row{display:flex;align-items:center;gap:6px;margin-bottom:5px}
-.opt-row input[type=text]{flex:1;padding:6px 9px;font-size:12px;border:1px solid var(--fbr);border-radius:var(--fr);font-family:inherit;color:var(--fn);background:var(--fw)}
-.opt-row input[type=radio]{accent-color:var(--fo);flex-shrink:0}
-.exp-inp{width:100%;padding:7px 10px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:12px;color:var(--fn);background:var(--fw);resize:vertical;min-height:52px;margin-top:6px;font-family:inherit}
-.qe-hint{font-size:10px;color:var(--fg);margin:4px 0 6px}
-.add-q{font-size:12px;color:var(--fo);background:none;border:none;cursor:pointer;font-weight:500;padding:4px 0;font-family:inherit}
-
-/* PROGRESS BAR GLOBAL */
-.prog-wrap{background:var(--fw);border-radius:var(--frlg);padding:16px 20px;border:1px solid var(--fbr);margin-bottom:22px;display:flex;align-items:center;gap:16px}
-
-/* LOADING */
-.loading{display:flex;align-items:center;justify-content:center;min-height:200px;color:var(--fg);font-size:14px}
-.spinner{width:28px;height:28px;border:3px solid var(--fgl);border-top-color:var(--fo);border-radius:50%;animation:spin .7s linear infinite;margin-right:10px}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.section-title{font-size:14px;font-weight:500;color:var(--fn)}
-
-@media(max-width:768px){
-  .sb{transform:translateX(-100%);transition:transform .2s;z-index:20}
-  .sb.open{transform:translateX(0)}
-  .main{margin-left:0}
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .page{padding:16px}
-  .topbar{padding:12px 16px}
-  .tbl-wrap{overflow-x:auto}
-  .tbl-wrap table{min-width:500px}
-  .mods{grid-template-columns:1fr}
-  #mob-menu{display:block!important}
+/* BOARD */
+#wrap{display:flex;flex-direction:column;align-items:center;flex:1;width:100%;
+  padding:4px 8px 8px;gap:10px;justify-content:center;}
+#board{
+  display:grid;grid-template-columns:repeat(8,1fr);
+  background:#0e0800;border-radius:12px;
+  border:2px solid rgba(117,170,219,.25);
+  box-shadow:0 0 28px rgba(117,170,219,.1);
+  flex-shrink:0;
 }
+.c{
+  border-radius:5px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.04);
+  transition:background .08s;
+}
+.c.lit{box-shadow:inset 0 -3px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.28);}
+.c.ghost{opacity:.45;}
+.c.bad{background:rgba(255,60,60,.35)!important;}
+
+/* TRAY */
+#tray{
+  display:flex;justify-content:space-around;align-items:center;
+  width:100%;max-width:420px;
+  background:rgba(255,255,255,.05);border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  padding:10px 4px;min-height:110px;flex-shrink:0;
+}
+.slot{display:flex;align-items:center;justify-content:center;
+  width:110px;height:95px;cursor:grab;transition:transform .1s;}
+.slot.used{opacity:.25;pointer-events:none;}
+.pg{display:grid;}
+.pc{border-radius:4px;
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.28);}
+
+/* HINT */
+#hint{font-size:11px;color:rgba(255,255,255,.35);text-align:center;flex-shrink:0;}
+
+/* FLOATING */
+#fp{position:fixed;pointer-events:none;z-index:999;display:none;
+  transform:translate(-50%,-50%);}
+
+/* COMBO */
+#combo{position:fixed;top:50%;left:50%;z-index:800;pointer-events:none;
+  display:none;font-size:50px;font-weight:900;color:#F5D130;
+  text-shadow:0 0 22px rgba(245,209,48,.85);
+  animation:cpop .75s ease-out forwards;}
+@keyframes cpop{
+  0%{transform:translate(-50%,-50%) scale(.4);opacity:1}
+  55%{transform:translate(-50%,-65%) scale(1.25);opacity:1}
+  100%{transform:translate(-50%,-90%) scale(1);opacity:0}
+}
+
+/* CLEAR ANIM */
+@keyframes clr{
+  0%{transform:scale(1);opacity:1}
+  40%{background:#fff!important;transform:scale(1.08);opacity:.7}
+  100%{transform:scale(0);opacity:0}
+}
+.clearing{animation:clr .28s ease-out forwards;}
+
+/* GAME OVER */
+#go{display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.88);z-index:500;
+  flex-direction:column;align-items:center;justify-content:center;gap:18px;}
+#go h2{font-size:42px;color:#75AADB;text-shadow:0 0 25px rgba(117,170,219,.8);}
+#go .fs{font-size:70px;font-weight:900;color:#F5D130;}
+#go p{color:rgba(255,255,255,.65);font-size:15px;}
+#go .sub{font-size:13px;color:rgba(255,255,255,.4);}
+#rbtn{
+  background:linear-gradient(135deg,#75AADB,#4a8ac3);
+  color:#fff;border:none;padding:15px 44px;
+  font-size:19px;font-weight:900;border-radius:50px;cursor:pointer;
+  letter-spacing:2px;box-shadow:0 4px 20px rgba(117,170,219,.4);
+  transition:transform .1s;
+}
+#rbtn:active{transform:scale(.94);}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="sc-login">
-<div class="login-wrap">
-  <div class="login-card">
-    <div style="text-align:center;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--fbr)">
-      <div style="background:#1C1C2E;border-radius:8px;padding:12px 24px;margin-bottom:8px;display:inline-block">
-        <span style="font-size:26px;font-weight:900;color:#7B6FE8;font-family:Arial,sans-serif">MERA</span>
-        <span style="font-size:11px;color:#9CA3AF;margin-left:10px;vertical-align:middle">SOLUTIONS · ACADEMY</span>
-      </div>
-      <div style="font-size:11px;color:var(--fg);text-transform:uppercase;letter-spacing:.08em">Plataforma de Capacitacion Interna</div>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:20px">
-      <button style="flex:1;padding:9px;border:1px solid;border-radius:var(--fr);background:var(--fol);color:var(--fo);font-size:13px;cursor:pointer;font-weight:500;border-color:var(--fo)" id="rb-col" onclick="setRole('col')">Colaborador</button>
-      <button style="flex:1;padding:9px;border:1px solid var(--fbr);border-radius:var(--fr);background:none;color:var(--fg);font-size:13px;cursor:pointer" id="rb-adm" onclick="setRole('adm')">Administrador</button>
-    </div>
-    <div style="margin-bottom:14px">
-      <label style="display:block;font-size:11px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Usuario</label>
-      <input type="text" id="inp-u" placeholder="Tu usuario" autocomplete="username" style="width:100%;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit"/>
-    </div>
-    <div style="margin-bottom:14px">
-      <label style="display:block;font-size:11px;font-weight:500;color:var(--fg);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Contrasena</label>
-      <div style="position:relative">
-        <input type="password" id="inp-p" placeholder="••••••" autocomplete="current-password" style="width:100%;padding:9px 40px 9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit" onkeydown="if(event.key==='Enter')doLogin()"/>
-        <button type="button" onclick="togglePw('inp-p',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg);font-size:16px;padding:2px">👁</button>
-      </div>
-    </div>
-    <div id="err-msg" style="font-size:12px;color:var(--frd);margin-bottom:8px;display:none">Usuario o contrasena incorrectos</div>
-    <button id="btn-login" onclick="doLogin()" style="width:100%;background:var(--fo);color:#fff;border:none;border-radius:var(--fr);padding:11px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">Ingresar</button>
+<div id="hdr">
+  <div id="logo">MATE<span>!</span></div>
+  <div id="scores">
+    <div class="sbox"><div class="slbl">Puntos</div><div class="sval" id="sdis">0</div></div>
+    <div class="sbox"><div class="slbl">Record</div><div class="sval" id="bdis">0</div></div>
   </div>
-</div>
 </div>
 
-<!-- APP -->
-<div id="sc-app" class="hidden">
-<div class="shell">
-  <div class="sb" id="sidebar">
-    <div class="sb-logo" style="padding:12px 14px">
-      <div style="background:#1C1C2E;border-radius:6px;padding:8px 12px;display:flex;align-items:center;gap:10px">
-        <span style="font-size:20px;font-weight:900;color:#FF6B35;font-family:Arial,sans-serif">MERA</span>
-        <div style="width:1px;height:28px;background:#374151"></div>
-        <div>
-          <div style="font-size:8px;color:#9CA3AF;letter-spacing:1px">SOLUTIONS</div>
-          <div style="font-size:8px;color:#FF6B35;letter-spacing:.5px">ACADEMY</div>
-        </div>
-      </div>
-    </div>
-    <div class="sb-nav" id="sb-nav"></div>
-    <div class="sb-user" id="sb-user"></div>
+<div id="wrap">
+  <div id="board"></div>
+  <div id="tray">
+    <div class="slot" id="s0"></div>
+    <div class="slot" id="s1"></div>
+    <div class="slot" id="s2"></div>
   </div>
-  <div class="main">
-    <div class="topbar">
-      <button id="mob-menu" onclick="document.getElementById('sidebar').classList.toggle('open')" style="display:none;background:none;border:none;cursor:pointer;padding:4px;margin-right:12px">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-      <div>
-        <div class="tb-title" id="tb-title">Dashboard</div>
-        <div class="tb-sub" id="tb-sub"></div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div id="search-wrap" style="display:none;position:relative">
-          <input type="text" id="global-search" placeholder="Buscar..." onkeyup="doSearch(this.value)"
-            style="padding:7px 12px 7px 32px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:13px;width:220px;background:var(--fgb);font-family:inherit"/>
-          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--fg)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <div id="search-results" style="position:absolute;top:38px;left:0;right:0;background:var(--fw);border:1px solid var(--fbr);border-radius:var(--fr);box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:50;max-height:300px;overflow-y:auto;display:none"></div>
-        </div>
-        <div style="position:relative">
-          <button id="notif-btn" onclick="toggleNotifPanel()" title="Notificaciones" style="background:none;border:1px solid var(--fbr);border-radius:var(--fr);padding:6px 10px;cursor:pointer;font-size:16px;line-height:1;color:var(--fg);position:relative">
-            🔔<span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--frd);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:600;line-height:16px;text-align:center"></span>
-          </button>
-          <div id="notif-panel" style="display:none;position:absolute;top:44px;right:0;width:320px;background:var(--fw);border:1px solid var(--fbr);border-radius:var(--frlg);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:100;max-height:400px;overflow-y:auto">
-            <div style="padding:12px 16px;border-bottom:1px solid var(--fbr);font-size:13px;font-weight:500;color:var(--fn);display:flex;justify-content:space-between;align-items:center">
-              Notificaciones
-              <button onclick="markAllRead()" style="font-size:11px;color:var(--fo);background:none;border:none;cursor:pointer">Marcar todas como leídas</button>
-            </div>
-            <div id="notif-list" style="padding:8px 0"></div>
-          </div>
-        </div>
-        <button id="dark-toggle" onclick="toggleDark()" title="Cambiar tema" style="background:none;border:1px solid var(--fbr);border-radius:var(--fr);padding:6px 10px;cursor:pointer;font-size:16px;line-height:1;color:var(--fg)">🌙</button>
-        <div class="tb-right" id="tb-right"></div>
-      </div>
-    </div>
-    <div class="page" id="page"></div>
-  </div>
-</div>
+  <div id="hint">Arrasta las piezas al tablero</div>
 </div>
 
-<!-- MODAL MÓDULO -->
-<div class="modal-bg" id="modal-mod">
-<div class="modal">
-  <div class="modal-hdr">
-    <span class="modal-title" id="mmod-title">Nuevo módulo</span>
-    <button class="modal-close" onclick="closeModal('modal-mod')">×</button>
-  </div>
-  <div class="modal-body">
-    <div class="fl"><label>Título</label><input type="text" id="m-title"/></div>
-    <div class="fl"><label>Descripción</label><textarea id="m-desc"></textarea></div>
-    <div class="fl"><label>Campaña / Área</label>
-      <select id="m-camp"><option>VISA</option><option>TLMK</option><option>EDESUR</option><option>FARMACITY</option><option>MATER DEI</option><option>ADT</option><option>STRIX</option><option>CAR ONE</option><option>PRO JUBILAR</option><option>AYSA</option><option>RIO GAS</option><option>MIRGOR</option><option>General</option><option>Onboarding</option></select>
-    </div>
-    <div class="fl"><label>URL Video YouTube (embed)</label><input type="text" id="m-video" placeholder="https://www.youtube.com/embed/ID"/></div>
-    <div class="fl"><label>Link sesión en vivo (Zoom/Meet) — opcional</label><input type="text" id="m-meeting" placeholder="https://zoom.us/j/..."/></div>
-    <div class="fl">
-      <label>Material adjunto (PDF, Word, PPT…) — opcional</label>
-      <input type="file" id="m-pdf-file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" style="width:100%;padding:7px 0;font-size:13px;font-family:inherit"/>
-      <div id="m-pdf-current" style="font-size:12px;color:var(--fg);margin-top:5px"></div>
-      <input type="hidden" id="m-pdf"/>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-      <div class="fl"><label>Orden en la campaña</label><input type="number" id="m-order" min="1" value="1" placeholder="1"/></div>
-      <div class="fl"><label>Días límite</label><input type="number" id="m-days" min="1" value="7" placeholder="7"/></div>
-      <div class="fl"><label>Máx. intentos</label><input type="number" id="m-attempts" min="1" max="10" value="3" placeholder="3"/></div>
-    </div>
-    <div class="fl" style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-      <input type="checkbox" id="m-required" checked style="width:auto;accent-color:var(--fo)"/>
-      <label for="m-required" style="font-size:13px;color:var(--fn);text-transform:none;letter-spacing:0;margin:0;cursor:pointer">Módulo obligatorio</label>
-    </div>
-    <div style="border-top:1px solid var(--fbr);margin:16px 0 12px"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <span style="font-size:13px;font-weight:500;color:var(--fn)">Preguntas de evaluación</span>
-      <button class="add-q" onclick="addQ()">+ Agregar pregunta</button>
-    </div>
-    <div class="qe-hint">Seleccioná ● en la respuesta correcta de cada pregunta</div>
-    <div id="q-list"></div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn-p btn-sm" onclick="saveModule()" style="flex:1">Guardar módulo</button>
-    <button class="btn-danger btn-sm" id="btn-del-mod" style="display:none" onclick="deleteModule()">Eliminar</button>
-    <button class="btn-s btn-sm" onclick="closeModal('modal-mod')">Cancelar</button>
-  </div>
-</div>
-</div>
+<div id="fp"></div>
+<div id="combo" id="combo"></div>
 
-<!-- MODAL USUARIO -->
-<div class="modal-bg" id="modal-usr">
-<div class="modal">
-  <div class="modal-hdr">
-    <span class="modal-title" id="musr-title">Nuevo colaborador</span>
-    <button class="modal-close" onclick="closeModal('modal-usr')">×</button>
-  </div>
-  <div class="modal-body">
-    <div class="fl"><label>Nombre completo</label><input type="text" id="u-name"/></div>
-    <div class="fl"><label>Usuario (para ingresar)</label><input type="text" id="u-user" autocomplete="off"/></div>
-    <div class="fl"><label>Contraseña</label><div style="position:relative"><input type="password" id="u-pass" autocomplete="new-password" style="width:100%;padding:9px 40px 9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit"/><button type="button" onclick="togglePw('u-pass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg);font-size:16px;padding:2px">👁</button></div></div>
-    <div class="fl"><label>Campaña / Área</label>
-      <select id="u-camp"><option>VISA</option><option>TLMK</option><option>EDESUR</option><option>FARMACITY</option><option>MATER DEI</option><option>ADT</option><option>STRIX</option><option>CAR ONE</option><option>PRO JUBILAR</option><option>AYSA</option><option>RIO GAS</option><option>MIRGOR</option><option>General</option><option>Onboarding</option></select>
-    </div>
-    <div class="fl"><label>Rol</label>
-      <select id="u-role"><option value="col">Colaborador</option><option value="sup">Supervisor</option></select>
-    </div>
-    <div id="u-edit-fields" class="hidden">
-      <div style="border-top:1px solid var(--fbr);margin:10px 0 14px"></div>
-      <div class="fl"><label>Nueva contraseña (dejar vacío para no cambiar)</label><div style="position:relative"><input type="password" id="u-newpass" autocomplete="new-password" style="width:100%;padding:9px 40px 9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:14px;color:var(--fn);background:var(--fw);font-family:inherit"/><button type="button" onclick="togglePw('u-newpass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--fg);font-size:16px;padding:2px">👁</button></div></div>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn-p btn-sm" onclick="saveUser()" style="flex:1">Guardar</button>
-    <button class="btn-danger btn-sm" id="btn-del-usr" style="display:none" onclick="deleteUser()">Eliminar</button>
-    <button class="btn-s btn-sm" onclick="closeModal('modal-usr')">Cancelar</button>
-  </div>
-</div>
+<div id="go">
+  <h2>GAME OVER</h2>
+  <div class="fs" id="fsc">0</div>
+  <p>Puntaje final</p>
+  <div class="sub" id="newrec" style="display:none;color:#F5D130;font-weight:900;">NUEVO RECORD!</div>
+  <button id="rbtn">JUGAR DE NUEVO</button>
 </div>
 
 <script>
-// Make functions globally available immediately
-window.setRole = function(r) {
-  S.role = r;
-  const col = document.getElementById('rb-col');
-  const adm = document.getElementById('rb-adm');
-  if(!col||!adm) return;
-  if(r==='col'){
-    col.style.cssText='flex:1;padding:9px;border:1px solid;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;background:#EEF0FF;color:#5B4FCF;border-color:#5B4FCF';
-    adm.style.cssText='flex:1;padding:9px;border:1px solid #DDE1F0;border-radius:8px;font-size:13px;cursor:pointer;background:none;color:#6B7280';
-  } else {
-    adm.style.cssText='flex:1;padding:9px;border:1px solid;border-radius:8px;font-size:13px;cursor:pointer;font-weight:500;background:#EEF0FF;color:#5B4FCF;border-color:#5B4FCF';
-    col.style.cssText='flex:1;padding:9px;border:1px solid #DDE1F0;border-radius:8px;font-size:13px;cursor:pointer;background:none;color:#6B7280';
-  }
-};
-window.doLogin = async function() {
-  if(!window.sb) { console.log('Supabase not ready yet, retrying...'); setTimeout(window.doLogin, 500); return; }
-  const u = document.getElementById('inp-u').value.trim();
-  const p = document.getElementById('inp-p').value.trim();
-  const err = document.getElementById('err-msg');
-  const btn = document.getElementById('btn-login');
-  if (!u || !p) { err.style.display='block'; err.textContent='Completa usuario y contrasena'; return; }
-  btn.disabled=true; btn.textContent='Ingresando...';
-  err.style.display='none';
-  try {
-    const { data: rows, error } = await sb.from('users').select('*').eq('username',u).eq('password',p).eq('role',S.role).limit(1);
-    const data = rows?.[0] || null;
-    if (error||!data) { err.style.display='block'; err.textContent='Usuario o contrasena incorrectos'; return; }
-    S.user=data;
-    // Feature F: log login event
-    await sb.from('module_logs').insert({ user_id: data.id, action: 'Login', details: `Inicio de sesion como ${data.role}` });
-    document.getElementById('sc-login').classList.add('hidden');
-    document.getElementById('sc-app').classList.remove('hidden');
-    buildShell();
-    if(S.user.role==='adm'){ showSearch(true); loadSearchCache(); aSection('dash'); }
-    else if(S.user.role==='sup'){ aSection('usrs'); }
-    else { renderColList(); }
-  } catch(e) {
-    err.style.display='block'; err.textContent='Error de conexion: '+e.message;
-  } finally {
-    btn.disabled=false; btn.textContent='Ingresar';
-  }
-};
-// ============================================================
-// CONFIGURACIÓN SUPABASE
-// ============================================================
-const SUPABASE_URL = 'https://scgjdqszhebfqjxupzkd.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjZ2pkcXN6aGViZnFqeHVwemtkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTEzMDk0NSwiZXhwIjoyMDkwNzA2OTQ1fQ.d-Alh7JNv5KkLmdJyM-CTyBbceHpBwWMU146BISYZvU';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.sb = sb;
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const GS   = 8;   // grid size
+const GAP  = 3;
+const PAD  = 7;
 
-// ============================================================
-// ESTADO GLOBAL
-// ============================================================
-const S = {
-  role: 'col',
-  user: null,
-  editModId: null,
-  editUsrId: null,
-  editQs: [],
-  activeModule: null,
-  evalQs: [],
-  answers: {},
-  curQ: 0
-};
+// Compute cell size based on screen
+const CELL = Math.min(44, Math.max(34, Math.floor((Math.min(window.innerWidth, 420) - PAD*2 - GAP*7 - 20) / GS)));
 
-// ============================================================
-// LOGIN
-// ============================================================
-// setRole defined as window.setRole above
+const COLORS = ['#75AADB','#F5D130','#3aac5e','#e8564a','#a55eea','#e8922e','#26bfbf'];
 
-// doLogin moved to window.doLogin above
+// All piece shapes: array of [row, col] offsets
+const PIECES = [
+  [[0,0]],                                      // dot
+  [[0,0],[0,1]],                                // 1x2 h
+  [[0,0],[1,0]],                                // 1x2 v
+  [[0,0],[0,1],[0,2]],                          // 1x3 h
+  [[0,0],[1,0],[2,0]],                          // 1x3 v
+  [[0,0],[0,1],[1,0],[1,1]],                    // 2x2
+  [[0,0],[1,0],[1,1],[2,1]],                    // S
+  [[0,1],[1,0],[1,1],[2,0]],                    // Z
+  [[0,0],[0,1],[0,2],[1,1]],                    // T
+  [[0,0],[1,0],[2,0],[2,1]],                    // L
+  [[0,1],[1,1],[2,0],[2,1]],                    // J
+  [[0,0],[0,1],[0,2],[0,3]],                    // 1x4 h
+  [[0,0],[1,0],[2,0],[3,0]],                    // 1x4 v
+  [[0,0],[0,1],[1,0]],                          // corner TL
+  [[0,0],[0,1],[1,1]],                          // corner TR
+  [[0,1],[1,0],[1,1]],                          // corner BL
+  [[0,0],[1,0],[1,1]],                          // corner BR
+  [[0,0],[0,1],[0,2],[1,0]],                    // L-flat
+  [[0,0],[0,1],[0,2],[1,2]],                    // J-flat
+  [[1,0],[1,1],[1,2],[0,0]],                    // L-flat2
+  [[1,0],[1,1],[1,2],[0,2]],                    // J-flat2
+  [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2]],        // 2x3 rect
+  [[0,0],[0,1],[1,0],[1,1],[2,0],[2,1]],        // 3x2 rect
+  [[0,0],[0,1],[0,2],[1,1],[2,1]],              // cross arm
+];
 
-function logout() {
-  S.user = null;
-  document.getElementById('sc-app').classList.add('hidden');
-  document.getElementById('sc-login').classList.remove('hidden');
-  document.getElementById('inp-u').value = '';
-  document.getElementById('inp-p').value = '';
-}
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let grid   = [];
+let pieces = [null,null,null];
+let used   = [false,false,false];
+let score  = 0;
+let best   = +( localStorage.getItem('mb_best')||0 );
+let sel    = -1;
+let dragging = false;
+let ghostList= [];
 
-// ============================================================
-// SHELL / SIDEBAR
-// ============================================================
-function buildShell() {
-  const u = S.user;
-  const ini = u.full_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  // Sync dark mode button icon with saved preference
-  setTimeout(() => loadNotifications(), 500);
-  const savedTheme = localStorage.getItem('mera-theme');
-  const btn = document.getElementById('dark-toggle');
-  if (btn) btn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-  document.getElementById('sb-user').innerHTML = `
-    <div class="su-row">
-      <div class="su-av">${ini}</div>
-      <div><div class="su-name">${u.full_name}</div><div class="su-role">${u.campaign}</div></div>
-    </div>
-    <button class="su-out" onclick="logout()">Cerrar sesion</button>
-    ${S.user.role==='col'?`<button class="su-out" style="color:var(--fbl)" onclick="openProfile(S.user.id,S.user.full_name)">Ver mi perfil</button>`:''}`;
+// ─── DOM ────────────────────────────────────────────────────────────────────
+const boardEl  = document.getElementById('board');
+const fpEl     = document.getElementById('fp');
+const comboEl  = document.getElementById('combo');
+const goEl     = document.getElementById('go');
+const sdisEl   = document.getElementById('sdis');
+const bdisEl   = document.getElementById('bdis');
+const fscEl    = document.getElementById('fsc');
+const newrecEl = document.getElementById('newrec');
+let   cells    = [];   // cells[r][c] = div
 
-  const isAdm = u.role === 'adm';
-  const isSup = u.role === 'sup';
-  document.getElementById('sb-nav').innerHTML = isSup ? `
-    <div class="nav-sect">
-      <div class="nav-sect-lbl">Mi campaña — ${u.campaign}</div>
-      <div class="ni" id="ni-usrs" onclick="aSection('usrs')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 6a5 5 0 1110 0H3z"/></svg>Colaboradores
-      </div>
-      <div class="ni" id="ni-res" onclick="aSection('res')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v12H2V2zm2 3v1h8V5H4zm0 3v1h8V8H4zm0 3v1h5v-1H4z"/></svg>Resultados
-      </div>
-      <div class="ni" id="ni-rep" onclick="aSection('rep')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 13V3h2v10H2zm4-6v6H4V7h2zm4-3v9H8V4h2zm4-2v11h-2V2h2z"/></svg>Reportes
-      </div>
-      <div class="ni" id="ni-rank" onclick="aSection('rank')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 13V3h2v10H2zm4-6v6H4V7h2zm4-3v9H8V4h2zm4-2v11h-2V2h2z"/></svg>Ranking
-      </div>
-    </div>` : isAdm ? `
-    <div class="nav-sect">
-      <div class="nav-sect-lbl">General</div>
-      <div class="ni" id="ni-dash" onclick="aSection('dash')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h5v5H2zm7 0h5v5H9zM2 9h5v5H2zm7 0h5v5H9z"/></svg>Dashboard
-      </div>
-      <div class="ni" id="ni-mods" onclick="aSection('mods')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2zm0 4h12v2H2zm0 4h8v2H2z"/></svg>Módulos
-      </div>
-    </div>
-    <div class="nav-sect">
-      <div class="nav-sect-lbl">Personas</div>
-      <div class="ni" id="ni-usrs" onclick="aSection('usrs')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 6a5 5 0 1110 0H3z"/></svg>Colaboradores
-      </div>
-      <div class="ni" id="ni-res" onclick="aSection('res')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v12H2V2zm2 3v1h8V5H4zm0 3v1h8V8H4zm0 3v1h5v-1H4z"/></svg>Resultados
-      </div>
-      <div class="ni" id="ni-rep" onclick="aSection('rep')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 13V3h2v10H2zm4-6v6H4V7h2zm4-3v9H8V4h2zm4-2v11h-2V2h2z"/></svg>Reportes por campana
-      </div>
-      <div class="ni" id="ni-surv" onclick="aSection('surv')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l2 4 5 .7-3.5 3.4.8 5L8 12l-4.3 2.1.8-5L1 5.7 6 5z"/></svg>Encuestas
-      </div>
-      <div class="ni" id="ni-venc" onclick="aSection('venc')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zM7 4h2v5H7zm0 6h2v2H7z"/></svg>Modulos vencidos
-      </div>
-      <div class="ni" id="ni-asign" onclick="aSection('asign')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2h12v2H2zm0 4h12v2H2zm0 4h8v2H2zm10 0l2 2-2 2v-4z"/></svg>Asignaciones
-      </div>
-      <div class="ni" id="ni-logs" onclick="aSection('logs')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 2h14v2H1zm0 4h10v2H1zm0 4h12v2H1zm0 4h8v2H1z"/></svg>Historial cambios
-      </div>
-      <div class="ni" id="ni-rank" onclick="aSection('rank')">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 13V3h2v10H2zm4-6v6H4V7h2zm4-3v9H8V4h2zm4-2v11h-2V2h2z"/></svg>Ranking
-      </div>
-    </div>` : `
-    <div class="nav-sect">
-      <div class="nav-sect-lbl">Mi aprendizaje</div>
-      <div class="ni on" id="ni-home" onclick="renderColList()">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1L1 7v8h5V9h4v6h5V7L8 1z"/></svg>Mis módulos
-      </div>
-    </div>`;
-}
-
-function setTopbar(title, sub = '', rightHtml = '') {
-  document.getElementById('tb-title').textContent = title;
-  document.getElementById('tb-sub').textContent = sub;
-  document.getElementById('tb-right').innerHTML = rightHtml;
-}
-
-function setActive(id) {
-  document.querySelectorAll('.ni').forEach(n => n.classList.remove('on'));
-  const el = document.getElementById(id);
-  if (el) el.classList.add('on');
-}
-
-function loading() {
-  document.getElementById('page').innerHTML = `<div class="loading"><div class="spinner"></div>Cargando...</div>`;
-}
-
-// ============================================================
-// COLABORADOR
-// ============================================================
-async function renderColList() {
-  setActive('ni-home');
-  loading();
-  const [{ data: mods }, { data: assignments }] = await Promise.all([
-    sb.from('modules').select('*').or(`campaign.eq.${S.user.campaign},campaign.eq.General`).order('sort_order').order('created_at'),
-    sb.from('module_assignments').select('module_id').eq('user_id', S.user.id)
-  ]);
-  // Load manually assigned modules not already in list
-  const assignedIds = (assignments||[]).map(a=>a.module_id);
-  const existingIds = (mods||[]).map(m=>m.id);
-  const extraIds = assignedIds.filter(id=>!existingIds.includes(id));
-  let extraMods = [];
-  if (extraIds.length) {
-    const { data: em } = await sb.from('modules').select('*').in('id', extraIds);
-    extraMods = em || [];
-  }
-  const allMods = [...(mods||[]), ...extraMods];
-  const { data: comps } = await sb.from('completions').select('*').eq('user_id', S.user.id);
-  const done = allMods.filter(m => comps?.some(c => c.module_id === m.id && c.passed)).length;
-  const total = allMods.length;
-  const pct = total ? Math.round(done / total * 100) : 0;
-  setTopbar(`Hola, ${S.user.full_name.split(' ')[0]}`, `${done}/${total} modulos completados`);
-
-  const startDate = S.user.start_date ? new Date(S.user.start_date) : new Date();
-  const today = new Date();
-  const daysSinceStart = Math.floor((today - startDate) / (1000*60*60*24));
-
-  const genMods = allMods.filter(m => m.campaign==='General');
-  const campMods = allMods.filter(m => m.campaign!=='General');
-  const genAllDone = genMods.every(m => comps?.some(c => c.module_id===m.id && c.passed));
-
-  const cardHtml = (m, idx, locked) => {
-    const comp = comps?.find(c => c.module_id===m.id);
-    const isComp = comp?.passed;
-    const tagClass = m.campaign==='General'?'tag-gr':m.campaign==='EDESUR'?'tag-bl':'tag-gn';
-    const dl = m.days_limit||7;
-    const left = dl - daysSinceStart;
-    const expired = left<0 && !comp?.passed;
-    const urgent = left>=0 && left<=2 && !comp?.passed;
-    let badge = comp?.passed
-      ? `<span class="mc-st st-done">Aprobado - ${comp.score}%</span>`
-      : expired ? `<span class="mc-st st-fail">Vencido hace ${Math.abs(left)} dia(s)</span>`
-      : urgent ? `<span class="mc-st" style="color:#D97706">Vence en ${left} dia(s)</span>`
-      : comp ? `<span class="mc-st st-fail">Desaprobado - ${comp.score}%</span>`
-      : `<span class="mc-st st-pend">Pendiente - ${left} dia(s) restantes</span>`;
-    // Calcular días restantes con fecha de ingreso real
-    const u_start = S.user.start_date || null;
-    let daysInfo = '';
-    if (u_start && m.days_limit && !isComp) {
-      const start = new Date(u_start);
-      const deadline = new Date(start.getTime() + m.days_limit * 86400000);
-      const today = new Date();
-      const diff = Math.ceil((deadline - today) / 86400000);
-      if (diff < 0) {
-        daysInfo = `<div style="font-size:11px;color:var(--frd);margin-top:4px">⚠️ Vencido hace ${Math.abs(diff)} días</div>`;
-      } else if (diff <= 3) {
-        daysInfo = `<div style="font-size:11px;color:#D97706;margin-top:4px">⏰ Vence en ${diff} día${diff!==1?'s':''}</div>`;
-      } else {
-        daysInfo = `<div style="font-size:11px;color:var(--fg);margin-top:4px">📅 ${diff} días restantes</div>`;
-      }
-    }
-    const ord = `<span style="font-size:10px;color:var(--fg);background:var(--fgl);padding:2px 7px;border-radius:10px">N${m.sort_order||idx+1}</span>`;
-    const req = m.is_required ? `<span style="font-size:10px;color:var(--fo);background:var(--fol);padding:2px 7px;border-radius:10px">Obligatorio</span>` : '';
-    if(locked) return `<div class="mc" style="opacity:.5;cursor:not-allowed;background:var(--fgb)">
-      <div style="display:flex;gap:6px;margin-bottom:8px"><span class="tag ${tagClass}">${m.campaign}</span>${ord}</div>
-      <div class="mc-title">Bloqueado - ${m.title}</div>
-      <div class="mc-desc">${m.description}</div>
-      <div style="font-size:12px;color:var(--fg)">Completa la induccion general primero</div></div>`;
-    const borderStyle = expired ? 'style="border-left:3px solid var(--frd)"' : comp?.passed ? '' : '';
-    return `<div class="mc ${comp?.passed?'done-card':''}" onclick="openMod('${m.id}')" ${borderStyle}>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><span class="tag ${tagClass}">${m.campaign}</span>${ord}${req}</div>
-      <div class="mc-title">${m.title}</div>
-      <div class="mc-desc">${m.description}</div>
-      <div>${badge}</div>${daysInfo}</div>`;
-  };
-
-  const dashStats = await renderColDashboard(mods, comps, startDate);
-  let h = dashStats;
-
-  if(genMods.length>0){
-    h += `<div class="section-hdr"><span class="section-title">Induccion general</span></div><div class="mods">`;
-    genMods.forEach((m,i) => { h += cardHtml(m,i,false); });
-    h += `</div>`;
-  }
-  if(campMods.length>0){
-    h += `<div class="section-hdr" style="margin-top:24px"><span class="section-title">Modulos de tu campana - ${S.user.campaign}</span></div><div class="mods">`;
-    campMods.forEach((m,i) => { h += cardHtml(m,i,genMods.length>0 && !genAllDone); });
-    h += `</div>`;
-  }
-  document.getElementById('page').innerHTML = h;
-  setTimeout(checkVencidos, 100);
-}
-
-async function openMod(id, studyMode = false) {
-  loading();
-  const { data: m } = await sb.from('modules').select('*, questions(*)').eq('id', id).single();
-  // Verificar prerequisito: módulo anterior completado
-  if (!studyMode && m.sort_order > 1) {
-    const { data: prevMods } = await sb.from('modules')
-      .select('id,title,sort_order')
-      .eq('campaign', m.campaign)
-      .eq('is_required', true)
-      .lt('sort_order', m.sort_order)
-      .order('sort_order', { ascending: false })
-      .limit(1);
-    if (prevMods?.length) {
-      const prev = prevMods[0];
-      const { data: prevComp } = await sb.from('completions')
-        .select('id')
-        .eq('user_id', S.user.id)
-        .eq('module_id', prev.id)
-        .eq('passed', true)
-        .limit(1);
-      if (!prevComp?.length) {
-        document.getElementById('page').innerHTML = `
-          <button class="back-btn" onclick="renderColList()">← Volver</button>
-          <div style="background:var(--fw);border-radius:var(--frlg);padding:32px;text-align:center;border:1px solid var(--fbr)">
-            <div style="font-size:32px;margin-bottom:12px">🔒</div>
-            <div style="font-size:16px;font-weight:500;color:var(--fn);margin-bottom:8px">Módulo bloqueado</div>
-            <div style="font-size:13px;color:var(--fg)">Primero debés aprobar: <strong>${prev.title}</strong></div>
-          </div>`;
-        return;
-      }
+// ─── SETUP ──────────────────────────────────────────────────────────────────
+function buildBoard(){
+  boardEl.style.gap = GAP+'px';
+  boardEl.style.padding = PAD+'px';
+  boardEl.innerHTML='';
+  cells=[];
+  grid=Array.from({length:GS},()=>Array(GS).fill(null));
+  for(let r=0;r<GS;r++){
+    cells[r]=[];
+    for(let c=0;c<GS;c++){
+      const d=document.createElement('div');
+      d.className='c';
+      d.style.width=CELL+'px';
+      d.style.height=CELL+'px';
+      boardEl.appendChild(d);
+      cells[r][c]=d;
     }
   }
-  const comp = await sb.from('completions').select('*').eq('user_id', S.user.id).eq('module_id', id).order('created_at', { ascending: false }).limit(1);
-  S.activeModule = m;
-  // Feature D: shuffle questions
-  S.evalQs = [...(m.questions || [])].sort(() => Math.random() - 0.5).slice(0, 10);
-  S.answers = {}; S.curQ = 0;
+}
 
-  const tagClass = m.campaign === 'General' ? 'tag-gr' : m.campaign === 'Edesur' ? 'tag-bl' : m.campaign === 'Anfitrión' ? 'tag-or' : 'tag-gn';
-  setTopbar(m.title, `Campaña: ${m.campaign}`);
+function initGame(){
+  score=0;
+  updateScore();
+  bdisEl.textContent=best;
+  goEl.style.display='none';
+  buildBoard();
+  newPieces();
+}
 
-  let h = `<button class="back-btn" onclick="renderColList()">← Volver a módulos</button>`;
-  h += `<div style="margin-bottom:16px"><span class="tag ${tagClass}">${m.campaign}</span><div style="font-size:16px;font-weight:500;color:var(--fn);margin-top:8px">${m.title}</div><div style="font-size:13px;color:var(--fg);margin-top:3px">${m.description}</div></div>`;
+// ─── PIECES ─────────────────────────────────────────────────────────────────
+function randPiece(){
+  const shape = PIECES[Math.floor(Math.random()*PIECES.length)];
+  const color = COLORS[Math.floor(Math.random()*COLORS.length)];
+  return {shape,color};
+}
 
-  if (studyMode) {
-    h += `<div style="background:var(--fbll);border:1px solid #BFDBFE;border-radius:var(--fr);padding:11px 14px;font-size:13px;color:#1E40AF;margin-bottom:14px;display:flex;align-items:center;gap:8px">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-      <span><strong>Modo estudio</strong> — no se registran intentos ni puntajes</span>
-    </div>`;
-  }
+function newPieces(){
+  for(let i=0;i<3;i++){ pieces[i]=randPiece(); used[i]=false; }
+  renderTray();
+}
 
-  h += `<div class="vid-box"><iframe src="${m.video_url}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>`;
-
-  if (m.meeting_url) {
-    h += `<a href="${m.meeting_url}" target="_blank" class="btn-p btn-sm" style="display:inline-block;text-decoration:none;margin-bottom:16px">📹 Unirse a sesión en vivo</a>`;
-  }
-  if (m.pdf_url) {
-    h += `<div style="margin-bottom:20px">
-      <div style="font-size:13px;font-weight:500;color:var(--fn);margin-bottom:8px">Material de lectura</div>
-      <a href="${m.pdf_url}" target="_blank" class="btn-s btn-sm">📄 Abrir PDF / Material</a>
-    </div>`;
-  }
-
-  const lastComp = comp.data?.[0];
-  if (!studyMode) {
-    if (lastComp) {
-      h += `<div style="background:var(--fol);border-radius:var(--fr);padding:11px 14px;font-size:13px;color:var(--fod);margin-bottom:16px;border:1px solid var(--fbr)">
-        Ya realizaste este módulo con <strong>${lastComp.score}%</strong>. Podés volver a intentarlo.
-      </div>`;
+function renderTray(){
+  for(let i=0;i<3;i++){
+    const slot=document.getElementById('s'+i);
+    slot.innerHTML='';
+    if(used[i]||!pieces[i]){slot.classList.add('used');continue;}
+    slot.classList.remove('used');
+    const p=pieces[i];
+    const minR=Math.min(...p.shape.map(x=>x[0]));
+    const maxR=Math.max(...p.shape.map(x=>x[0]));
+    const minC=Math.min(...p.shape.map(x=>x[1]));
+    const maxC=Math.max(...p.shape.map(x=>x[1]));
+    const rows=maxR-minR+1, cols=maxC-minC+1;
+    const pg=document.createElement('div');
+    pg.className='pg';
+    const ps=18; // piece cell size in tray
+    pg.style.gridTemplateColumns=`repeat(${cols},${ps}px)`;
+    pg.style.gridTemplateRows=`repeat(${rows},${ps}px)`;
+    pg.style.gap='2px';
+    const map=Array.from({length:rows},()=>Array(cols).fill(false));
+    p.shape.forEach(([r,c])=>{ map[r-minR][c-minC]=true; });
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+      const d=document.createElement('div');
+      d.style.width=ps+'px'; d.style.height=ps+'px';
+      if(map[r][c]){d.className='pc'; d.style.background=p.color;}
+      pg.appendChild(d);
     }
-    h += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
-      <div style="font-size:14px;font-weight:500;color:var(--fn)">Evaluación · ${S.evalQs.length} preguntas</div>
-      <button class="btn-s btn-sm" onclick="openMod('${m.id}', true)" style="margin-left:auto">📖 Repasar contenido</button>
-    </div>
-    <div id="eval-area"></div>`;
-    h += `<div style="margin-top:24px">
-      <div style="font-size:14px;font-weight:500;color:var(--fn);margin-bottom:12px">💬 Preguntas y comentarios</div>
-      <div id="comments-box" style="margin-bottom:12px"></div>
-      <div style="display:flex;gap:8px">
-        <input type="text" id="comment-input" placeholder="Escribí tu pregunta o comentario..." style="flex:1;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:13px;font-family:inherit"/>
-        <button class="btn-p btn-sm" onclick="postComment('${m.id}')">Enviar</button>
-      </div>
-    </div>`;
-    document.getElementById('page').innerHTML = h;
-    renderQ();
-    setTimeout(() => loadComments(m.id), 100);
-  } else {
-    h += `<div style="text-align:center;padding:24px;background:var(--fw);border-radius:var(--frlg);border:1px solid var(--fbr);margin-top:16px">
-      <div style="font-size:14px;font-weight:500;color:var(--fn);margin-bottom:8px">¿Listo para evaluarte?</div>
-      <div style="font-size:13px;color:var(--fg);margin-bottom:16px">Cuando termines de repasar el video, podés ir a la evaluación oficial.</div>
-      <button class="btn-p btn-sm" onclick="openMod('${m.id}')">Ir a la evaluación</button>
-    </div>`;
-    h += `<div style="margin-top:24px">
-      <div style="font-size:14px;font-weight:500;color:var(--fn);margin-bottom:12px">💬 Preguntas y comentarios</div>
-      <div id="comments-box" style="margin-bottom:12px"></div>
-      <div style="display:flex;gap:8px">
-        <input type="text" id="comment-input" placeholder="Escribí tu pregunta o comentario..." style="flex:1;padding:9px 12px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:13px;font-family:inherit"/>
-        <button class="btn-p btn-sm" onclick="postComment('${m.id}')">Enviar</button>
-      </div>
-    </div>`;
-    document.getElementById('page').innerHTML = h;
-    setTimeout(() => loadComments(m.id), 100);
+    slot.appendChild(pg);
+    const idx=i;
+    slot.onmousedown =(e)=>{e.preventDefault();startDrag(idx,e.clientX,e.clientY);};
+    slot.ontouchstart=(e)=>{e.preventDefault();startDrag(idx,e.touches[0].clientX,e.touches[0].clientY);};
   }
 }
 
-function renderQ() {
-  const qs = S.evalQs, i = S.curQ;
-  let dots = qs.map((_, j) => `<div class="eval-dot ${j < i ? 'done' : j === i ? 'cur' : ''}"></div>`).join('');
-  let h = `<div class="eval-hdr"><div class="eval-dots">${dots}</div><span style="font-size:12px;color:var(--fg);white-space:nowrap">${i + 1} / ${qs.length}</span></div>`;
-  h += `<div class="qblock"><div class="q-n">Pregunta ${i + 1}</div><div class="q-t">${qs[i].question_text}</div>`;
-  const opts = [qs[i].option_a, qs[i].option_b, qs[i].option_c, qs[i].option_d];
-  opts.forEach((o, j) => {
-    if (!o) return;
-    const sel = S.answers[i] === j;
-    h += `<div class="opt ${sel ? 'sel' : ''}" onclick="selA(${j})"><input type="radio" name="q" ${sel ? 'checked' : ''}> ${o}</div>`;
-  });
-  h += `</div><div class="nav-row">`;
-  if (i > 0) h += `<button class="btn-s btn-sm" onclick="goQ(${i - 1})">← Anterior</button>`;
-  if (i < qs.length - 1) h += `<button class="btn-p btn-sm" onclick="goQ(${i + 1})">Siguiente →</button>`;
-  else h += `<button class="btn-p btn-sm" onclick="submitEval()">Enviar evaluación</button>`;
-  h += `</div>`;
-  document.getElementById('eval-area').innerHTML = h;
+// ─── DRAG ───────────────────────────────────────────────────────────────────
+function startDrag(idx,x,y){
+  if(used[idx]||!pieces[idx]) return;
+  sel=idx; dragging=true;
+  buildFloating(pieces[idx]);
+  moveDrag(x,y);
 }
 
-function selA(j) { S.answers[S.curQ] = j; renderQ(); }
-function goQ(i) { S.curQ = i; renderQ(); }
-
-async function submitEval() {
-  const qs = S.evalQs;
-  const miss = qs.length - Object.keys(S.answers).length;
-  if (miss > 0 && !confirm(`Tenes ${miss} pregunta(s) sin responder. Envias igual?`)) return;
-  // Check max attempts
-  const { data: prevComps } = await sb.from('completions').select('id').eq('user_id', S.user.id).eq('module_id', S.activeModule.id);
-  const maxAtt = S.activeModule.max_attempts || 3;
-  if ((prevComps||[]).length >= maxAtt) {
-    alert(`Ya usaste todos los intentos disponibles para este modulo (${maxAtt}/${maxAtt}).`);
-    return;
-  }
-  let correct = 0;
-  const correctMap = { 0: 'a', 1: 'b', 2: 'c', 3: 'd' };
-  qs.forEach((q, i) => {
-    const userAns = correctMap[S.answers[i]];
-    if (userAns === q.correct_option) correct++;
-  });
-  const score = Math.round(correct / qs.length * 100);
-  const passed = score >= 60;
-  await sb.from('completions').insert({ user_id: S.user.id, module_id: S.activeModule.id, score, passed });
-  renderReview(score, passed, correct, qs);
-}
-
-function renderReview(score, passed, correct, qs) {
-  setTopbar('Resultado de evaluación', S.activeModule.title);
-  const correctMap = { 0: 'a', 1: 'b', 2: 'c', 3: 'd' };
-  const optLabel = (q, idx) => [q.option_a, q.option_b, q.option_c, q.option_d][idx];
-
-  let h = `<button class="back-btn" onclick="renderColList()">← Volver a módulos</button>`;
-  h += `<div class="score-card">
-    <div class="score-ring ${passed ? 'r-pass' : 'r-fail'}">${score}%</div>
-    <div class="score-title">${passed ? '¡Módulo aprobado!' : 'Módulo desaprobado'}</div>
-    <div class="score-sub">${correct} de ${qs.length} correctas · Mínimo: 60%</div>
-    ${!passed ? '<div style="font-size:12px;color:var(--frd);margin-top:6px">Podés repetir el módulo cuando quieras.</div>' : ''}
-  </div>`;
-
-  if (passed) {
-    h += `<div class="cert-area">
-      <div class="cert-lbl">Certificado de aprobación</div>
-      <canvas id="cert-canvas" width="580" height="360"></canvas>
-      <div style="margin-top:12px"><button class="btn-p btn-sm" onclick="downloadCert()">Descargar certificado</button></div>
-    </div>`;
-  }
-
-  h += `<div style="font-size:14px;font-weight:500;color:var(--fn);margin:20px 0 12px">Revisión detallada</div>`;
-  qs.forEach((q, i) => {
-    const ua = S.answers[i];
-    const uaLetter = correctMap[ua];
-    const ok = uaLetter === q.correct_option;
-    h += `<div class="rev-item ${ok ? 'ok' : 'err'}">
-      <div class="rev-top">
-        <div class="rev-badge ${ok ? 'rb-ok' : 'rb-err'}">${ok ? '✓' : '✗'}</div>
-        <div class="rev-q">${i + 1}. ${q.question_text}</div>
-      </div>`;
-    if (!ok) {
-      const ul = ua !== undefined ? optLabel(q, ua) : 'Sin responder';
-      const correctIdx = ['a', 'b', 'c', 'd'].indexOf(q.correct_option);
-      h += `<div class="rev-ans">
-        <div class="ans-row"><span class="ans-lbl">Tu respuesta:</span><span class="ans-err">${ul || '—'}</span></div>
-        <div class="ans-row"><span class="ans-lbl">Correcta:</span><span class="ans-ok">${optLabel(q, correctIdx)}</span></div>
-        ${q.explanation ? `<div class="why">💡 ${q.explanation}</div>` : ''}
-      </div>`;
+function buildFloating(p){
+  fpEl.innerHTML='';
+  const minR=Math.min(...p.shape.map(x=>x[0]));
+  const maxR=Math.max(...p.shape.map(x=>x[0]));
+  const minC=Math.min(...p.shape.map(x=>x[1]));
+  const maxC=Math.max(...p.shape.map(x=>x[1]));
+  const rows=maxR-minR+1, cols=maxC-minC+1;
+  const fg=document.createElement('div');
+  fg.style.display='grid';
+  fg.style.gridTemplateColumns=`repeat(${cols},${CELL}px)`;
+  fg.style.gridTemplateRows=`repeat(${rows},${CELL}px)`;
+  fg.style.gap=GAP+'px';
+  const map=Array.from({length:rows},()=>Array(cols).fill(false));
+  p.shape.forEach(([r,c])=>{ map[r-minR][c-minC]=true; });
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const d=document.createElement('div');
+    d.style.width=CELL+'px'; d.style.height=CELL+'px';
+    if(map[r][c]){
+      d.style.borderRadius='5px';
+      d.style.background=p.color;
+      d.style.boxShadow='inset 0 -3px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.28)';
     }
-    h += `</div>`;
-  });
-  h += `<div style="display:flex;gap:8px;margin-top:18px">
-    <button class="btn-s btn-sm" onclick="renderColList()">Volver a módulos</button>
-    ${!passed ? `<button class="btn-p btn-sm" onclick="openMod('${S.activeModule.id}')">Repetir módulo</button>` : ''}
-  </div>`;
-  document.getElementById('page').innerHTML = h;
-  if (passed) {
-    setTimeout(() => drawCert(score), 60);
-    setTimeout(() => openSurvey(S.activeModule.id, S.activeModule.title), 1500);
+    fg.appendChild(d);
   }
+  fpEl.appendChild(fg);
+  fpEl.style.display='block';
 }
 
-function drawCert(score) {
-  const c = document.getElementById('cert-canvas'); if (!c) return;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, 580, 360);
-  // Header bar
-  ctx.fillStyle = '#1C1C2E'; ctx.fillRect(0, 0, 580, 70);
-  ctx.fillStyle = '#FF6B35'; ctx.font = 'bold 28px Arial'; ctx.textAlign = 'left'; ctx.fillText('MERA', 24, 44);
-  ctx.fillStyle = '#9CA3AF'; ctx.font = '10px Arial'; ctx.fillText('SOLUTIONS', 96, 32);
-  ctx.fillStyle = '#FF6B35'; ctx.font = '9px Arial'; ctx.fillText('ACADEMY', 96, 48);
-  ctx.strokeStyle = '#374151'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(88,14); ctx.lineTo(88,56); ctx.stroke();
-  ctx.strokeStyle = '#FF6B35'; ctx.lineWidth = 3; ctx.strokeRect(10, 10, 560, 340);
-  ctx.strokeStyle = '#E5E7EB'; ctx.lineWidth = 1; ctx.strokeRect(18, 18, 544, 324);
-  ctx.fillStyle = '#FF6B35'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center'; ctx.fillText('CERTIFICADO DE APROBACION', 290, 105);
-  ctx.fillStyle = '#6B7280'; ctx.font = '13px Arial'; ctx.fillText('Se certifica que', 290, 124);
-  ctx.fillStyle = '#1C1C2E'; ctx.font = 'bold 22px Arial'; ctx.fillText(S.user.full_name, 290, 154);
-  ctx.fillStyle = '#6B7280'; ctx.font = '13px Arial'; ctx.fillText('completó exitosamente el módulo', 290, 182);
-  ctx.fillStyle = '#FF6B35'; ctx.font = 'bold 15px Arial'; ctx.fillText(S.activeModule.title, 290, 208);
-  ctx.fillStyle = '#10B981'; ctx.font = 'bold 18px Arial'; ctx.fillText(`Puntuación: ${score}%`, 290, 242);
-  ctx.strokeStyle = '#E5E7EB'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(80, 278); ctx.lineTo(500, 278); ctx.stroke();
-  ctx.fillStyle = '#6B7280'; ctx.font = '11px Arial'; ctx.fillText(`Fecha: ${new Date().toLocaleDateString('es-AR')} · MERA Solutions · Recursos Humanos`, 290, 306);
+function moveDrag(x,y){
+  if(!dragging) return;
+  fpEl.style.left=x+'px';
+  fpEl.style.top=y+'px';
+  // board coords
+  const br=boardEl.getBoundingClientRect();
+  const step=CELL+GAP;
+  const relX=x-br.left-PAD;
+  const relY=y-br.top-PAD;
+  const p=pieces[sel];
+  // center piece on cursor
+  const avgR=p.shape.reduce((s,[r])=>s+r,0)/p.shape.length;
+  const avgC=p.shape.reduce((s,[,c])=>s+c,0)/p.shape.length;
+  const gr=Math.round(relY/step - avgR);
+  const gc=Math.round(relX/step - avgC);
+  updateGhost(gr,gc);
 }
 
-function downloadCert() {
-  const c = document.getElementById('cert-canvas'); if (!c) return;
-  const a = document.createElement('a');
-  a.href = c.toDataURL('image/png');
-  a.download = `certificado_${S.user.full_name.replace(/ /g, '_')}_${S.activeModule.title.replace(/ /g, '_')}.png`;
-  a.click();
-}
-
-// ============================================================
-// ADMIN — SECCIONES
-// ============================================================
-function aSection(s) {
-  setActive('ni-' + s);
-  const cfg = {
-    dash: ['Dashboard', 'Resumen general', ''],
-    mods: ['Módulos', 'Módulos de capacitación', `<button class="btn-p btn-sm" onclick="openNewMod()">+ Nuevo módulo</button>`],
-    usrs: ['Colaboradores', 'Gestión de usuarios', `<button class="btn-p btn-sm" onclick="openNewUsr()">+ Nuevo colaborador</button>`],
-    res: ['Resultados', 'Evaluaciones completadas', `<button class="btn-s btn-sm" onclick="exportCSV()">Exportar CSV</button>`],
-    rep: ['Reportes por campana', 'Aprobacion por campana y modulo', ''],
-    surv: ['Encuestas de satisfaccion', 'Feedback de los colaboradores', ''],
-    venc: ['Modulos vencidos', 'Colaboradores que no completaron a tiempo', ''],
-    asign: ['Asignaciones manuales', 'Asignar modulos a colaboradores especificos', ''],
-    logs: ['Historial de cambios', 'Registro de ediciones de modulos', ''],
-    rank: ['Ranking', 'Top colaboradores por campaña', '']
-  };
-  setTopbar(...cfg[s]);
-  ({ dash: renderDash, mods: renderMods, usrs: renderUsrs, res: renderRes, rep: renderRep, surv: renderSurv, venc: renderVenc, asign: renderAsign, logs: renderLogs, rank: renderRank })[s]();
-}
-
-async function renderDash() {
-  loading();
-  const [{ count: cols }, { count: mods }, { data: comps }] = await Promise.all([
-    sb.from('users').select('*', { count: 'exact', head: true }).eq('role', 'col'),
-    sb.from('modules').select('*', { count: 'exact', head: true }),
-    sb.from('completions').select('*')
-  ]);
-  const ev = comps?.length || 0;
-  const pa = comps?.filter(c => c.passed).length || 0;
-  const pct = ev ? Math.round(pa / ev * 100) : 0;
-
-  let h = `<div class="stats">
-    <div class="sc"><div class="sc-icon" style="background:#EFF6FF"><svg width="18" height="18" viewBox="0 0 24 24" fill="#3B82F6"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m9-10a4 4 0 100-8 4 4 0 000 8z"/></svg></div><div class="sc-val">${cols || 0}</div><div class="sc-lbl">Colaboradores</div></div>
-    <div class="sc"><div class="sc-icon" style="background:var(--fol)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--fo)"><path d="M12 2L2 7l10 5 10-5zm0 10l-10-5v9l10 5 10-5v-9z"/></svg></div><div class="sc-val">${mods || 0}</div><div class="sc-lbl">Módulos activos</div></div>
-    <div class="sc"><div class="sc-icon" style="background:var(--fgrl)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--fgr)"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div class="sc-val">${ev}</div><div class="sc-lbl">Evaluaciones</div></div>
-    <div class="sc"><div class="sc-icon" style="background:var(--frdl)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--frd)"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div><div class="sc-val">${pct}%</div><div class="sc-lbl">Tasa aprobación</div></div>
-  </div>`;
-
-  // Charts
-  h += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-    <div style="background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr)">
-      <div style="font-size:13px;font-weight:500;color:var(--fn);margin-bottom:16px">Aprobaciones por campaña</div>
-      <canvas id="chart-camp" height="180"></canvas>
-    </div>
-    <div style="background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr)">
-      <div style="font-size:13px;font-weight:500;color:var(--fn);margin-bottom:16px">Actividad últimos 30 días</div>
-      <canvas id="chart-activity" height="180"></canvas>
-    </div>
-  </div>`;
-
-  h += `<div class="section-hdr"><span class="section-title">Actividad reciente</span></div>`;
-  h += `<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Módulo</th><th>Puntaje</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>`;
-  const recent = [...(comps || [])].reverse().slice(0, 10);
-  const uids = [...new Set(recent.map(c => c.user_id))];
-  const mids = [...new Set(recent.map(c => c.module_id))];
-  const [{ data: users }, { data: modules }] = await Promise.all([
-    sb.from('users').select('id,full_name').in('id', uids),
-    sb.from('modules').select('id,title').in('id', mids)
-  ]);
-  recent.forEach(c => {
-    const u = users?.find(x => x.id === c.user_id);
-    const m = modules?.find(x => x.id === c.module_id);
-    h += `<tr><td>${u?.full_name || '—'}</td><td>${m?.title || '—'}</td><td>${c.score}%</td>
-      <td><span class="pill ${c.passed ? 'p-ok' : 'p-fl'}">${c.passed ? 'Aprobado' : 'Desaprobado'}</span></td>
-      <td style="color:var(--fg)">${c.created_at?.slice(0, 10) || '—'}</td></tr>`;
-  });
-  h += `</tbody></table></div>`;
-  document.getElementById('page').innerHTML = h;
-
-  // Initialize charts
-  setTimeout(async () => {
-    // Chart 1: Aprobaciones por campaña
-    const [{ data: campUsers }, { data: campMods2 }, { data: campComps }] = await Promise.all([
-      sb.from('users').select('id,campaign').eq('role','col'),
-      sb.from('modules').select('id,campaign'),
-      sb.from('completions').select('user_id,module_id,passed')
-    ]);
-    const campNames = [...new Set((campUsers||[]).map(u=>u.campaign))].sort();
-    const campPcts = campNames.map(camp => {
-      const cu = (campUsers||[]).filter(u=>u.campaign===camp);
-      const cm = (campMods2||[]).filter(m=>m.campaign===camp||m.campaign==='General');
-      const total = cu.length * cm.length;
-      const passed2 = (campComps||[]).filter(c=>{
-        return cu.find(u=>u.id===c.user_id) && cm.find(m=>m.id===c.module_id) && c.passed;
-      }).length;
-      return total ? Math.round(passed2/total*100) : 0;
-    });
-    const ctx1 = document.getElementById('chart-camp');
-    if (ctx1) {
-      new Chart(ctx1, {
-        type: 'bar',
-        data: {
-          labels: campNames,
-          datasets: [{ label: 'Aprobación %', data: campPcts, backgroundColor: '#5B4FCF', borderRadius: 6 }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 100, ticks: { callback: v => v+'%' } } } }
-      });
+function updateGhost(gr,gc){
+  clearGhost();
+  if(!dragging||sel<0) return;
+  const p=pieces[sel];
+  const valid=canPlace(p.shape,gr,gc);
+  p.shape.forEach(([dr,dc])=>{
+    const r=gr+dr, c=gc+dc;
+    if(r>=0&&r<GS&&c>=0&&c<GS){
+      cells[r][c].classList.add(valid?'ghost':'bad');
+      if(valid) cells[r][c].style.background=p.color;
+      else      cells[r][c].style.background='rgba(255,60,60,.35)';
+      ghostList.push([r,c]);
     }
+  });
+}
 
-    // Chart 2: Actividad últimos 30 días
-    const now = new Date();
-    const days30 = Array.from({length:30}, (_,i) => {
-      const d = new Date(now); d.setDate(d.getDate()-29+i);
-      return d.toISOString().slice(0,10);
+function clearGhost(){
+  ghostList.forEach(([r,c])=>{
+    cells[r][c].classList.remove('ghost','bad');
+    cells[r][c].style.background = grid[r][c] || '';
+  });
+  ghostList=[];
+}
+
+function endDrag(x,y){
+  if(!dragging) return;
+  fpEl.style.display='none';
+  dragging=false;
+  const br=boardEl.getBoundingClientRect();
+  const step=CELL+GAP;
+  const relX=x-br.left-PAD;
+  const relY=y-br.top-PAD;
+  if(sel>=0&&!used[sel]){
+    const p=pieces[sel];
+    const avgR=p.shape.reduce((s,[r])=>s+r,0)/p.shape.length;
+    const avgC=p.shape.reduce((s,[,c])=>s+c,0)/p.shape.length;
+    const gr=Math.round(relY/step-avgR);
+    const gc=Math.round(relX/step-avgC);
+    if(canPlace(p.shape,gr,gc)) place(sel,gr,gc);
+  }
+  clearGhost();
+  sel=-1;
+}
+
+// ─── GAME LOGIC ─────────────────────────────────────────────────────────────
+function canPlace(shape,gr,gc){
+  return shape.every(([dr,dc])=>{
+    const r=gr+dr, c=gc+dc;
+    return r>=0&&r<GS&&c>=0&&c<GS&&!grid[r][c];
+  });
+}
+
+function place(idx,gr,gc){
+  const p=pieces[idx];
+  p.shape.forEach(([dr,dc])=>{
+    const r=gr+dr, c=gc+dc;
+    grid[r][c]=p.color;
+    cells[r][c].style.background=p.color;
+    cells[r][c].classList.add('lit');
+  });
+  used[idx]=true;
+  document.getElementById('s'+idx).classList.add('used');
+  score+=p.shape.length;
+  updateScore();
+  setTimeout(()=>{
+    clearLines();
+    if(used.every(u=>u)) newPieces();
+    else{ renderTray(); checkOver(); }
+  },55);
+}
+
+function clearLines(){
+  const rs=[], cs=[];
+  for(let r=0;r<GS;r++) if(grid[r].every(v=>v)) rs.push(r);
+  for(let c=0;c<GS;c++) if(grid.every(row=>row[c])) cs.push(c);
+  if(!rs.length&&!cs.length) return;
+  const tot=rs.length+cs.length;
+  score += tot*50 + (tot>1?tot*30:0);
+  if(tot>1) showCombo(tot);
+  const set=new Set();
+  rs.forEach(r=>{ for(let c=0;c<GS;c++) set.add(r+','+c); });
+  cs.forEach(c=>{ for(let r=0;r<GS;r++) set.add(r+','+c); });
+  set.forEach(k=>{
+    const [r,c]=k.split(',').map(Number);
+    cells[r][c].classList.add('clearing');
+  });
+  setTimeout(()=>{
+    set.forEach(k=>{
+      const [r,c]=k.split(',').map(Number);
+      grid[r][c]=null;
+      cells[r][c].style.background='';
+      cells[r][c].classList.remove('lit','clearing');
     });
-    const actMap = {};
-    days30.forEach(d => actMap[d] = 0);
-    (comps||[]).forEach(c => {
-      const day = c.created_at?.slice(0,10);
-      if (day && actMap[day] !== undefined) actMap[day]++;
-    });
-    const ctx2 = document.getElementById('chart-activity');
-    if (ctx2) {
-      new Chart(ctx2, {
-        type: 'line',
-        data: {
-          labels: days30.map(d => d.slice(5)),
-          datasets: [{ label: 'Completions', data: days30.map(d => actMap[d]), borderColor: '#16A34A', backgroundColor: 'rgba(22,163,74,.1)', tension: 0.3, fill: true, pointRadius: 2 }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { min: 0, ticks: { stepSize: 1 } } } }
-      });
-    }
-  }, 50);
+    updateScore();
+    checkOver();
+  },300);
 }
 
-async function renderMods(filterCamp) {
-  loading();
-  const [{ data: mods }, { data: comps }] = await Promise.all([
-    sb.from('modules').select('*, questions(count)').order('campaign').order('sort_order'),
-    sb.from('completions').select('module_id')
-  ]);
-  const camps = [...new Set((mods||[]).map(m => m.campaign).filter(Boolean))].sort();
-  const active = filterCamp !== undefined ? filterCamp : '';
-  const filtered = active ? (mods||[]).filter(m => m.campaign === active) : (mods||[]);
+function showCombo(n){
+  const msgs=['','','DOBLE!','TRIPLE!','BOMBA!','ULTRA!'];
+  comboEl.textContent = msgs[Math.min(n,5)] || n+'x COMBO!';
+  comboEl.style.display='block';
+  comboEl.style.animation='none';
+  void comboEl.offsetWidth;
+  comboEl.style.animation='cpop .75s ease-out forwards';
+  setTimeout(()=>{ comboEl.style.display='none'; },800);
+}
 
-  let bar = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">`;
-  bar += `<span style="font-size:12px;color:var(--fg);font-weight:500;margin-right:4px">Campaña:</span>`;
-  bar += `<button onclick="renderMods('')" class="btn-sm ${!active?'btn-p':'btn-s'}" style="padding:5px 12px;font-size:12px">Todas</button>`;
-  camps.forEach(c => bar += `<button onclick="renderMods('${c}')" class="btn-sm ${active===c?'btn-p':'btn-s'}" style="padding:5px 12px;font-size:12px">${c}</button>`);
-  bar += `</div>`;
-
-  let h = bar + `<div class="tbl-wrap"><table><thead><tr><th>Orden</th><th>Título</th><th>Campaña</th><th>Días límite</th><th>Obligatorio</th><th>Preguntas</th><th>Completados</th><th></th></tr></thead><tbody>`;
-  filtered.forEach(m => {
-    const co = comps?.filter(c => c.module_id === m.id).length || 0;
-    const tagClass = m.campaign === 'General' ? 'tag-gr' : m.campaign === 'EDESUR' ? 'tag-bl' : 'tag-gn';
-    h += `<tr>
-      <td style="color:var(--fg);text-align:center">${m.sort_order||1}</td>
-      <td style="font-weight:500">${m.title}</td>
-      <td><span class="tag ${tagClass}">${m.campaign}</span></td>
-      <td style="text-align:center">${m.days_limit||7} días</td>
-      <td style="text-align:center">${m.is_required!==false?'<span class="pill p-ok">Sí</span>':'<span class="pill p-pe">No</span>'}</td>
-      <td style="text-align:center">${m.questions?.[0]?.count||0}</td>
-      <td style="text-align:center">${co}</td>
-      <td><button class="btn-s btn-sm" onclick="openEditMod('${m.id}')">Editar</button></td></tr>`;
+function checkOver(){
+  const avail=pieces.filter((_,i)=>!used[i]&&pieces[i]);
+  if(!avail.length) return;
+  const any=avail.some(p=>{
+    for(let r=0;r<GS;r++) for(let c=0;c<GS;c++) if(canPlace(p.shape,r,c)) return true;
+    return false;
   });
-  if (!filtered.length) h += `<tr><td colspan="8" style="text-align:center;color:var(--fg);padding:24px">No hay módulos</td></tr>`;
-  h += `</tbody></table></div>`;
-  document.getElementById('page').innerHTML = h;
+  if(!any) gameOver();
 }
 
-let _usrsData = null;
-
-async function renderUsrs() {
-  loading();
-  _usrsData = null;
-  let usrsQuery = sb.from('users').select('*').in('role', ['col','sup']).order('campaign').order('full_name');
-  if (S.user.role === 'sup') usrsQuery = usrsQuery.eq('campaign', S.user.campaign);
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
-    usrsQuery,
-    sb.from('modules').select('id,campaign'),
-    sb.from('completions').select('user_id,module_id,passed')
-  ]);
-  _usrsData = { users: users||[], mods: mods||[], comps: comps||[] };
-  filterUsrs('');
+function gameOver(){
+  const isNew = score>best;
+  if(isNew){ best=score; localStorage.setItem('mb_best',best); bdisEl.textContent=best; }
+  fscEl.textContent=score;
+  newrecEl.style.display= isNew?'block':'none';
+  goEl.style.display='flex';
 }
 
-function filterUsrs(active) {
-  if (!_usrsData) return;
-  const { users, mods, comps } = _usrsData;
-  const camps = [...new Set(users.map(u => u.campaign).filter(Boolean))].sort();
-  const filtered = active ? users.filter(u => u.campaign === active) : users;
-
-  let bar = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">`;
-  bar += `<span style="font-size:12px;color:var(--fg);font-weight:500;margin-right:4px">Campaña:</span>`;
-  bar += `<button onclick="filterUsrs('')" class="${!active?'btn-p':'btn-s'} btn-sm">Todas</button>`;
-  camps.forEach(c => bar += `<button onclick="filterUsrs('${c}')" class="${active===c?'btn-p':'btn-s'} btn-sm">${c}</button>`);
-  bar += `<button onclick="exportUsrsCSV('${active}')" class="btn-s btn-sm" style="margin-left:auto">Exportar CSV</button>`;
-  bar += `</div>`;
-
-  let h = bar + `<div class="tbl-wrap"><table><thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th>Rol</th><th>Progreso</th><th></th></tr></thead><tbody>`;
-  filtered.forEach(u => {
-    const userMods = mods.filter(m => m.campaign === u.campaign || m.campaign === 'General');
-    const total = userMods.length;
-    const passed = comps.filter(c => c.user_id === u.id && c.passed && userMods.find(m => m.id === c.module_id)).length;
-    const pct = total ? Math.round(passed / total * 100) : 0;
-    const barColor = pct >= 80 ? 'var(--fgr)' : pct >= 40 ? 'var(--fo)' : 'var(--frd)';
-    const rolLabel = u.role === 'sup' ? '<span class="pill p-pe">Supervisor</span>' : '<span style="font-size:12px;color:var(--fg)">Colaborador</span>';
-    h += `<tr>
-      <td style="font-weight:500">${u.full_name}</td>
-      <td style="color:var(--fg)">${u.username}</td>
-      <td>${u.campaign || '—'}</td>
-      <td>${rolLabel}</td>
-      <td style="min-width:130px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="flex:1;height:6px;background:var(--fgl);border-radius:3px;overflow:hidden">
-            <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;transition:width .3s"></div>
-          </div>
-          <span style="font-size:11px;color:var(--fg);min-width:32px">${passed}/${total}</span>
-        </div>
-      </td>
-      <td><button class="btn-s btn-sm" onclick="openEditUsr('${u.id}','${u.full_name.replace(/'/g,"\\'")}','${u.username}','${u.campaign||''}','${u.role||'col'}')">Editar</button></td></tr>`;
-  });
-  if (!filtered.length) h += `<tr><td colspan="5" style="text-align:center;color:var(--fg);padding:24px">No hay colaboradores</td></tr>`;
-  h += `</tbody></table></div>`;
-  document.getElementById('page').innerHTML = h;
+function updateScore(){
+  sdisEl.textContent=score;
+  if(score>best){ best=score; bdisEl.textContent=best; }
 }
 
-async function exportUsrsCSV(camp) {
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
-    sb.from('users').select('*').eq('role','col').order('campaign').order('full_name'),
-    sb.from('modules').select('id,title,campaign'),
-    sb.from('completions').select('user_id,module_id,passed,score')
-  ]);
-  const filtered = camp ? (users||[]).filter(u => u.campaign === camp) : (users||[]);
-  const rows = [['Nombre','Usuario','Campaña','Módulos aprobados','Total módulos','Progreso %']];
-  filtered.forEach(u => {
-    const userMods = (mods||[]).filter(m => m.campaign === u.campaign || m.campaign === 'General');
-    const total = userMods.length;
-    const passed = (comps||[]).filter(c => c.user_id === u.id && c.passed && userMods.find(m => m.id === c.module_id)).length;
-    rows.push([u.full_name, u.username, u.campaign||'', passed, total, total ? Math.round(passed/total*100)+'%' : '0%']);
-  });
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
-  a.download = `colaboradores_${camp||'todos'}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-}
-
-async function renderRes() {
-  loading();
-  const { data: comps } = await sb.from('completions').select('*').order('created_at', { ascending: false });
-  const uids = [...new Set((comps || []).map(c => c.user_id))];
-  const mids = [...new Set((comps || []).map(c => c.module_id))];
-  const [{ data: users }, { data: modules }] = await Promise.all([
-    uids.length ? sb.from('users').select('id,full_name,campaign').in('id', uids) : { data: [] },
-    mids.length ? sb.from('modules').select('id,title').in('id', mids) : { data: [] }
-  ]);
-  let h = `<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Campaña</th><th>Módulo</th><th>Puntaje</th><th>Estado</th><th>Fecha</th></tr></thead><tbody>`;
-  (comps || []).forEach(c => {
-    const u = users?.find(x => x.id === c.user_id);
-    const m = modules?.find(x => x.id === c.module_id);
-    h += `<tr><td>${u?.full_name || '—'}</td><td style="color:var(--fg)">${u?.campaign || '—'}</td>
-      <td>${m?.title || '—'}</td><td>${c.score}%</td>
-      <td><span class="pill ${c.passed ? 'p-ok' : 'p-fl'}">${c.passed ? 'Aprobado' : 'Desaprobado'}</span></td>
-      <td style="color:var(--fg)">${c.created_at?.slice(0, 10) || '—'}</td></tr>`;
-  });
-  h += `</tbody></table></div>`;
-
-  document.getElementById('page').innerHTML = h;
-}
-
-async function exportCSV() {
-  const { data: comps } = await sb.from('completions').select('*').order('created_at', { ascending: false });
-  const uids = [...new Set((comps || []).map(c => c.user_id))];
-  const mids = [...new Set((comps || []).map(c => c.module_id))];
-  const [{ data: users }, { data: modules }] = await Promise.all([
-    uids.length ? sb.from('users').select('id,full_name,campaign').in('id', uids) : { data: [] },
-    mids.length ? sb.from('modules').select('id,title').in('id', mids) : { data: [] }
-  ]);
-  const rows = [['Colaborador', 'Campaña', 'Módulo', 'Puntaje', 'Estado', 'Fecha']];
-  (comps || []).forEach(c => {
-    const u = users?.find(x => x.id === c.user_id);
-    const m = modules?.find(x => x.id === c.module_id);
-    rows.push([u?.full_name, u?.campaign, m?.title, c.score + '%', c.passed ? 'Aprobado' : 'Desaprobado', c.created_at?.slice(0, 10)]);
-  });
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows.map(r => r.join(',')).join('\n'));
-  a.download = `resultados_mera_academy_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-}
-
-// ============================================================
-// MODALES — MÓDULOS
-// ============================================================
-let editQs = [];
-function makeQ() { return { id: null, question_text: '', option_a: '', option_b: '', option_c: '', option_d: '', correct_option: 'a', explanation: '' }; }
-
-async function openNewMod() {
-  S.editModId = null; editQs = [makeQ()];
-  ['m-title', 'm-desc', 'm-video', 'm-meeting', 'm-pdf'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('m-pdf-file').value = '';
-  document.getElementById('m-pdf-current').innerHTML = '';
-  document.getElementById('m-camp').value = 'Edesur';
-  document.getElementById('mmod-title').textContent = 'Nuevo módulo';
-  document.getElementById('btn-del-mod').style.display = 'none';
-  renderQList(); document.getElementById('modal-mod').classList.add('open');
-}
-
-async function openEditMod(id) {
-  S.editModId = id;
-  const { data: m } = await sb.from('modules').select('*, questions(*)').eq('id', id).single();
-  editQs = (m.questions || []).map(q => ({ ...q }));
-  if (editQs.length === 0) editQs = [makeQ()];
-  document.getElementById('m-title').value = m.title;
-  document.getElementById('m-desc').value = m.description;
-  document.getElementById('m-video').value = m.video_url;
-  document.getElementById('m-meeting').value = m.meeting_url || '';
-  document.getElementById('m-pdf').value = m.pdf_url || '';
-  document.getElementById('m-pdf-file').value = '';
-  document.getElementById('m-pdf-current').innerHTML = m.pdf_url
-    ? `<span>Archivo actual: <a href="${m.pdf_url}" target="_blank" style="color:var(--fo)">ver archivo</a> · Subí uno nuevo para reemplazarlo</span>`
-    : '';
-  document.getElementById('m-camp').value = m.campaign;
-  document.getElementById('m-order').value = m.sort_order || 1;
-  document.getElementById('m-days').value = m.days_limit || 7;
-  document.getElementById('m-required').checked = m.is_required !== false;
-  document.getElementById('m-attempts').value = m.max_attempts || 3;
-  document.getElementById('mmod-title').textContent = 'Editar módulo';
-  document.getElementById('btn-del-mod').style.display = 'inline-block';
-  renderQList(); document.getElementById('modal-mod').classList.add('open');
-}
-
-function renderQList() {
-  const opts = ['a', 'b', 'c', 'd'];
-  let h = '';
-  editQs.forEach((q, i) => {
-    const qType = q.type || 'multi';
-    h += `<div class="qe-block"><div style="font-size:11px;color:var(--fg);font-weight:500;margin-bottom:7px">Pregunta ${i + 1}</div>
-      <input type="text" value="${q.question_text}" placeholder="Texto de la pregunta" oninput="editQs[${i}].question_text=this.value" style="margin-bottom:8px"/>`;
-    h += `<div style="margin-bottom:6px;display:flex;gap:8px;align-items:center">
-      <span style="font-size:11px;color:var(--fg)">Tipo:</span>
-      <select onchange="editQs[${i}].type=this.value;renderQList()" style="padding:4px 8px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:12px;font-family:inherit">
-        <option value="multi" ${qType==='multi'?'selected':''}>Múltiple opción</option>
-        <option value="tf" ${qType==='tf'?'selected':''}>Verdadero/Falso</option>
-      </select>
-    </div>`;
-    if (qType === 'tf') {
-      q.option_a = 'Verdadero'; q.option_b = 'Falso';
-      h += `<div class="opt-row">
-        <input type="radio" name="cr${i}" ${q.correct_option==='a'?'checked':''} onchange="editQs[${i}].correct_option='a'" title="Respuesta correcta">
-        <input type="text" value="Verdadero" readonly style="background:var(--fgb)"/>
-      </div>
-      <div class="opt-row">
-        <input type="radio" name="cr${i}" ${q.correct_option==='b'?'checked':''} onchange="editQs[${i}].correct_option='b'" title="Respuesta correcta">
-        <input type="text" value="Falso" readonly style="background:var(--fgb)"/>
-      </div>`;
-    } else {
-      opts.forEach((opt, j) => {
-        const labels = ['A', 'B', 'C', 'D'];
-        h += `<div class="opt-row">
-          <input type="radio" name="cr${i}" ${q.correct_option === opt ? 'checked' : ''} onchange="editQs[${i}].correct_option='${opt}'" title="Respuesta correcta">
-          <input type="text" value="${q['option_' + opt] || ''}" placeholder="Opción ${labels[j]}" oninput="editQs[${i}]['option_${opt}']=this.value"/>
-        </div>`;
-      });
-    }
-    h += `<div class="qe-hint">● = respuesta correcta</div>
-      <textarea class="exp-inp" placeholder="Explicación si se equivoca (opcional)" oninput="editQs[${i}].explanation=this.value">${q.explanation || ''}</textarea>
-      ${editQs.length > 1 ? `<button class="add-q" onclick="removeQ(${i})" style="color:var(--frd);margin-top:5px">Eliminar pregunta</button>` : ''}
-    </div>`;
-  });
-  document.getElementById('q-list').innerHTML = h;
-}
-
-function addQ() { editQs.push(makeQ()); renderQList(); }
-function removeQ(i) { editQs.splice(i, 1); renderQList(); }
-
-async function saveModule() {
-  const title = document.getElementById('m-title').value.trim();
-  if (!title) { alert('El título es obligatorio'); return; }
-  // Upload file if selected
-  let pdf_url = document.getElementById('m-pdf').value.trim();
-  const pdfFile = document.getElementById('m-pdf-file').files[0];
-  if (pdfFile) {
-    const safeName = pdfFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const path = `materials/${Date.now()}_${safeName}`;
-    // Ensure bucket exists (ignore error if already exists)
-    await sb.storage.createBucket('materials', { public: true }).catch(() => {});
-    const { error: upErr } = await sb.storage.from('materials').upload(path, pdfFile, { upsert: true });
-    if (upErr) { alert('Error al subir el archivo: ' + upErr.message); return; }
-    const { data: urlData } = sb.storage.from('materials').getPublicUrl(path);
-    pdf_url = urlData.publicUrl;
-  }
-  const modData = { title, description: document.getElementById('m-desc').value.trim(), campaign: document.getElementById('m-camp').value, video_url: document.getElementById('m-video').value.trim(), meeting_url: document.getElementById('m-meeting').value.trim(), pdf_url, sort_order: parseInt(document.getElementById('m-order').value)||1, days_limit: parseInt(document.getElementById('m-days').value)||7, is_required: document.getElementById('m-required').checked, max_attempts: parseInt(document.getElementById('m-attempts').value)||3 };
-  let modId = S.editModId;
-  if (modId) {
-    await sb.from('modules').update(modData).eq('id', modId);
-    await sb.from('questions').delete().eq('module_id', modId);
-  } else {
-    const { data } = await sb.from('modules').insert(modData).select().single();
-    modId = data.id;
-  }
-  const validQs = editQs.filter(q => q.question_text).map(q => ({ ...q, id: undefined, module_id: modId }));
-  if (validQs.length) await sb.from('questions').insert(validQs);
-  // Log the change
-  const action = S.editModId ? 'Edicion' : 'Creacion';
-  const mod2 = await sb.from('modules').select('title').eq('id', modId).single();
-  await sb.from('module_logs').insert({ module_id: modId, user_id: S.user.id, action, details: `${action} del modulo: ${mod2.data?.title}` });
-  closeModal('modal-mod'); renderMods();
-}
-
-async function deleteModule() {
-  if (!confirm('¿Eliminar este módulo y todas sus preguntas?')) return;
-  await sb.from('questions').delete().eq('module_id', S.editModId);
-  await sb.from('modules').delete().eq('id', S.editModId);
-  closeModal('modal-mod'); renderMods();
-}
-
-// ============================================================
-// MODALES — USUARIOS
-// ============================================================
-function openNewUsr() {
-  S.editUsrId = null;
-  ['u-name', 'u-user', 'u-pass'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('u-camp').value = 'Edesur';
-  document.getElementById('u-role').value = 'col';
-  document.getElementById('musr-title').textContent = 'Nuevo colaborador';
-  document.getElementById('btn-del-usr').style.display = 'none';
-  document.getElementById('u-edit-fields').classList.add('hidden');
-  document.getElementById('u-pass').closest('.fl').classList.remove('hidden');
-  document.getElementById('modal-usr').classList.add('open');
-}
-
-function openEditUsr(id, name, username, campaign, role) {
-  S.editUsrId = id;
-  document.getElementById('u-name').value = name;
-  document.getElementById('u-user').value = username;
-  document.getElementById('u-pass').value = '';
-  document.getElementById('u-camp').value = campaign;
-  document.getElementById('u-role').value = role || 'col';
-  document.getElementById('musr-title').textContent = 'Editar colaborador';
-  document.getElementById('btn-del-usr').style.display = 'inline-block';
-  document.getElementById('u-edit-fields').classList.remove('hidden');
-  document.getElementById('u-pass').closest('.fl').classList.add('hidden');
-  document.getElementById('u-newpass').value = '';
-  document.getElementById('modal-usr').classList.add('open');
-}
-
-async function saveUser() {
-  const name = document.getElementById('u-name').value.trim();
-  const username = document.getElementById('u-user').value.trim();
-  const camp = document.getElementById('u-camp').value;
-  if (!name || !username) { alert('Nombre y usuario son obligatorios'); return; }
-  const role = document.getElementById('u-role').value;
-  if (S.editUsrId) {
-    const upd = { full_name: name, username, campaign: camp, role };
-    const newpass = document.getElementById('u-newpass').value.trim();
-    if (newpass) upd.password = newpass;
-    await sb.from('users').update(upd).eq('id', S.editUsrId);
-  } else {
-    const pass = document.getElementById('u-pass').value.trim();
-    if (!pass) { alert('La contraseña es obligatoria'); return; }
-    await sb.from('users').insert({ full_name: name, username, password: pass, campaign: camp, role });
-    // Auto-asignar módulos obligatorios de su campaña
-    const { data: newUser } = await sb.from('users').select('id').eq('username', username).single();
-    if (newUser) {
-      const { data: campMods } = await sb.from('modules')
-        .select('id')
-        .or(`campaign.eq.${camp},campaign.eq.General`)
-        .eq('is_required', true);
-      if (campMods?.length) {
-        const assignments = campMods.map(m => ({ user_id: newUser.id, module_id: m.id }));
-        await sb.from('module_assignments').upsert(assignments, { onConflict: 'user_id,module_id' });
-      }
-      // Log onboarding
-      await sb.from('module_logs').insert({
-        user_id: newUser.id,
-        action: 'Onboarding',
-        details: `Colaborador creado y módulos obligatorios asignados automáticamente (campaña: ${camp})`
-      });
-    }
-  }
-  closeModal('modal-usr'); renderUsrs();
-}
-
-async function deleteUser() {
-  if (!confirm('¿Eliminar este colaborador?')) return;
-  await sb.from('users').delete().eq('id', S.editUsrId);
-  closeModal('modal-usr'); renderUsrs();
-}
-
-
-
-
-// ============================================================
-// IMPORTAR COLABORADORES DESDE EXCEL
-// ============================================================
-function openImportModal() {
-  const existing = document.getElementById('modal-import');
-  if (existing) { existing.classList.add('open'); return; }
-  const modal = document.createElement('div');
-  modal.id = 'modal-import';
-  modal.className = 'modal-bg open';
-  modal.innerHTML = `<div class="modal" style="max-width:500px">
-    <div class="modal-hdr">
-      <span class="modal-title">Importar colaboradores desde Excel</span>
-      <button class="modal-close" onclick="document.getElementById('modal-import').classList.remove('open')">x</button>
-    </div>
-    <div class="modal-body">
-      <div style="background:var(--fbll);border-radius:var(--fr);padding:12px 14px;margin-bottom:16px;font-size:12px;color:#1E40AF">
-        El archivo Excel debe tener estas columnas en orden:<br>
-        <strong>Nombre completo | Usuario | Contrasena | Campana</strong><br>
-        La primera fila puede ser encabezado (se ignora automaticamente).
-      </div>
-      <div class="fl">
-        <label>Seleccionar archivo Excel (.xlsx o .csv)</label>
-        <input type="file" id="import-file" accept=".xlsx,.xls,.csv" style="padding:8px"/>
-      </div>
-      <div id="import-preview" style="display:none">
-        <div style="font-size:12px;font-weight:500;color:var(--fn);margin-bottom:8px" id="import-preview-title"></div>
-        <div class="tbl-wrap" style="max-height:200px;overflow-y:auto">
-          <table id="import-table"><thead><tr><th>Nombre</th><th>Usuario</th><th>Campana</th></tr></thead><tbody id="import-tbody"></tbody></table>
-        </div>
-      </div>
-      <div id="import-err" style="display:none;color:var(--frd);font-size:12px;margin-top:8px"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-p btn-sm" onclick="processImport()" style="flex:1">Importar colaboradores</button>
-      <button class="btn-s btn-sm" onclick="document.getElementById('modal-import').classList.remove('open')">Cancelar</button>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-  document.getElementById('import-file').addEventListener('change', previewImport);
-}
-
-let importData = [];
-
-function previewImport(e) {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(ev) {
-    try {
-      let rows = [];
-      if (file.name.endsWith('.csv')) {
-        const text = ev.target.result;
-        rows = text.split('\n').map(r => r.split(',').map(c => c.trim().replace(/^"|"$/g,'')));
-      } else {
-        // Basic XLSX parsing - read as text and split by common delimiters
-        const text = new TextDecoder('utf-8', {fatal:false}).decode(new Uint8Array(ev.target.result));
-        // Try to extract readable data
-        const matches = text.match(/[\w\s@.áéíóúñÁÉÍÓÚÑ]{2,50}/g) || [];
-        document.getElementById('import-err').style.display='block';
-        document.getElementById('import-err').textContent='Para archivos Excel, guarda primero como CSV (Archivo → Guardar como → CSV). Los CSV se importan directamente.';
-        return;
-      }
-      // Skip header if first row looks like headers
-      const start = rows[0]?.[0]?.toLowerCase().includes('nombre') || rows[0]?.[0]?.toLowerCase().includes('name') ? 1 : 0;
-      importData = rows.slice(start).filter(r => r[0] && r[1] && r[2]).map(r => ({
-        full_name: r[0], username: r[1], password: r[2] || '1234', campaign: r[3] || 'General', role: 'col'
-      }));
-      const tbody = document.getElementById('import-tbody');
-      tbody.innerHTML = importData.map(d => `<tr><td>${d.full_name}</td><td>${d.username}</td><td>${d.campaign}</td></tr>`).join('');
-      document.getElementById('import-preview-title').textContent = `${importData.length} colaborador(es) listos para importar`;
-      document.getElementById('import-preview').style.display = 'block';
-      document.getElementById('import-err').style.display = 'none';
-    } catch(err) {
-      document.getElementById('import-err').style.display='block';
-      document.getElementById('import-err').textContent='Error al leer el archivo. Usa formato CSV.';
-    }
-  };
-  if (file.name.endsWith('.csv')) reader.readAsText(file, 'UTF-8');
-  else reader.readAsArrayBuffer(file);
-}
-
-async function processImport() {
-  if (!importData.length) { alert('Primero carga un archivo valido'); return; }
-  let ok = 0, errors = 0;
-  for (const d of importData) {
-    const { error } = await sb.from('users').insert(d);
-    if (error) errors++; else ok++;
-  }
-  document.getElementById('modal-import').classList.remove('open');
-  alert(`Importacion completada: ${ok} creados, ${errors} errores (usuarios duplicados se omiten).`);
-  loadSearchCache();
-  renderUsrs();
-}
-
-// ============================================================
-// ASIGNACIONES MANUALES
-// ============================================================
-async function renderAsign() {
-  loading();
-  const [{ data: users }, { data: mods }, { data: assigns }] = await Promise.all([
-    sb.from('users').select('*').eq('role','col').order('full_name'),
-    sb.from('modules').select('*').order('campaign').order('sort_order'),
-    sb.from('module_assignments').select('*')
-  ]);
-
-  let h = `<div style="background:var(--fbll);border-radius:var(--fr);padding:12px 16px;margin-bottom:20px;font-size:13px;color:#1E40AF">
-    Las asignaciones manuales agregan modulos adicionales a un colaborador por fuera de los de su campana.
-  </div>`;
-
-  h += `<div class="section-hdr"><span class="section-title">Asignar modulo a colaborador</span></div>`;
-  h += `<div style="background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr);margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
-    <div class="fl" style="margin:0"><label>Colaborador</label>
-      <select id="asign-user">${(users||[]).map(u=>`<option value="${u.id}">${u.full_name} (${u.campaign})</option>`).join('')}</select>
-    </div>
-    <div class="fl" style="margin:0"><label>Modulo</label>
-      <select id="asign-mod">${(mods||[]).map(m=>`<option value="${m.id}">[${m.campaign}] ${m.title}</option>`).join('')}</select>
-    </div>
-    <button class="btn-p btn-sm" onclick="createAsign()" style="height:38px">Asignar</button>
-  </div>`;
-
-  h += `<div class="section-hdr"><span class="section-title">Asignaciones activas (${(assigns||[]).length})</span></div>`;
-  if (!(assigns||[]).length) {
-    h += `<div style="text-align:center;padding:40px;background:var(--fw);border-radius:var(--frlg);border:1px solid var(--fbr);color:var(--fg)">Sin asignaciones manuales todavia</div>`;
-  } else {
-    h += `<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Modulo</th><th>Campana modulo</th><th>Fecha asignacion</th><th></th></tr></thead><tbody>`;
-    (assigns||[]).forEach(a => {
-      const u = users?.find(x=>x.id===a.user_id);
-      const m = mods?.find(x=>x.id===a.module_id);
-      h += `<tr>
-        <td style="font-weight:500">${u?.full_name||'—'}</td>
-        <td>${m?.title||'—'}</td>
-        <td>${m?.campaign||'—'}</td>
-        <td style="color:var(--fg)">${a.created_at?.slice(0,10)||'—'}</td>
-        <td><button class="btn-danger btn-sm" onclick="deleteAsign('${a.id}')">Quitar</button></td>
-      </tr>`;
-    });
-    h += `</tbody></table></div>`;
-  }
-  document.getElementById('page').innerHTML = h;
-}
-
-async function createAsign() {
-  const uid = document.getElementById('asign-user').value;
-  const mid = document.getElementById('asign-mod').value;
-  const { error } = await sb.from('module_assignments').insert({ user_id: uid, module_id: mid, assigned_by: S.user.id });
-  if (error) { alert('Error: puede que esta asignacion ya exista'); return; }
-  renderAsign();
-}
-
-async function deleteAsign(id) {
-  if (!confirm('Quitar esta asignacion?')) return;
-  await sb.from('module_assignments').delete().eq('id', id);
-  renderAsign();
-}
-
-// ============================================================
-// HISTORIAL DE CAMBIOS
-// ============================================================
-async function renderLogs() {
-  loading();
-  const { data: logs } = await sb.from('module_logs').select('*').order('created_at', {ascending:false}).limit(100);
-  const uids = [...new Set((logs||[]).filter(l=>l.user_id).map(l=>l.user_id))];
-  const mids = [...new Set((logs||[]).filter(l=>l.module_id).map(l=>l.module_id))];
-  const [{ data: users }, { data: mods }] = await Promise.all([
-    uids.length ? sb.from('users').select('id,full_name').in('id',uids) : {data:[]},
-    mids.length ? sb.from('modules').select('id,title').in('id',mids) : {data:[]}
-  ]);
-
-  if (!(logs||[]).length) {
-    document.getElementById('page').innerHTML = `<div style="text-align:center;padding:60px;color:var(--fg)">Sin cambios registrados todavia. Los cambios se registran cuando se crea o edita un modulo.</div>`;
-    return;
-  }
-
-  let h = `<div class="tbl-wrap"><table><thead><tr><th>Fecha</th><th>Accion</th><th>Modulo</th><th>Realizado por</th><th>Detalle</th></tr></thead><tbody>`;
-  (logs||[]).forEach(l => {
-    const u = users?.find(x=>x.id===l.user_id);
-    const m = mods?.find(x=>x.id===l.module_id);
-    const badgeColor = l.action==='Creacion'?'p-ok':l.action==='Eliminacion'?'p-fl':l.action==='Login'?'p-pe':'p-pe';
-    h += `<tr>
-      <td style="color:var(--fg);white-space:nowrap">${l.created_at?.slice(0,16).replace('T',' ')||'—'}</td>
-      <td><span class="pill ${badgeColor}">${l.action}</span></td>
-      <td style="font-weight:500">${m?.title||'—'}</td>
-      <td>${u?.full_name||'Sistema'}</td>
-      <td style="color:var(--fg);font-size:12px">${l.details||'—'}</td>
-    </tr>`;
-  });
-  h += `</tbody></table></div>`;
-  document.getElementById('page').innerHTML = h;
-}
-
-// ============================================================
-// DASHBOARD PERSONAL DEL COLABORADOR
-// ============================================================
-async function renderColDashboard(mods, comps, startDate) {
-  const today = new Date();
-  const daysSince = Math.floor((today - startDate)/(1000*60*60*24));
-  const genMods = (mods||[]).filter(m=>m.campaign==='General');
-  const campMods = (mods||[]).filter(m=>m.campaign!=='General');
-  const allMods = [...genMods, ...campMods];
-  const passed = allMods.filter(m=>comps?.some(c=>c.module_id===m.id&&c.passed)).length;
-  const pct = allMods.length ? Math.round(passed/allMods.length*100) : 0;
-  const vencidos = allMods.filter(m=>{
-    const p = comps?.some(c=>c.module_id===m.id&&c.passed);
-    return !p && (m.days_limit||7)-daysSince < 0;
-  }).length;
-  const proximos = allMods.filter(m=>{
-    const p = comps?.some(c=>c.module_id===m.id&&c.passed);
-    const left = (m.days_limit||7)-daysSince;
-    return !p && left>=0 && left<=3;
-  }).length;
-  const surveys = await sb.from('surveys').select('rating').eq('user_id',S.user.id);
-  const avgRating = surveys.data?.length ? (surveys.data.reduce((s,x)=>s+x.rating,0)/surveys.data.length).toFixed(1) : '—';
-
-  // Calcular puntos de gamificación
-  const passedComps = (comps||[]).filter(c=>c.passed);
-  let totalPoints = passedComps.length * 10;
-  passedComps.forEach(c => { if (c.score >= 90) totalPoints += 5; });
-
-  return `<div class="stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
-    <div class="sc"><div class="sc-icon" style="background:var(--fol)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--fo)"><path d="M12 20V10M18 20V4M6 20v-6"/></svg></div><div class="sc-val">${pct}%</div><div class="sc-lbl">Progreso general</div></div>
-    <div class="sc"><div class="sc-icon" style="background:var(--fgrl)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--fgr)"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div><div class="sc-val">${passed}</div><div class="sc-lbl">Modulos aprobados</div></div>
-    <div class="sc"><div class="sc-icon" style="background:var(--frdl)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--frd)"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/></svg></div><div class="sc-val">${vencidos}</div><div class="sc-lbl">Vencidos</div></div>
-    <div class="sc"><div class="sc-icon" style="background:#FEF3C7"><span style="font-size:16px">⚡</span></div><div class="sc-val">${totalPoints}</div><div class="sc-lbl">Mis puntos</div></div>
-  </div>`;
-}
-
-
-// ============================================================
-// BUSCADOR GLOBAL
-// ============================================================
-function showSearch(show) {
-  const wrap = document.getElementById('search-wrap');
-  if (wrap) wrap.style.display = show ? 'block' : 'none';
-}
-
-let searchCache = { users: [], modules: [] };
-
-async function loadSearchCache() {
-  const [{ data: users }, { data: mods }] = await Promise.all([
-    sb.from('users').select('id,full_name,username,campaign').eq('role','col'),
-    sb.from('modules').select('id,title,description,campaign')
-  ]);
-  searchCache.users = users || [];
-  searchCache.modules = mods || [];
-}
-
-function doSearch(q) {
-  const res = document.getElementById('search-results');
-  if (!q || q.length < 2) { res.style.display = 'none'; return; }
-  q = q.toLowerCase();
-  const matchUsers = searchCache.users.filter(u =>
-    u.full_name.toLowerCase().includes(q) || u.username.toLowerCase().includes(q) || u.campaign.toLowerCase().includes(q)
-  ).slice(0,5);
-  const matchMods = searchCache.modules.filter(m =>
-    m.title.toLowerCase().includes(q) || (m.description||'').toLowerCase().includes(q) || m.campaign.toLowerCase().includes(q)
-  ).slice(0,5);
-
-  let h = '';
-  if (matchUsers.length) {
-    h += `<div style="padding:8px 12px;font-size:10px;color:var(--fg);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--fbr)">Colaboradores</div>`;
-    matchUsers.forEach(u => {
-      h += `<div onclick="openProfile('${u.id}','${u.full_name}');closeSearch()" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--fbr)" onmouseover="this.style.background='var(--fgb)'" onmouseout="this.style.background=''">
-        <div style="font-weight:500;color:var(--fn)">${u.full_name}</div>
-        <div style="font-size:11px;color:var(--fg)">${u.campaign} · @${u.username}</div>
-      </div>`;
-    });
-  }
-  if (matchMods.length) {
-    h += `<div style="padding:8px 12px;font-size:10px;color:var(--fg);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--fbr)">Modulos</div>`;
-    matchMods.forEach(m => {
-      h += `<div onclick="aSection('mods');closeSearch()" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--fbr)" onmouseover="this.style.background='var(--fgb)'" onmouseout="this.style.background=''">
-        <div style="font-weight:500;color:var(--fn)">${m.title}</div>
-        <div style="font-size:11px;color:var(--fg)">${m.campaign}</div>
-      </div>`;
-    });
-  }
-  if (!h) h = `<div style="padding:14px;text-align:center;font-size:13px;color:var(--fg)">Sin resultados</div>`;
-  res.innerHTML = h;
-  res.style.display = 'block';
-}
-
-function closeSearch() {
-  document.getElementById('global-search').value = '';
-  document.getElementById('search-results').style.display = 'none';
-}
-
-// ============================================================
-// NOTIFICACIONES DE MODULOS VENCIDOS AL INGRESAR
-// ============================================================
-async function checkVencidos() {
-  const { data: mods } = await sb.from('modules').select('*').or(`campaign.eq.${S.user.campaign},campaign.eq.General`);
-  const { data: comps } = await sb.from('completions').select('*').eq('user_id', S.user.id);
-  const startDate = S.user.start_date ? new Date(S.user.start_date) : new Date();
-  const today = new Date();
-  const daysSince = Math.floor((today - startDate) / (1000*60*60*24));
-
-  const vencidos = (mods||[]).filter(m => {
-    const passed = comps?.some(c => c.module_id === m.id && c.passed);
-    const dl = m.days_limit || 7;
-    return !passed && daysSince > dl;
-  });
-
-  const urgentes = (mods||[]).filter(m => {
-    const passed = comps?.some(c => c.module_id === m.id && c.passed);
-    const dl = m.days_limit || 7;
-    const left = dl - daysSince;
-    return !passed && left >= 0 && left <= 2;
-  });
-
-  const page = document.getElementById('page');
-  let banner = '';
-  if (vencidos.length > 0) {
-    banner += `<div style="background:var(--frdl);border:1px solid #FECACA;border-radius:var(--fr);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="var(--frd)"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/></svg>
-      <div><div style="font-size:13px;font-weight:500;color:#991B1B">Tenes ${vencidos.length} modulo(s) vencido(s)</div>
-      <div style="font-size:12px;color:#B91C1C">${vencidos.map(m=>m.title).join(', ')}</div></div>
-    </div>`;
-  }
-  if (urgentes.length > 0) {
-    banner += `<div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:var(--fr);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="#D97706"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/></svg>
-      <div><div style="font-size:13px;font-weight:500;color:#92400E">Tenes ${urgentes.length} modulo(s) por vencer</div>
-      <div style="font-size:12px;color:#B45309">${urgentes.map(m=>m.title).join(', ')}</div></div>
-    </div>`;
-  }
-  if (banner) {
-    page.insertAdjacentHTML('afterbegin', banner);
-  }
-}
-
-// ============================================================
-// PANEL DE MODULOS VENCIDOS — ADMIN
-// ============================================================
-async function renderVenc() {
-  loading();
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
-    sb.from('users').select('*').eq('role','col'),
-    sb.from('modules').select('*'),
-    sb.from('completions').select('*')
-  ]);
-
-  const today = new Date();
-  const vencList = [];
-
-  (users||[]).forEach(u => {
-    const startDate = u.start_date ? new Date(u.start_date) : new Date();
-    const daysSince = Math.floor((today - startDate) / (1000*60*60*24));
-    const userMods = (mods||[]).filter(m => m.campaign === u.campaign || m.campaign === 'General');
-    userMods.forEach(m => {
-      const passed = comps?.some(c => c.user_id===u.id && c.module_id===m.id && c.passed);
-      const attempted = comps?.some(c => c.user_id===u.id && c.module_id===m.id);
-      const dl = m.days_limit || 7;
-      const daysLeft = dl - daysSince;
-      if (!passed && daysLeft < 0) {
-        vencList.push({ user: u, mod: m, daysOverdue: Math.abs(daysLeft), attempted });
-      }
-    });
-  });
-
-  // Stats
-  const uniqueUsers = [...new Set(vencList.map(v=>v.user.id))].length;
-  const uniqueMods = [...new Set(vencList.map(v=>v.mod.id))].length;
-  const notAttempted = vencList.filter(v=>!v.attempted).length;
-
-  let h = `<div class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px">
-    <div class="sc"><div class="sc-icon" style="background:var(--frdl)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--frd)"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2m9-10a4 4 0 100-8 4 4 0 000 8z"/></svg></div><div class="sc-val">${uniqueUsers}</div><div class="sc-lbl">Colaboradores con vencidos</div></div>
-    <div class="sc"><div class="sc-icon" style="background:#FEF3C7"><svg width="18" height="18" viewBox="0 0 24 24" fill="#D97706"><path d="M12 2L2 7l10 5 10-5zm0 10l-10-5v9l10 5 10-5v-9z"/></svg></div><div class="sc-val">${vencList.length}</div><div class="sc-lbl">Total vencimientos</div></div>
-    <div class="sc"><div class="sc-icon" style="background:var(--frdl)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--frd)"><path d="M18 6L6 18M6 6l12 12"/></svg></div><div class="sc-val">${notAttempted}</div><div class="sc-lbl">Sin ningun intento</div></div>
-  </div>`;
-
-  if (vencList.length === 0) {
-    h += `<div style="text-align:center;padding:60px;background:var(--fw);border-radius:var(--frlg);border:1px solid var(--fbr)">
-      <div style="font-size:32px;margin-bottom:12px">✅</div>
-      <div style="font-size:15px;font-weight:500;color:var(--fn)">Sin modulos vencidos</div>
-      <div style="font-size:13px;color:var(--fg);margin-top:4px">Todos los colaboradores estan al dia</div>
-    </div>`;
-  } else {
-    h += `<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Campana</th><th>Modulo</th><th>Dias de retraso</th><th>Estado</th><th></th></tr></thead><tbody>`;
-    vencList.sort((a,b) => b.daysOverdue - a.daysOverdue).forEach(v => {
-      h += `<tr>
-        <td style="font-weight:500;cursor:pointer;color:var(--fbl)" onclick="openProfile('${v.user.id}','${v.user.full_name}')">${v.user.full_name}</td>
-        <td>${v.user.campaign}</td>
-        <td>${v.mod.title}</td>
-        <td><span style="color:var(--frd);font-weight:500">${v.daysOverdue} dia(s)</span></td>
-        <td><span class="pill ${v.attempted?'p-pe':'p-fl'}">${v.attempted?'Intentado':'Sin intentar'}</span></td>
-        <td><button class="btn-s btn-sm" onclick="openProfile('${v.user.id}','${v.user.full_name}')">Ver perfil</button></td>
-      </tr>`;
-    });
-    h += `</tbody></table></div>`;
-    h += `<div style="margin-top:14px"><button class="btn-s btn-sm" onclick="exportVencCSV()">Exportar a CSV</button></div>`;
-  }
-
-  document.getElementById('page').innerHTML = h;
-}
-
-async function exportVencCSV() {
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
-    sb.from('users').select('*').eq('role','col'),
-    sb.from('modules').select('*'),
-    sb.from('completions').select('*')
-  ]);
-  const today = new Date();
-  const rows = [['Colaborador','Campana','Modulo','Dias retraso','Estado']];
-  (users||[]).forEach(u => {
-    const startDate = u.start_date ? new Date(u.start_date) : new Date();
-    const daysSince = Math.floor((today - startDate)/(1000*60*60*24));
-    (mods||[]).filter(m=>m.campaign===u.campaign||m.campaign==='General').forEach(m => {
-      const passed = comps?.some(c=>c.user_id===u.id&&c.module_id===m.id&&c.passed);
-      const attempted = comps?.some(c=>c.user_id===u.id&&c.module_id===m.id);
-      const dl = m.days_limit||7;
-      const left = dl - daysSince;
-      if (!passed && left < 0) rows.push([u.full_name,u.campaign,m.title,Math.abs(left),attempted?'Intentado':'Sin intentar']);
-    });
-  });
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
-  a.download = `vencidos_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-}
-
-// ============================================================
-// EXPORTAR REPORTE POR CAMPANA A CSV
-// ============================================================
-async function exportRepCSV(camp) {
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
-    sb.from('users').select('*').eq('role','col').eq('campaign',camp),
-    sb.from('modules').select('*').or(`campaign.eq.${camp},campaign.eq.General`).order('sort_order'),
-    sb.from('completions').select('*')
-  ]);
-  const headers = ['Colaborador','Ingreso',...(mods||[]).map(m=>m.title),'Progreso %'];
-  const rows = [headers];
-  (users||[]).forEach(u => {
-    const uComps = (comps||[]).filter(c=>c.user_id===u.id);
-    const passed = uComps.filter(c=>c.passed).length;
-    const pct = mods?.length ? Math.round(passed/mods.length*100) : 0;
-    const row = [u.full_name, u.start_date||'—', ...(mods||[]).map(m=>{
-      const c = uComps.find(x=>x.module_id===m.id);
-      return c?.passed ? `Aprobado ${c.score}%` : c ? `Desaprobado ${c.score}%` : 'Pendiente';
-    }), pct+'%'];
-    rows.push(row);
-  });
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
-  a.download = `reporte_${camp}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-}
-
-
-// ============================================================
-// ENCUESTA DE SATISFACCION
-// ============================================================
-let surveyRating = 0;
-let surveyModuleId = null;
-
-function openSurvey(moduleId, moduleTitle) {
-  surveyModuleId = moduleId;
-  surveyRating = 0;
-  document.getElementById('survey-mod-title').textContent = moduleTitle;
-  document.getElementById('survey-comment').value = '';
-  document.querySelectorAll('.star-btn').forEach(b => b.textContent = '☆');
-  document.getElementById('modal-survey').classList.add('open');
-}
-
-function setStar(n) {
-  surveyRating = n;
-  document.querySelectorAll('.star-btn').forEach(b => {
-    b.textContent = parseInt(b.dataset.v) <= n ? '★' : '☆';
-    b.style.color = parseInt(b.dataset.v) <= n ? '#FF6B35' : '#6B7280';
-  });
-}
-
-async function submitSurvey() {
-  if (!surveyRating) { alert('Selecciona una calificacion'); return; }
-  await sb.from('surveys').insert({
-    user_id: S.user.id,
-    module_id: surveyModuleId,
-    rating: surveyRating,
-    comment: document.getElementById('survey-comment').value.trim()
-  });
-  closeModal('modal-survey');
-}
-
-// ============================================================
-// PERFIL DEL COLABORADOR
-// ============================================================
-async function openProfile(userId, userName) {
-  document.getElementById('profile-title').textContent = 'Perfil de ' + userName;
-  document.getElementById('modal-profile').classList.add('open');
-  const [{ data: comps }, { data: mods }, { data: surveys }] = await Promise.all([
-    sb.from('completions').select('*').eq('user_id', userId).order('created_at', {ascending:false}),
-    sb.from('modules').select('id,title,campaign,days_limit,max_attempts'),
-    sb.from('surveys').select('*').eq('user_id', userId)
-  ]);
-  const user = await sb.from('users').select('*').eq('id', userId).single();
-  const u = user.data;
-  const startDate = u?.start_date ? new Date(u.start_date).toLocaleDateString('es-AR') : 'No definida';
-  const passed = (comps||[]).filter(c=>c.passed).length;
-  const total = (mods||[]).length;
-  const pct = total ? Math.round(passed/total*100) : 0;
-
-  let h = `<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--fbr)">
-    <div style="width:48px;height:48px;border-radius:50%;background:var(--fol);color:var(--fo);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600">${userName.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase()}</div>
-    <div>
-      <div style="font-size:16px;font-weight:500;color:var(--fn)">${userName}</div>
-      <div style="font-size:12px;color:var(--fg)">${u?.campaign} · Ingreso: ${startDate}</div>
-    </div>
-    <div style="margin-left:auto;text-align:center">
-      <div style="font-size:24px;font-weight:600;color:var(--fo)">${pct}%</div>
-      <div style="font-size:11px;color:var(--fg)">completado</div>
-    </div>
-  </div>`;
-
-  h += `<div style="font-size:13px;font-weight:500;color:var(--fn);margin-bottom:10px">Historial de evaluaciones</div>`;
-  h += `<div class="tbl-wrap"><table><thead><tr><th>Modulo</th><th>Puntaje</th><th>Estado</th><th>Intentos</th><th>Fecha</th></tr></thead><tbody>`;
-
-  const modsById = {};
-  (mods||[]).forEach(m => modsById[m.id] = m);
-
-  // Group by module to show attempts
-  const byMod = {};
-  (comps||[]).forEach(c => {
-    if (!byMod[c.module_id]) byMod[c.module_id] = [];
-    byMod[c.module_id].push(c);
-  });
-
-  Object.entries(byMod).forEach(([mid, attempts]) => {
-    const m = modsById[mid];
-    const best = attempts.reduce((b,a) => a.score > b.score ? a : b, attempts[0]);
-    const maxAtt = m?.max_attempts || 3;
-    const attLeft = maxAtt - attempts.length;
-    h += `<tr>
-      <td style="font-weight:500">${m?.title||'—'}</td>
-      <td>${best.score}%</td>
-      <td><span class="pill ${best.passed?'p-ok':'p-fl'}">${best.passed?'Aprobado':'Desaprobado'}</span></td>
-      <td style="text-align:center;color:${attLeft<=0&&!best.passed?'var(--frd)':'var(--fg)'}">${attempts.length}/${maxAtt}</td>
-      <td style="color:var(--fg)">${best.created_at?.slice(0,10)||'—'}</td>
-    </tr>`;
-  });
-
-  if (Object.keys(byMod).length === 0) h += `<tr><td colspan="5" style="text-align:center;color:var(--fg);padding:20px">Sin evaluaciones aun</td></tr>`;
-  h += `</tbody></table></div>`;
-
-  if ((surveys||[]).length > 0) {
-    const avg = Math.round(surveys.reduce((s,x)=>s+x.rating,0)/surveys.length*10)/10;
-    h += `<div style="font-size:13px;font-weight:500;color:var(--fn);margin:16px 0 10px">Encuestas completadas · Promedio ${avg}/5</div>`;
-    (surveys||[]).forEach(sv => {
-      const stars = '★'.repeat(sv.rating) + '☆'.repeat(5-sv.rating);
-      h += `<div style="background:var(--fgb);border-radius:var(--fr);padding:10px 14px;margin-bottom:8px;border:1px solid var(--fbr)">
-        <div style="color:#FF6B35;font-size:14px">${stars}</div>
-        ${sv.comment?`<div style="font-size:12px;color:var(--fg);margin-top:4px">${sv.comment}</div>`:''}
-        <div style="font-size:11px;color:var(--fg);margin-top:4px">${sv.created_at?.slice(0,10)||''}</div>
-      </div>`;
-    });
-  }
-
-  // Calcular badges
-  const badges = [];
-  const passedCount = (comps||[]).filter(c=>c.passed).length;
-  if (passedCount >= 1) badges.push({icon:'🎯', name:'Primer módulo', desc:'Completaste tu primer módulo'});
-  if (passedCount >= 5) badges.push({icon:'⭐', name:'5 módulos', desc:'Completaste 5 módulos'});
-  if (passedCount >= 10) badges.push({icon:'🏆', name:'10 módulos', desc:'Completaste 10 módulos'});
-  const perfectScores = (comps||[]).filter(c=>c.score===100).length;
-  if (perfectScores >= 1) badges.push({icon:'💎', name:'Perfecto', desc:'Obtuviste 100% en un módulo'});
-  const avgScore = passedCount ? Math.round((comps||[]).filter(c=>c.passed).reduce((s,c)=>s+c.score,0)/passedCount) : 0;
-  if (avgScore >= 90) badges.push({icon:'🌟', name:'Alto rendimiento', desc:'Promedio mayor al 90%'});
-
-  let badgeHtml = '';
-  if (badges.length) {
-    badgeHtml = `<div style="margin-top:16px">
-      <div style="font-size:13px;font-weight:500;color:var(--fn);margin-bottom:10px">Logros obtenidos</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${badges.map(b => `<div style="background:var(--fol);border-radius:var(--fr);padding:8px 12px;text-align:center;min-width:80px">
-          <div style="font-size:24px">${b.icon}</div>
-          <div style="font-size:11px;font-weight:500;color:var(--fo);margin-top:4px">${b.name}</div>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  }
-  h += badgeHtml;
-
-  document.getElementById('profile-body').innerHTML = h;
-}
-
-// ============================================================
-// REPORTE POR CAMPANA
-// ============================================================
-async function renderRep() {
-  loading();
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
-    sb.from('users').select('id,campaign').eq('role','col'),
-    sb.from('modules').select('id,title,campaign'),
-    sb.from('completions').select('*')
-  ]);
-
-  const campaigns = [...new Set((users||[]).map(u=>u.campaign))].sort();
-  let h = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-bottom:24px">`;
-
-  campaigns.forEach(camp => {
-    const campUsers = (users||[]).filter(u=>u.campaign===camp);
-    const campMods = (mods||[]).filter(m=>m.campaign===camp||m.campaign==='General');
-    const totalPossible = campUsers.length * campMods.length;
-    const passed = (comps||[]).filter(c => {
-      const u = campUsers.find(x=>x.id===c.user_id);
-      const m = campMods.find(x=>x.id===c.module_id);
-      return u && m && c.passed;
-    }).length;
-    const pct = totalPossible ? Math.round(passed/totalPossible*100) : 0;
-    const META = 80;
-    const color = pct>=META?'var(--fgr)':pct>=50?'#F59E0B':'var(--frd)';
-    const metaBadge = pct>=META
-      ? `<span style="font-size:11px;background:var(--fgrl);color:#065F46;padding:2px 8px;border-radius:10px;font-weight:500">En meta</span>`
-      : `<span style="font-size:11px;background:var(--frdl);color:#7F1D1D;padding:2px 8px;border-radius:10px;font-weight:500">Por debajo de la meta</span>`;
-    h += `<div class="sc" style="cursor:pointer" onclick="renderRepDetail('${camp}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-        <span class="tag tag-gn">${camp}</span>
-        <span style="font-size:22px;font-weight:600;color:${color}">${pct}%</span>
-      </div>
-      <div style="margin-bottom:8px">${metaBadge}</div>
-      <div style="font-size:12px;color:var(--fg);margin-bottom:8px">${campUsers.length} colaboradores · ${campMods.length} modulos · Meta: ${META}%</div>
-      <div class="pbar"><div class="pfill" style="width:${pct}%;background:${color}"></div></div>
-      <div style="font-size:11px;color:var(--fg);margin-top:6px">Clic para ver detalle</div>
-      <button onclick="event.stopPropagation();exportRepCSV('${camp}')" class="btn-s btn-sm" style="margin-top:8px;width:100%">Exportar CSV</button>
-    </div>`;
-  });
-  h += `</div>`;
-
-  // Tabla resumen por modulo
-  h += `<div class="section-hdr"><span class="section-title">Aprobacion por modulo</span></div>`;
-  h += `<div class="tbl-wrap"><table><thead><tr><th>Modulo</th><th>Campana</th><th>Evaluaciones</th><th>Aprobados</th><th>Tasa</th></tr></thead><tbody>`;
-  (mods||[]).forEach(m => {
-    const modComps = (comps||[]).filter(c=>c.module_id===m.id);
-    const modPassed = modComps.filter(c=>c.passed).length;
-    const modPct = modComps.length ? Math.round(modPassed/modComps.length*100) : 0;
-    const color = modPct>=75?'p-ok':modPct>=50?'p-pe':'p-fl';
-    h += `<tr><td style="font-weight:500">${m.title}</td><td>${m.campaign}</td>
-      <td style="text-align:center">${modComps.length}</td>
-      <td style="text-align:center">${modPassed}</td>
-      <td><span class="pill ${color}">${modPct}%</span></td></tr>`;
-  });
-  h += `</tbody></table></div>`;
-
-  // Módulos obligatorios por campaña
-  const mandatoryMods = (mods||[]).filter(m=>m.is_required!==false);
-  const complianceCamps = [...new Set((users||[]).map(u=>u.campaign))].sort();
-  let compH = `<div class="section-hdr" style="margin-top:24px"><span class="section-title">Cumplimiento de módulos obligatorios</span></div>
-    <div class="tbl-wrap"><table><thead><tr><th>Campaña</th><th>Módulos obligatorios</th><th>Colaboradores</th><th>Cumplimiento total</th><th>Estado</th></tr></thead><tbody>`;
-  complianceCamps.forEach(camp => {
-    const campUsers = (users||[]).filter(u=>u.campaign===camp);
-    const campMandatory = mandatoryMods.filter(m=>m.campaign===camp||m.campaign==='General');
-    const total = campUsers.length * campMandatory.length;
-    const completed = (comps||[]).filter(c=>{
-      const u = campUsers.find(x=>x.id===c.user_id);
-      const m = campMandatory.find(x=>x.id===c.module_id);
-      return u && m && c.passed;
-    }).length;
-    const pct = total ? Math.round(completed/total*100) : 0;
-    const status = pct>=100 ? '<span class="pill p-ok">✓ Completo</span>' : pct>=80 ? '<span class="pill p-pe">En progreso</span>' : '<span class="pill p-fl">⚠ Bajo</span>';
-    compH += `<tr><td style="font-weight:500">${camp}</td><td style="text-align:center">${campMandatory.length}</td><td style="text-align:center">${campUsers.length}</td>
-      <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:6px;background:var(--fgl);border-radius:3px"><div style="width:${pct}%;height:100%;background:${pct>=80?'var(--fgr)':pct>=50?'var(--fo)':'var(--frd)'};border-radius:3px"></div></div><span style="font-size:11px;min-width:32px">${pct}%</span></div></td>
-      <td>${status}</td></tr>`;
-  });
-  compH += `</tbody></table></div>`;
-  h += compH;
-
-  document.getElementById('page').innerHTML = h;
-}
-
-async function renderRepDetail(camp) {
-  loading();
-  setTopbar(`Reporte - ${camp}`, 'Detalle por colaborador', `<button class="btn-s btn-sm" onclick="aSection('rep')">← Volver</button>`);
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
-    sb.from('users').select('*').eq('role','col').eq('campaign',camp),
-    sb.from('modules').select('*').or(`campaign.eq.${camp},campaign.eq.General`).order('sort_order'),
-    sb.from('completions').select('*')
-  ]);
-
-  let h = `<div class="tbl-wrap" style="overflow-x:auto"><table><thead><tr><th>Colaborador</th>`;
-  (mods||[]).forEach(m => { h += `<th style="min-width:120px">${m.title.slice(0,20)}...</th>`; });
-  h += `<th>Progreso</th></tr></thead><tbody>`;
-
-  (users||[]).forEach(u => {
-    const uComps = (comps||[]).filter(c=>c.user_id===u.id);
-    const passed = uComps.filter(c=>c.passed).length;
-    const pct = mods?.length ? Math.round(passed/mods.length*100) : 0;
-    h += `<tr><td style="font-weight:500;cursor:pointer;color:var(--fbl)" onclick="openProfile('${u.id}','${u.full_name}')">${u.full_name}</td>`;
-    (mods||[]).forEach(m => {
-      const comp = uComps.find(c=>c.module_id===m.id);
-      h += `<td style="text-align:center">${comp?.passed?'<span class="pill p-ok">'+comp.score+'%</span>':comp?'<span class="pill p-fl">'+comp.score+'%</span>':'<span style="color:var(--fg);font-size:12px">—</span>'}</td>`;
-    });
-    h += `<td><div style="display:flex;align-items:center;gap:8px"><div class="pbar" style="flex:1"><div class="pfill" style="width:${pct}%"></div></div><span style="font-size:12px;color:var(--fg);white-space:nowrap">${pct}%</span></div></td></tr>`;
-  });
-  h += `</tbody></table></div>`;
-
-  document.getElementById('page').innerHTML = h;
-}
-
-// ============================================================
-// ENCUESTAS — VISTA ADMIN
-// ============================================================
-async function renderSurv() {
-  loading();
-  const { data: surveys } = await sb.from('surveys').select('*').order('created_at',{ascending:false});
-  const uids = [...new Set((surveys||[]).map(s=>s.user_id))];
-  const mids = [...new Set((surveys||[]).map(s=>s.module_id))];
-  const [{ data: users }, { data: mods }] = await Promise.all([
-    uids.length ? sb.from('users').select('id,full_name').in('id',uids) : {data:[]},
-    mids.length ? sb.from('modules').select('id,title').in('id',mids) : {data:[]}
-  ]);
-
-  if (!(surveys||[]).length) {
-    document.getElementById('page').innerHTML = `<div style="text-align:center;padding:60px;color:var(--fg)">Todavia no hay encuestas completadas</div>`;
-    return;
-  }
-
-  const avg = Math.round(surveys.reduce((s,x)=>s+x.rating,0)/surveys.length*10)/10;
-  const dist = [1,2,3,4,5].map(n => ({n, c: surveys.filter(s=>s.rating===n).length}));
-
-  let h = `<div class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px">
-    <div class="sc"><div class="sc-icon" style="background:#FEF3C7"><span style="font-size:18px">⭐</span></div><div class="sc-val">${avg}</div><div class="sc-lbl">Promedio general</div></div>
-    <div class="sc"><div class="sc-icon" style="background:var(--fbll)"><svg width="18" height="18" viewBox="0 0 24 24" fill="var(--fbl)"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="sc-val">${surveys.length}</div><div class="sc-lbl">Total encuestas</div></div>
-    <div class="sc"><div class="sc-icon" style="background:var(--fgrl)"><span style="font-size:18px">✓</span></div><div class="sc-val">${surveys.filter(s=>s.rating>=4).length}</div><div class="sc-lbl">Calificaciones 4-5 estrellas</div></div>
-  </div>`;
-
-  h += `<div class="section-hdr"><span class="section-title">Distribucion de calificaciones</span></div>`;
-  h += `<div style="background:var(--fw);border-radius:var(--frlg);padding:20px;border:1px solid var(--fbr);margin-bottom:20px">`;
-  dist.reverse().forEach(d => {
-    const pct = Math.round(d.c/surveys.length*100);
-    h += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
-      <span style="font-size:13px;color:var(--fo);width:30px">${'★'.repeat(d.n)}</span>
-      <div class="pbar" style="flex:1"><div class="pfill" style="width:${pct}%"></div></div>
-      <span style="font-size:12px;color:var(--fg);width:40px;text-align:right">${d.c} (${pct}%)</span>
-    </div>`;
-  });
-  h += `</div>`;
-
-  h += `<div class="section-hdr"><span class="section-title">Comentarios recientes</span></div>`;
-  h += `<div class="tbl-wrap"><table><thead><tr><th>Colaborador</th><th>Modulo</th><th>Calificacion</th><th>Comentario</th><th>Fecha</th></tr></thead><tbody>`;
-  (surveys||[]).slice(0,20).forEach(s => {
-    const u = users?.find(x=>x.id===s.user_id);
-    const m = mods?.find(x=>x.id===s.module_id);
-    h += `<tr>
-      <td>${u?.full_name||'—'}</td>
-      <td>${m?.title||'—'}</td>
-      <td style="color:#FF6B35">${'★'.repeat(s.rating)}${'☆'.repeat(5-s.rating)}</td>
-      <td style="color:var(--fg);max-width:200px">${s.comment||'—'}</td>
-      <td style="color:var(--fg)">${s.created_at?.slice(0,10)||'—'}</td>
-    </tr>`;
-  });
-  h += `</tbody></table></div>`;
-
-  document.getElementById('page').innerHTML = h;
-}
-
-
-async function renderRank() {
-  loading();
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
-    sb.from('users').select('*').eq('role','col').order('campaign').order('full_name'),
-    sb.from('modules').select('id,campaign'),
-    sb.from('completions').select('user_id,module_id,passed,score')
-  ]);
-  const camps = [...new Set((users||[]).map(u=>u.campaign))].sort();
-  let h = '';
-  camps.forEach(camp => {
-    const campUsers = (users||[]).filter(u=>u.campaign===camp);
-    const campMods = (mods||[]).filter(m=>m.campaign===camp||m.campaign==='General');
-    const ranked = campUsers.map(u => {
-      const uComps = (comps||[]).filter(c=>c.user_id===u.id);
-      const passed = uComps.filter(c=>c.passed && campMods.find(m=>m.id===c.module_id)).length;
-      const pct = campMods.length ? Math.round(passed/campMods.length*100) : 0;
-      return { ...u, passed, total: campMods.length, pct };
-    }).sort((a,b) => b.pct - a.pct || b.passed - a.passed);
-
-    h += `<div style="margin-bottom:24px">
-      <div class="section-hdr"><span class="section-title">${camp}</span></div>
-      <div class="tbl-wrap"><table><thead><tr><th>#</th><th>Colaborador</th><th>Módulos aprobados</th><th>Progreso</th></tr></thead><tbody>`;
-    ranked.forEach((u, i) => {
-      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':`${i+1}`;
-      const barColor = u.pct>=80?'var(--fgr)':u.pct>=40?'var(--fo)':'var(--frd)';
-      h += `<tr>
-        <td style="font-size:16px;text-align:center;width:40px">${medal}</td>
-        <td style="font-weight:500">${u.full_name}</td>
-        <td style="text-align:center">${u.passed} / ${u.total}</td>
-        <td style="min-width:150px">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div style="flex:1;height:6px;background:var(--fgl);border-radius:3px">
-              <div style="width:${u.pct}%;height:100%;background:${barColor};border-radius:3px"></div>
-            </div>
-            <span style="font-size:11px;color:var(--fg);min-width:35px">${u.pct}%</span>
-          </div>
-        </td>
-      </tr>`;
-    });
-    h += `</tbody></table></div></div>`;
-  });
-  document.getElementById('page').innerHTML = h || '<div style="text-align:center;padding:60px;color:var(--fg)">No hay datos</div>';
-}
-
-// ============================================================
-// FORO / COMENTARIOS POR MÓDULO
-// ============================================================
-async function loadComments(moduleId) {
-  const { data: logs } = await sb.from('module_logs')
-    .select('*')
-    .eq('module_id', moduleId)
-    .in('action', ['Comentario', 'Respuesta'])
-    .order('created_at', { ascending: true });
-
-  const uids = [...new Set((logs||[]).map(l=>l.user_id))];
-  const { data: usersData } = uids.length ? await sb.from('users').select('id,full_name,role').in('id', uids) : { data: [] };
-
-  const box = document.getElementById('comments-box');
-  if (!box) return;
-  if (!logs?.length) { box.innerHTML = `<div style="font-size:13px;color:var(--fg);padding:8px 0">Aún no hay comentarios. ¡Sé el primero!</div>`; return; }
-
-  box.innerHTML = (logs||[]).map(l => {
-    const u = usersData?.find(x=>x.id===l.user_id);
-    const ini = (u?.full_name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-    const isReply = l.action === 'Respuesta';
-    const isAdmin = u?.role === 'adm' || u?.role === 'sup';
-    const canReply = (S.user.role === 'adm' || S.user.role === 'sup') && !isReply;
-    return `<div style="display:flex;gap:10px;margin-bottom:12px;padding:10px;background:${isReply?'var(--fol)':'var(--fgb)'};border-radius:var(--fr);${isReply?'margin-left:40px;border-left:3px solid var(--fo)':''}">
-      <div style="width:30px;height:30px;border-radius:50%;background:${isAdmin?'var(--fo)':'var(--fol)'};color:${isAdmin?'#fff':'var(--fo)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${ini}</div>
-      <div style="flex:1">
-        <div style="font-size:12px;font-weight:500;color:var(--fn)">${u?.full_name||'Usuario'} ${isAdmin?'<span style="font-size:10px;background:var(--fo);color:#fff;padding:1px 6px;border-radius:10px;margin-left:4px">Admin</span>':''} <span style="color:var(--fg);font-weight:400">· ${l.created_at?.slice(0,10)||''}</span></div>
-        <div style="font-size:13px;color:var(--fn);margin-top:3px">${l.details}</div>
-        ${canReply?`<button onclick="showReplyBox('${l.id}','${moduleId}')" style="font-size:11px;color:var(--fo);background:none;border:none;cursor:pointer;margin-top:4px;padding:0">↩ Responder</button>`:''}
-        <div id="reply-box-${l.id}" style="display:none;margin-top:8px;display:none">
-          <div style="display:flex;gap:6px">
-            <input type="text" id="reply-input-${l.id}" placeholder="Escribí tu respuesta..." style="flex:1;padding:7px 10px;border:1px solid var(--fbr);border-radius:var(--fr);font-size:13px;font-family:inherit"/>
-            <button class="btn-p btn-sm" onclick="postReply('${l.id}','${moduleId}')">Enviar</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function showReplyBox(logId, moduleId) {
-  const box = document.getElementById('reply-box-' + logId);
-  if (box) { box.style.display = box.style.display === 'none' ? 'block' : 'none'; }
-}
-
-async function postReply(logId, moduleId) {
-  const input = document.getElementById('reply-input-' + logId);
-  const text = input?.value?.trim();
-  if (!text) return;
-  await sb.from('module_logs').insert({ module_id: moduleId, user_id: S.user.id, action: 'Respuesta', details: text });
-  loadComments(moduleId);
-}
-
-async function postComment(moduleId) {
-  const input = document.getElementById('comment-input');
-  const text = input?.value?.trim();
-  if (!text) return;
-  await sb.from('module_logs').insert({ module_id: moduleId, user_id: S.user.id, action: 'Comentario', details: text });
-  input.value = '';
-  loadComments(moduleId);
-}
-
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-// ============================================================
-// NOTIFICACIONES
-// ============================================================
-let _notifs = [];
-
-async function loadNotifications() {
-  const readIds = JSON.parse(localStorage.getItem('mera-notif-read') || '[]');
-  _notifs = [];
-
-  if (S.user.role === 'col') {
-    // Módulos nuevos asignados en los últimos 7 días
-    const since = new Date(Date.now() - 7 * 86400000).toISOString();
-    const { data: newMods } = await sb.from('modules').select('id,title,created_at')
-      .or(`campaign.eq.${S.user.campaign},campaign.eq.General`)
-      .gte('created_at', since).order('created_at', { ascending: false });
-    (newMods || []).forEach(m => _notifs.push({
-      id: 'mod_' + m.id, icon: '📚', text: `Nuevo módulo disponible: <strong>${m.title}</strong>`,
-      time: m.created_at?.slice(0, 10), read: readIds.includes('mod_' + m.id)
-    }));
-
-    // Módulos próximos a vencer (≤3 días)
-    if (S.user.start_date) {
-      const { data: mods } = await sb.from('modules').select('id,title,days_limit')
-        .or(`campaign.eq.${S.user.campaign},campaign.eq.General`);
-      const { data: comps } = await sb.from('completions').select('module_id,passed').eq('user_id', S.user.id).eq('passed', true);
-      const passedIds = new Set((comps || []).map(c => c.module_id));
-      (mods || []).filter(m => !passedIds.has(m.id) && m.days_limit).forEach(m => {
-        const deadline = new Date(new Date(S.user.start_date).getTime() + m.days_limit * 86400000);
-        const diff = Math.ceil((deadline - new Date()) / 86400000);
-        if (diff <= 3 && diff >= 0) _notifs.push({
-          id: 'venc_' + m.id, icon: '⏰', text: `<strong>${m.title}</strong> vence en ${diff} día${diff !== 1 ? 's' : ''}`,
-          time: 'Hoy', read: readIds.includes('venc_' + m.id), urgent: true
-        });
-      });
-    }
-  } else {
-    // Admin/supervisor: colaboradores con módulos vencidos
-    const { data: logs } = await sb.from('module_logs').select('*').eq('action', 'Comentario')
-      .order('created_at', { ascending: false }).limit(10);
-    const uids = [...new Set((logs || []).map(l => l.user_id))];
-    const { data: users } = uids.length ? await sb.from('users').select('id,full_name').in('id', uids) : { data: [] };
-    (logs || []).forEach(l => {
-      const u = (users || []).find(x => x.id === l.user_id);
-      _notifs.push({
-        id: 'com_' + l.id, icon: '💬', text: `<strong>${u?.full_name || 'Alguien'}</strong> dejó un comentario`,
-        time: l.created_at?.slice(0, 10), read: readIds.includes('com_' + l.id)
-      });
-    });
-  }
-
-  renderNotifications();
-}
-
-function renderNotifications() {
-  const unread = _notifs.filter(n => !n.read).length;
-  const badge = document.getElementById('notif-badge');
-  if (badge) { badge.textContent = unread; badge.style.display = unread ? 'block' : 'none'; }
-
-  const list = document.getElementById('notif-list');
-  if (!list) return;
-  if (!_notifs.length) {
-    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--fg);font-size:13px">No hay notificaciones</div>`;
-    return;
-  }
-  list.innerHTML = _notifs.map(n => `
-    <div onclick="markRead('${n.id}')" style="padding:12px 16px;border-bottom:1px solid var(--fbr);cursor:pointer;background:${n.read ? 'transparent' : 'var(--fol)'};transition:background .1s" onmouseover="this.style.background='var(--fgl)'" onmouseout="this.style.background='${n.read ? 'transparent' : 'var(--fol)'}'">
-      <div style="display:flex;gap:10px;align-items:flex-start">
-        <span style="font-size:18px">${n.icon}</span>
-        <div style="flex:1">
-          <div style="font-size:13px;color:var(--fn);line-height:1.4">${n.text}</div>
-          <div style="font-size:11px;color:var(--fg);margin-top:3px">${n.time || ''}</div>
-        </div>
-        ${!n.read ? '<div style="width:7px;height:7px;border-radius:50%;background:var(--fo);margin-top:4px;flex-shrink:0"></div>' : ''}
-      </div>
-    </div>`).join('');
-}
-
-function toggleNotifPanel() {
-  const panel = document.getElementById('notif-panel');
-  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-}
-
-function markRead(id) {
-  const n = _notifs.find(x => x.id === id);
-  if (n) n.read = true;
-  const readIds = JSON.parse(localStorage.getItem('mera-notif-read') || '[]');
-  if (!readIds.includes(id)) readIds.push(id);
-  localStorage.setItem('mera-notif-read', JSON.stringify(readIds));
-  renderNotifications();
-}
-
-function markAllRead() {
-  _notifs.forEach(n => n.read = true);
-  const ids = _notifs.map(n => n.id);
-  localStorage.setItem('mera-notif-read', JSON.stringify(ids));
-  renderNotifications();
-}
-
-// Close notif panel on outside click
-document.addEventListener('click', e => {
-  const panel = document.getElementById('notif-panel');
-  const btn = document.getElementById('notif-btn');
-  if (panel && btn && !panel.contains(e.target) && !btn.contains(e.target)) {
-    panel.style.display = 'none';
-  }
-});
-
-function togglePw(inputId, btn) {
-  const inp = document.getElementById(inputId);
-  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
-  else { inp.type = 'password'; btn.textContent = '👁'; }
-}
-
-function toggleDark() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  document.getElementById('dark-toggle').textContent = isDark ? '🌙' : '☀️';
-  localStorage.setItem('mera-theme', isDark ? 'light' : 'dark');
-}
-// Apply saved theme on load
-(function() {
-  const t = localStorage.getItem('mera-theme');
-  if (t === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    // Button is not rendered yet at this point; will be set when buildShell runs
-  }
-})();
+// ─── EVENTS ─────────────────────────────────────────────────────────────────
+document.addEventListener('mousemove', e=>{ if(dragging) moveDrag(e.clientX,e.clientY); });
+document.addEventListener('mouseup',   e=>{ if(dragging) endDrag(e.clientX,e.clientY); });
+document.addEventListener('touchmove', e=>{ if(dragging){e.preventDefault();moveDrag(e.touches[0].clientX,e.touches[0].clientY);}},{passive:false});
+document.addEventListener('touchend',  e=>{ if(dragging){e.preventDefault();const t=e.changedTouches[0];endDrag(t.clientX,t.clientY);}},{passive:false});
+document.getElementById('rbtn').addEventListener('click', initGame);
+
+// ─── START ──────────────────────────────────────────────────────────────────
+initGame();
 </script>
-
-<!-- MODAL ENCUESTA -->
-<div class="modal-bg" id="modal-survey">
-<div class="modal">
-  <div class="modal-hdr">
-    <span class="modal-title">Encuesta de satisfaccion</span>
-    <button class="modal-close" onclick="closeModal('modal-survey')">x</button>
-  </div>
-  <div class="modal-body">
-    <div style="text-align:center;margin-bottom:18px">
-      <div style="font-size:14px;font-weight:500;color:var(--fn);margin-bottom:6px" id="survey-mod-title"></div>
-      <div style="font-size:13px;color:var(--fg)">Tu opinion nos ayuda a mejorar los contenidos</div>
-    </div>
-    <div class="fl">
-      <label>Calificacion del modulo</label>
-      <div id="star-rating" style="display:flex;gap:8px;margin-top:6px">
-        <button onclick="setStar(1)" class="star-btn" data-v="1" style="font-size:28px;background:none;border:none;cursor:pointer;transition:transform .1s">☆</button>
-        <button onclick="setStar(2)" class="star-btn" data-v="2" style="font-size:28px;background:none;border:none;cursor:pointer;transition:transform .1s">☆</button>
-        <button onclick="setStar(3)" class="star-btn" data-v="3" style="font-size:28px;background:none;border:none;cursor:pointer;transition:transform .1s">☆</button>
-        <button onclick="setStar(4)" class="star-btn" data-v="4" style="font-size:28px;background:none;border:none;cursor:pointer;transition:transform .1s">☆</button>
-        <button onclick="setStar(5)" class="star-btn" data-v="5" style="font-size:28px;background:none;border:none;cursor:pointer;transition:transform .1s">☆</button>
-      </div>
-    </div>
-    <div class="fl"><label>Comentario (opcional)</label><textarea id="survey-comment" placeholder="Que te parecio el contenido? Hay algo que mejorar?"></textarea></div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn-p btn-sm" onclick="submitSurvey()" style="flex:1">Enviar opinion</button>
-    <button class="btn-s btn-sm" onclick="closeModal('modal-survey')">Saltar</button>
-  </div>
-</div>
-</div>
-
-<!-- MODAL PERFIL -->
-<div class="modal-bg" id="modal-profile">
-<div class="modal" style="max-width:600px">
-  <div class="modal-hdr">
-    <span class="modal-title" id="profile-title">Perfil</span>
-    <button class="modal-close" onclick="closeModal('modal-profile')">x</button>
-  </div>
-  <div class="modal-body" id="profile-body">
-    <div class="loading"><div class="spinner"></div>Cargando...</div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn-s btn-sm" onclick="closeModal('modal-profile')">Cerrar</button>
-  </div>
-</div>
-</div>
-
 </body>
 </html>
