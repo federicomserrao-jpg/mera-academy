@@ -16,8 +16,13 @@ import {
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Plus, Search, Filter, MoreHorizontal, Mail, Phone,
   Building2, Users, LayoutGrid, List, Download,
+  Pencil, UserX, Eye,
 } from 'lucide-react';
 import { getInitials, getColorAvatar, formatFecha } from '@/lib/utils';
 
@@ -211,9 +216,25 @@ export default function EmpleadosPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3">
-                          <button className="text-muted-foreground hover:text-foreground">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem>
+                                <Eye className="mr-2 h-4 w-4" /> Ver perfil
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Pencil className="mr-2 h-4 w-4" /> Editar datos
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                <UserX className="mr-2 h-4 w-4" /> Dar de baja
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     );
