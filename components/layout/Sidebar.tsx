@@ -19,6 +19,11 @@ import {
   Settings,
   ChevronLeft,
   Zap,
+  Network,
+  FilePen,
+  FolderOpen,
+  GraduationCap,
+  Receipt,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -27,20 +32,22 @@ const navItems = [
     label: 'Principal',
     items: [
       { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+      { href: '/organigrama', icon: Network, label: 'Organigrama' },
     ],
   },
   {
     label: 'Personas',
     items: [
       { href: '/empleados', icon: Users, label: 'Empleados' },
+      { href: '/contratos', icon: FilePen, label: 'Contratos' },
+      { href: '/documentos', icon: FolderOpen, label: 'Documentos' },
       { href: '/onboarding', icon: ClipboardList, label: 'Onboarding' },
-      { href: '/evaluaciones', icon: Star, label: 'Evaluaciones' },
     ],
   },
   {
     label: 'Tiempo',
     items: [
-      { href: '/vacaciones', icon: CalendarDays, label: 'Vacaciones' },
+      { href: '/vacaciones', icon: CalendarDays, label: 'Ausencias' },
       { href: '/fichaje', icon: Clock, label: 'Fichaje' },
       { href: '/turnos', icon: CalendarRange, label: 'Turnos' },
     ],
@@ -49,12 +56,15 @@ const navItems = [
     label: 'Talento',
     items: [
       { href: '/reclutamiento', icon: UserSearch, label: 'Reclutamiento' },
+      { href: '/formacion', icon: GraduationCap, label: 'Formación' },
+      { href: '/evaluaciones', icon: Star, label: 'Evaluaciones' },
     ],
   },
   {
-    label: 'Finanzas',
+    label: 'Compensación',
     items: [
       { href: '/nominas', icon: FileText, label: 'Nóminas' },
+      { href: '/gastos', icon: Receipt, label: 'Gastos' },
     ],
   },
   {
