@@ -84,13 +84,66 @@ body{
   100%{transform:translate(-50%,-90%) scale(1);opacity:0}
 }
 
+/* Cell pop on place */
+@keyframes cellpop{
+  0%{transform:scale(.65);opacity:.5}
+  60%{transform:scale(1.14)}
+  100%{transform:scale(1);opacity:1}
+}
+.popping{animation:cellpop .22s cubic-bezier(.36,.07,.19,.97) forwards;}
+
 /* CLEAR ANIM */
 @keyframes clr{
   0%{transform:scale(1);opacity:1}
-  40%{background:#fff!important;transform:scale(1.08);opacity:.7}
+  35%{background:#fff!important;box-shadow:0 0 12px #fff;transform:scale(1.1);opacity:.9}
   100%{transform:scale(0);opacity:0}
 }
-.clearing{animation:clr .28s ease-out forwards;}
+.clearing{animation:clr .32s ease-out forwards;}
+
+/* Floating score text */
+.pts{position:fixed;z-index:900;pointer-events:none;font-size:21px;font-weight:900;
+  color:#F5D130;text-shadow:0 2px 8px rgba(0,0,0,.9);
+  animation:floatup .85s ease-out forwards;}
+@keyframes floatup{
+  0%{transform:translateY(0) scale(1);opacity:1}
+  20%{transform:translateY(-12px) scale(1.15);opacity:1}
+  100%{transform:translateY(-70px) scale(.9);opacity:0}
+}
+
+/* Score display flash */
+@keyframes sflash{
+  0%{transform:scale(1)}
+  40%{transform:scale(1.35);color:#fff}
+  100%{transform:scale(1);color:#F5D130}
+}
+.sflash{animation:sflash .3s ease-out;}
+
+/* Board border glow on clear */
+@keyframes bglow{
+  0%{box-shadow:0 0 28px rgba(117,170,219,.1)}
+  35%{box-shadow:0 0 55px rgba(58,172,94,.75),0 0 90px rgba(58,172,94,.3)}
+  100%{box-shadow:0 0 28px rgba(117,170,219,.1)}
+}
+.bglow{animation:bglow .55s ease-out;}
+
+/* Piece tray slots bounce in */
+@keyframes bouncein{
+  0%{transform:scale(0) rotate(-8deg);opacity:0}
+  65%{transform:scale(1.12) rotate(2deg)}
+  100%{transform:scale(1) rotate(0);opacity:1}
+}
+.bouncein{animation:bouncein .32s cubic-bezier(.36,.07,.19,.97) forwards;}
+
+/* Board shake on game over */
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-9px)}
+  30%{transform:translateX(9px)}
+  50%{transform:translateX(-6px)}
+  70%{transform:translateX(6px)}
+  90%{transform:translateX(-3px)}
+}
+.shake{animation:shake .5s ease-out;}
 
 /* GAME OVER */
 #go{display:none;position:fixed;inset:0;
@@ -142,6 +195,48 @@ body{
 </div>
 
 <script>
+// ─── AUDIO ─────────────────────────────────────────────────────────────────
+let AC = null;
+function getAC(){
+  if(!AC) try{ AC=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  if(AC&&AC.state==='suspended') AC.resume();
+  return AC;
+}
+function tone(freq,type,dur,vol,t){
+  const ac=getAC(); if(!ac) return;
+  const o=ac.createOscillator(), g=ac.createGain();
+  o.connect(g); g.connect(ac.destination);
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(vol,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.start(t); o.stop(t+dur);
+}
+function sndPickup(){
+  const ac=getAC(); if(!ac) return; const t=ac.currentTime;
+  tone(380,'sine',.08,.2,t); tone(560,'sine',.07,.15,t+.05);
+}
+function sndPlace(){
+  const ac=getAC(); if(!ac) return; const t=ac.currentTime;
+  tone(180,'square',.05,.12,t); tone(280,'sine',.12,.2,t+.02);
+}
+function sndClear(n){
+  const ac=getAC(); if(!ac) return; const t=ac.currentTime;
+  const f=[523,659,784,1047,1319];
+  for(let i=0;i<Math.min(n+1,5);i++) tone(f[i],'sine',.22,.28,t+i*.07);
+}
+function sndCombo(n){
+  const ac=getAC(); if(!ac) return; const t=ac.currentTime;
+  tone(784,'sine',.12,.35,t); tone(1047,'sine',.14,.4,t+.09);
+  tone(1319,'sine',.18,.45,t+.18);
+  if(n>=3) tone(1568,'triangle',.25,.5,t+.28);
+}
+function sndGameOver(){
+  const ac=getAC(); if(!ac) return; const t=ac.currentTime;
+  tone(350,'sawtooth',.25,.25,t);
+  tone(260,'sawtooth',.28,.25,t+.22);
+  tone(180,'sawtooth',.4,.3,t+.46);
+}
+
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const GS   = 8;   // grid size
 const GAP  = 3;
@@ -221,6 +316,44 @@ function buildBoard(){
   }
 }
 
+// ─── VISUAL FX ──────────────────────────────────────────────────────────────
+function popCells(list){
+  list.forEach(([r,c],i)=>{
+    const el=cells[r][c];
+    el.classList.remove('popping');
+    void el.offsetWidth;
+    el.style.animationDelay=(i*.015)+'s';
+    el.classList.add('popping');
+    el.addEventListener('animationend',()=>{ el.classList.remove('popping'); el.style.animationDelay=''; },{once:true});
+  });
+}
+function floatScore(pts,x,y){
+  const d=document.createElement('div');
+  d.className='pts'; d.textContent='+'+pts;
+  d.style.left=x+'px'; d.style.top=y+'px';
+  document.body.appendChild(d);
+  d.addEventListener('animationend',()=>d.remove());
+}
+function flashScore(){
+  sdisEl.classList.remove('sflash'); void sdisEl.offsetWidth;
+  sdisEl.classList.add('sflash');
+  sdisEl.addEventListener('animationend',()=>sdisEl.classList.remove('sflash'),{once:true});
+}
+function flashBoard(){
+  boardEl.classList.remove('bglow'); void boardEl.offsetWidth;
+  boardEl.classList.add('bglow');
+  boardEl.addEventListener('animationend',()=>boardEl.classList.remove('bglow'),{once:true});
+}
+function bounceInSlots(){
+  for(let i=0;i<3;i++){
+    const slot=document.getElementById('s'+i);
+    slot.style.animationDelay=(i*.08)+'s';
+    slot.classList.remove('bouncein'); void slot.offsetWidth;
+    slot.classList.add('bouncein');
+    slot.addEventListener('animationend',()=>{ slot.classList.remove('bouncein'); slot.style.animationDelay=''; },{once:true});
+  }
+}
+
 function initGame(){
   score=0;
   updateScore();
@@ -240,6 +373,7 @@ function randPiece(){
 function newPieces(){
   for(let i=0;i<3;i++){ pieces[i]=randPiece(); used[i]=false; }
   renderTray();
+  bounceInSlots();
 }
 
 function renderTray(){
@@ -279,6 +413,7 @@ function renderTray(){
 function startDrag(idx,x,y){
   if(used[idx]||!pieces[idx]) return;
   sel=idx; dragging=true;
+  sndPickup();
   buildFloating(pieces[idx]);
   moveDrag(x,y);
 }
@@ -383,12 +518,16 @@ function canPlace(shape,gr,gc){
 
 function place(idx,gr,gc){
   const p=pieces[idx];
+  const placed=[];
   p.shape.forEach(([dr,dc])=>{
     const r=gr+dr, c=gc+dc;
     grid[r][c]=p.color;
     cells[r][c].style.background=p.color;
     cells[r][c].classList.add('lit');
+    placed.push([r,c]);
   });
+  sndPlace();
+  popCells(placed);
   used[idx]=true;
   document.getElementById('s'+idx).classList.add('used');
   score+=p.shape.length;
@@ -406,13 +545,23 @@ function clearLines(){
   for(let c=0;c<GS;c++) if(grid.every(row=>row[c])) cs.push(c);
   if(!rs.length&&!cs.length) return;
   const tot=rs.length+cs.length;
-  score += tot*50 + (tot>1?tot*30:0);
-  if(tot>1) showCombo(tot);
+  const pts=tot*50+(tot>1?tot*30:0);
+  score+=pts;
+  sndClear(tot);
+  if(tot>1){ showCombo(tot); sndCombo(tot); }
+  flashBoard();
+  // Show floating score near center of board
+  const br=boardEl.getBoundingClientRect();
+  floatScore(pts, br.left+br.width/2, br.top+br.height/2);
+  flashScore();
   const set=new Set();
   rs.forEach(r=>{ for(let c=0;c<GS;c++) set.add(r+','+c); });
   cs.forEach(c=>{ for(let r=0;r<GS;r++) set.add(r+','+c); });
+  // Staggered sweep animation
   set.forEach(k=>{
     const [r,c]=k.split(',').map(Number);
+    const delay=( rs.includes(r) ? c : r )*0.028;
+    cells[r][c].style.animationDelay=delay+'s';
     cells[r][c].classList.add('clearing');
   });
   setTimeout(()=>{
@@ -420,11 +569,12 @@ function clearLines(){
       const [r,c]=k.split(',').map(Number);
       grid[r][c]=null;
       cells[r][c].style.background='';
+      cells[r][c].style.animationDelay='';
       cells[r][c].classList.remove('lit','clearing');
     });
     updateScore();
     checkOver();
-  },300);
+  },370);
 }
 
 function showCombo(n){
@@ -448,17 +598,27 @@ function checkOver(){
 }
 
 function gameOver(){
-  const isNew = score>best;
-  if(isNew){ best=score; localStorage.setItem('mb_best',best); bdisEl.textContent=best; }
-  fscEl.textContent=score;
-  newrecEl.style.display= isNew?'block':'none';
-  goEl.style.display='flex';
+  sndGameOver();
+  boardEl.classList.remove('shake'); void boardEl.offsetWidth;
+  boardEl.classList.add('shake');
+  boardEl.addEventListener('animationend',()=>boardEl.classList.remove('shake'),{once:true});
+  setTimeout(()=>{
+    const isNew = score>best;
+    if(isNew){ best=score; localStorage.setItem('mb_best',best); bdisEl.textContent=best; }
+    fscEl.textContent=score;
+    newrecEl.style.display= isNew?'block':'none';
+    goEl.style.display='flex';
+  },550);
 }
 
 function updateScore(){
   sdisEl.textContent=score;
   if(score>best){ best=score; bdisEl.textContent=best; }
 }
+
+// Init AudioContext on first user gesture
+document.addEventListener('touchstart',()=>getAC(),{once:true});
+document.addEventListener('mousedown',()=>getAC(),{once:true});
 
 // ─── EVENTS ─────────────────────────────────────────────────────────────────
 document.addEventListener('mousemove', e=>{ if(dragging) moveDrag(e.clientX,e.clientY); });
