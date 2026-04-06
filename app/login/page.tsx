@@ -1,54 +1,31 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/button';
+import { useFormState, useFormStatus } from 'react-dom';
+import { loginAction } from './actions';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Zap, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-60 transition-colors"
+    >
+      {pending ? 'Accediendo...' : 'Entrar'}
+    </button>
+  );
+}
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [state, formAction] = useFormState(loginAction, null);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [status, setStatus] = useState('');
-
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    const supabase = createClient();
-    setStatus('Conectando a Supabase...');
-
-    let timedOut = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
-      setStatus('');
-      setError('TIMEOUT: Supabase no responde después de 10s. URL: ' + process.env.NEXT_PUBLIC_SUPABASE_URL);
-      setLoading(false);
-    }, 10000);
-
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    clearTimeout(timer);
-    if (timedOut) return;
-
-    setStatus('');
-    if (error) {
-      setError('ERROR: ' + error.message + ' (status: ' + error.status + ')');
-      setLoading(false);
-    } else {
-      setStatus('Login OK, redirigiendo...');
-      window.location.href = '/dashboard';
-    }
-  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
@@ -64,15 +41,14 @@ export default function LoginPage() {
           <h2 className="text-base font-semibold text-foreground mb-1">Iniciar sesión</h2>
           <p className="text-sm text-muted-foreground mb-5">Accede a tu cuenta para continuar</p>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form action={formAction} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="tu@empresa.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
               />
@@ -83,10 +59,9 @@ export default function LoginPage() {
               <div className="relative">
                 <Input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
                   className="pr-10"
@@ -101,20 +76,14 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {error && (
+            {state?.error && (
               <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4 shrink-0" />
-                {error}
+                {state.error}
               </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Accediendo...' : 'Entrar'}
-            </Button>
-
-            {status && (
-              <p className="text-xs text-center text-blue-600">{status}</p>
-            )}
+            <SubmitButton />
           </form>
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
