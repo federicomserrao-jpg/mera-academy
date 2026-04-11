@@ -4,638 +4,676 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="theme-color" content="#1a56db"/>
-<meta name="description" content="Calculadora de indemnizaciones laborales Argentina. LCT, Empleados de Comercio, Gastronómico, UOCRA, SMATA."/>
+<meta name="theme-color" content="#1e3a8a"/>
+<meta name="description" content="Calculadora de indemnizaciones laborales Argentina. LCT, Empleados de Comercio, Gastronómico, UOCRA, SMATA, Camioneros."/>
 <title>Calculadora Laboral Argentina</title>
 <style>
 :root{
-  --pri:#1a56db; --pri-d:#1e429f; --pri-l:#e8effd;
-  --grn:#057a55; --grn-l:#d1fae5;
-  --red:#dc2626; --red-l:#fee2e2;
-  --yel:#92400e; --yel-l:#fef3c7;
-  --bg:#f3f4f6; --card:#fff;
-  --txt:#111827; --mut:#6b7280; --bor:#e5e7eb;
+  --pri:#2563eb;--pri-d:#1e3a8a;--pri-l:#eff6ff;--pri-m:#bfdbfe;
+  --grn:#059669;--grn-d:#065f46;--grn-l:#ecfdf5;
+  --red:#dc2626;--red-l:#fef2f2;
+  --amb:#d97706;--amb-l:#fffbeb;
+  --bg:#f1f5f9;--card:#fff;
+  --txt:#0f172a;--txt2:#334155;--mut:#64748b;--bor:#e2e8f0;
+  --shadow:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.05);
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:var(--bg);color:var(--txt);min-height:100vh;}
+  background:var(--bg);color:var(--txt);min-height:100vh;font-size:15px;}
 
-/* HEADER */
-#hdr{background:linear-gradient(135deg,var(--pri-d),var(--pri));color:#fff;
-  padding:20px 16px 16px;text-align:center;}
-#hdr h1{font-size:20px;font-weight:800;letter-spacing:.5px;}
-#hdr p{font-size:13px;opacity:.85;margin-top:4px;}
+/* ── HEADER ─────────────────────────────────────────────────── */
+#hdr{
+  background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 60%,#3b82f6 100%);
+  padding:28px 20px 48px;position:relative;overflow:hidden;
+}
+#hdr::after{
+  content:'';position:absolute;bottom:-1px;left:0;right:0;height:32px;
+  background:var(--bg);
+  clip-path:ellipse(55% 100% at 50% 100%);
+}
+.hdr-inner{position:relative;z-index:1;text-align:center;}
+.hdr-badge{display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
+  border-radius:20px;padding:4px 12px;font-size:11px;color:rgba(255,255,255,.9);
+  margin-bottom:10px;letter-spacing:.5px;text-transform:uppercase;}
+#hdr h1{font-size:24px;font-weight:800;color:#fff;letter-spacing:-.3px;}
+#hdr p{font-size:13px;color:rgba(255,255,255,.75);margin-top:5px;}
 
-/* CONTAINER */
-.wrap{max-width:560px;margin:0 auto;padding:16px 12px 40px;}
+/* ── WRAP ─────────────────────────────────────────────────────── */
+.wrap{max-width:560px;margin:0 auto;padding:0 12px 80px;}
 
-/* CARDS */
-.card{background:var(--card);border-radius:14px;padding:18px 16px;
-  margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-.card-title{font-size:13px;font-weight:700;color:var(--mut);
-  text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;}
+/* ── SECTION ─────────────────────────────────────────────────── */
+.section{margin-bottom:14px;}
+.sec-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:0 2px;}
+.sec-num{width:26px;height:26px;border-radius:50%;background:var(--pri);
+  color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;}
+.sec-title{font-size:13px;font-weight:700;color:var(--txt2);
+  text-transform:uppercase;letter-spacing:.6px;}
 
-/* CONVENIO GRID */
-.conv-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.conv-btn{border:2px solid var(--bor);border-radius:10px;padding:10px 8px;
-  text-align:center;cursor:pointer;transition:all .15s;background:#fff;}
+/* ── CARD ─────────────────────────────────────────────────────── */
+.card{background:var(--card);border-radius:16px;padding:18px 16px;
+  box-shadow:var(--shadow);}
+
+/* ── CONVENIO GRID ───────────────────────────────────────────── */
+.conv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.conv-btn{
+  border:2px solid var(--bor);border-radius:12px;padding:12px 6px 10px;
+  text-align:center;cursor:pointer;transition:all .2s;background:#fff;
+  position:relative;
+}
+.conv-btn:active{transform:scale(.96);}
 .conv-btn.active{border-color:var(--pri);background:var(--pri-l);}
-.conv-btn .icon{font-size:22px;display:block;margin-bottom:4px;}
-.conv-btn .name{font-size:12px;font-weight:700;color:var(--txt);}
-.conv-btn .desc{font-size:10px;color:var(--mut);margin-top:2px;}
+.conv-btn.active::after{
+  content:'✓';position:absolute;top:5px;right:7px;
+  font-size:10px;color:var(--pri);font-weight:800;
+}
+.conv-icon{width:38px;height:38px;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:18px;margin:0 auto 6px;
+  transition:transform .2s;}
+.conv-btn.active .conv-icon{transform:scale(1.1);}
+.conv-name{font-size:11px;font-weight:700;color:var(--txt);line-height:1.2;}
+.conv-desc{font-size:9px;color:var(--mut);margin-top:2px;}
 
-/* FORM */
+/* ── TIPO SELECT ────────────────────────────────────────────── */
+.tipo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.tipo-btn{
+  border:2px solid var(--bor);border-radius:10px;padding:10px 10px;
+  cursor:pointer;background:#fff;transition:all .15s;text-align:left;
+}
+.tipo-btn.active{border-color:var(--pri);background:var(--pri-l);}
+.tipo-btn:active{transform:scale(.97);}
+.tipo-ico{font-size:18px;margin-bottom:4px;display:block;}
+.tipo-name{font-size:12px;font-weight:700;color:var(--txt);display:block;}
+.tipo-desc{font-size:10px;color:var(--mut);margin-top:1px;display:block;}
+
+/* ── INPUTS ──────────────────────────────────────────────────── */
 .field{margin-bottom:14px;}
-label{display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:5px;}
-label span{font-weight:400;color:var(--mut);}
-input,select{width:100%;padding:11px 12px;border:1.5px solid var(--bor);border-radius:9px;
-  font-size:15px;color:var(--txt);background:#fff;appearance:none;outline:none;
-  transition:border-color .15s;}
-input:focus,select:focus{border-color:var(--pri);}
-.prefix-wrap{position:relative;}
-.prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);
-  font-size:15px;color:var(--mut);pointer-events:none;}
-.prefix-wrap input{padding-left:28px;}
+.field:last-child{margin-bottom:0;}
+.field-label{display:block;font-size:12px;font-weight:700;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.input-wrap{position:relative;}
+.input-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  font-size:16px;pointer-events:none;}
+.input-wrap input, .input-wrap select{
+  width:100%;padding:12px 12px 12px 40px;
+  border:1.5px solid var(--bor);border-radius:10px;
+  font-size:15px;color:var(--txt);background:#fff;
+  appearance:none;outline:none;transition:border-color .15s,box-shadow .15s;
+}
+.input-wrap input:focus,.input-wrap select:focus{
+  border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
-/* TOGGLE */
-.toggle-group{display:flex;gap:0;}
-.toggle-group button{flex:1;padding:10px 6px;border:1.5px solid var(--bor);background:#fff;
-  font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--mut);}
-.toggle-group button:first-child{border-radius:8px 0 0 8px;}
-.toggle-group button:last-child{border-radius:0 8px 8px 0;border-left:none;}
-.toggle-group button.on{background:var(--pri);border-color:var(--pri);color:#fff;}
-.toggle-group button.on-red{background:var(--red);border-color:var(--red);color:#fff;}
-
-/* CALCULATE BUTTON */
-#calcbtn{width:100%;padding:16px;background:var(--pri);color:#fff;border:none;
-  border-radius:12px;font-size:17px;font-weight:800;cursor:pointer;
-  letter-spacing:.5px;transition:background .15s;margin-top:4px;}
-#calcbtn:active{background:var(--pri-d);}
-
-/* RESULTS */
-#results{display:none;}
-.res-item{display:flex;justify-content:space-between;align-items:center;
+/* ── TOGGLE SWITCH ───────────────────────────────────────────── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;
   padding:12px 0;border-bottom:1px solid var(--bor);}
+.toggle-row:last-child{border-bottom:none;padding-bottom:0;}
+.toggle-lbl{font-size:14px;font-weight:600;color:var(--txt);flex:1;padding-right:12px;}
+.toggle-sub{font-size:11px;color:var(--mut);display:block;margin-top:2px;}
+.switch{position:relative;width:48px;height:26px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:#cbd5e1;border-radius:26px;
+  cursor:pointer;transition:.25s;}
+.slider:before{content:'';position:absolute;height:20px;width:20px;
+  left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);}
+input:checked+.slider{background:var(--pri);}
+input:checked+.slider:before{transform:translateX(22px);}
+input:checked+.slider.red{background:var(--red);}
+
+/* ── CALCULATE BUTTON ────────────────────────────────────────── */
+.calc-wrap{position:sticky;bottom:16px;padding:0;z-index:10;}
+#calcbtn{
+  width:100%;padding:16px;
+  background:linear-gradient(135deg,#2563eb,#1e40af);
+  color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:800;
+  cursor:pointer;letter-spacing:.5px;
+  box-shadow:0 4px 14px rgba(37,99,235,.4);
+  transition:transform .15s,box-shadow .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+#calcbtn:active{transform:scale(.98);box-shadow:0 2px 8px rgba(37,99,235,.3);}
+
+/* ── RESULTS ─────────────────────────────────────────────────── */
+#results{display:none;}
+
+.total-hero{
+  background:linear-gradient(135deg,#065f46,#059669);
+  border-radius:20px;padding:28px 20px;text-align:center;
+  margin-bottom:14px;position:relative;overflow:hidden;
+}
+.total-hero::before{
+  content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;
+  border-radius:50%;background:rgba(255,255,255,.07);
+}
+.total-hero::after{
+  content:'';position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;
+  border-radius:50%;background:rgba(255,255,255,.05);
+}
+.total-eyebrow{font-size:11px;color:rgba(255,255,255,.75);letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:6px;}
+.total-amount{font-size:44px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1;}
+.total-tag{display:inline-block;background:rgba(255,255,255,.15);
+  border-radius:20px;padding:4px 12px;font-size:11px;color:rgba(255,255,255,.9);
+  margin-top:10px;}
+.total-ant{font-size:12px;color:rgba(255,255,255,.65);margin-top:6px;}
+
+/* result items */
+.res-list{display:flex;flex-direction:column;gap:0;}
+.res-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 0;border-bottom:1px solid var(--bor);gap:10px;
+}
 .res-item:last-child{border-bottom:none;}
-.res-label{font-size:14px;color:var(--txt);}
-.res-sub{font-size:11px;color:var(--mut);margin-top:2px;}
-.res-val{font-size:15px;font-weight:700;color:var(--grn);white-space:nowrap;margin-left:12px;}
-.res-val.zero{color:var(--mut);font-weight:400;}
-.res-val.warn{color:var(--yel);}
+.res-item-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0;}
+.res-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.res-text{min-width:0;}
+.res-name{font-size:14px;font-weight:600;color:var(--txt);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.res-sub{font-size:11px;color:var(--mut);margin-top:1px;}
+.res-val{font-size:15px;font-weight:700;white-space:nowrap;}
+.res-val.green{color:var(--grn);}
+.res-val.zero{color:var(--mut);font-weight:400;font-size:13px;}
+.res-val.amber{color:var(--amb);}
 
-.total-card{background:var(--grn);border-radius:14px;padding:20px 16px;
-  text-align:center;margin-bottom:14px;}
-.total-card .lbl{font-size:13px;color:rgba(255,255,255,.8);margin-bottom:4px;}
-.total-card .amt{font-size:38px;font-weight:900;color:#fff;}
-.total-card .sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:4px;}
+/* multas box */
+.multas-box{
+  background:var(--red-l);border:1px solid #fecaca;border-radius:12px;
+  padding:14px;margin-top:4px;
+}
+.multas-title{font-size:11px;font-weight:800;color:var(--red);
+  text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;
+  display:flex;align-items:center;gap:6px;}
+.multas-title::before{content:'⚠️';font-size:14px;}
 
-.multa-card{background:var(--red-l);border:1px solid #fca5a5;border-radius:10px;padding:12px;}
-.multa-title{font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px;
-  text-transform:uppercase;letter-spacing:.5px;}
+/* disclaimer */
+.disclaimer{
+  background:var(--amb-l);border-left:3px solid var(--amb);
+  border-radius:0 10px 10px 0;padding:12px 14px;margin-top:4px;
+}
+.disclaimer strong{font-size:12px;color:var(--amb);display:block;margin-bottom:3px;}
+.disclaimer p{font-size:11px;color:#78350f;line-height:1.5;}
 
-.disclaimer{background:var(--yel-l);border-radius:10px;padding:12px 14px;
-  font-size:11px;color:var(--yel);line-height:1.5;}
-.disclaimer strong{display:block;margin-bottom:3px;}
+/* action buttons */
+.action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.action-btn{padding:12px;border:none;border-radius:10px;font-size:13px;
+  font-weight:700;cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-copy{background:var(--pri-l);color:var(--pri);}
+.btn-recalc{background:var(--bor);color:var(--txt2);}
+.action-btn:active{transform:scale(.97);}
 
-#copybtn{width:100%;padding:13px;background:var(--pri-l);color:var(--pri);border:none;
-  border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;}
-
-/* SECTION DIVIDER */
-.sec-div{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;
-  letter-spacing:.8px;padding:6px 0 10px;border-top:1px solid var(--bor);margin-top:4px;}
+/* hidden */
+.hidden{display:none!important;}
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div id="hdr">
-  <h1>Calculadora Laboral Argentina</h1>
-  <p>Indemnizaciones · LCT · Convenios Colectivos</p>
+  <div class="hdr-inner">
+    <div class="hdr-badge">⚖️ Argentina · 2026</div>
+    <h1>Calculadora Laboral</h1>
+    <p>Indemnizaciones · LCT · Convenios Colectivos</p>
+  </div>
 </div>
 
 <div class="wrap">
 
-<!-- CONVENIO -->
-<div class="card">
-  <div class="card-title">1. Seleccionar Convenio</div>
-  <div class="conv-grid" id="convGrid">
-    <div class="conv-btn active" data-conv="lct" onclick="selConv('lct',this)">
-      <span class="icon">⚖️</span>
-      <div class="name">LCT General</div>
-      <div class="desc">Ley Contrato de Trabajo</div>
-    </div>
-    <div class="conv-btn" data-conv="comercio" onclick="selConv('comercio',this)">
-      <span class="icon">🏪</span>
-      <div class="name">Comercio</div>
-      <div class="desc">CCT 130/75</div>
-    </div>
-    <div class="conv-btn" data-conv="gastro" onclick="selConv('gastro',this)">
-      <span class="icon">🍽️</span>
-      <div class="name">Gastronómico</div>
-      <div class="desc">CCT 389/04</div>
-    </div>
-    <div class="conv-btn" data-conv="uocra" onclick="selConv('uocra',this)">
-      <span class="icon">🏗️</span>
-      <div class="name">UOCRA</div>
-      <div class="desc">Construcción</div>
-    </div>
-    <div class="conv-btn" data-conv="smata" onclick="selConv('smata',this)">
-      <span class="icon">🔧</span>
-      <div class="name">SMATA</div>
-      <div class="desc">Mecánicos / Automotriz</div>
-    </div>
-    <div class="conv-btn" data-conv="camioneros" onclick="selConv('camioneros',this)">
-      <span class="icon">🚛</span>
-      <div class="name">Camioneros</div>
-      <div class="desc">CCT 40/89</div>
+<!-- 1. CONVENIO -->
+<div class="section">
+  <div class="sec-hdr">
+    <div class="sec-num">1</div>
+    <div class="sec-title">Convenio colectivo</div>
+  </div>
+  <div class="card">
+    <div class="conv-grid" id="convGrid">
+      <div class="conv-btn active" onclick="selConv('lct',this)">
+        <div class="conv-icon" style="background:#eff6ff;">⚖️</div>
+        <div class="conv-name">LCT General</div>
+        <div class="conv-desc">Ley Contrato Trabajo</div>
+      </div>
+      <div class="conv-btn" onclick="selConv('comercio',this)">
+        <div class="conv-icon" style="background:#fff7ed;">🏪</div>
+        <div class="conv-name">Comercio</div>
+        <div class="conv-desc">CCT 130/75</div>
+      </div>
+      <div class="conv-btn" onclick="selConv('gastro',this)">
+        <div class="conv-icon" style="background:#fef2f2;">🍽️</div>
+        <div class="conv-name">Gastronómico</div>
+        <div class="conv-desc">CCT 389/04</div>
+      </div>
+      <div class="conv-btn" onclick="selConv('uocra',this)">
+        <div class="conv-icon" style="background:#fefce8;">🏗️</div>
+        <div class="conv-name">UOCRA</div>
+        <div class="conv-desc">Construcción</div>
+      </div>
+      <div class="conv-btn" onclick="selConv('smata',this)">
+        <div class="conv-icon" style="background:#f8fafc;">🔧</div>
+        <div class="conv-name">SMATA</div>
+        <div class="conv-desc">Mecánicos</div>
+      </div>
+      <div class="conv-btn" onclick="selConv('camioneros',this)">
+        <div class="conv-icon" style="background:#f0fdf4;">🚛</div>
+        <div class="conv-name">Camioneros</div>
+        <div class="conv-desc">CCT 40/89</div>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- TIPO DE EGRESO -->
-<div class="card">
-  <div class="card-title">2. Tipo de Egreso</div>
-  <div class="field">
-    <select id="tipoEgreso" onchange="onTipoChange()">
-      <option value="despido">Despido sin causa</option>
-      <option value="renuncia">Renuncia voluntaria</option>
-      <option value="causa">Despido con causa justificada</option>
-      <option value="acuerdo">Acuerdo de partes (Art. 241)</option>
-      <option value="muerte">Fallecimiento del trabajador</option>
-      <option value="incapacidad">Incapacidad absoluta</option>
-    </select>
+<!-- 2. TIPO DE EGRESO -->
+<div class="section">
+  <div class="sec-hdr">
+    <div class="sec-num">2</div>
+    <div class="sec-title">Motivo de egreso</div>
+  </div>
+  <div class="card">
+    <div class="tipo-grid" id="tipoGrid">
+      <div class="tipo-btn active" onclick="selTipo('despido',this)">
+        <span class="tipo-ico">🚫</span>
+        <span class="tipo-name">Despido sin causa</span>
+        <span class="tipo-desc">Indemnización completa</span>
+      </div>
+      <div class="tipo-btn" onclick="selTipo('renuncia',this)">
+        <span class="tipo-ico">🚪</span>
+        <span class="tipo-name">Renuncia</span>
+        <span class="tipo-desc">Solo vac. y SAC</span>
+      </div>
+      <div class="tipo-btn" onclick="selTipo('causa',this)">
+        <span class="tipo-ico">⚠️</span>
+        <span class="tipo-name">Despido con causa</span>
+        <span class="tipo-desc">Solo vac. y SAC</span>
+      </div>
+      <div class="tipo-btn" onclick="selTipo('acuerdo',this)">
+        <span class="tipo-ico">🤝</span>
+        <span class="tipo-name">Acuerdo de partes</span>
+        <span class="tipo-desc">Art. 241 LCT</span>
+      </div>
+      <div class="tipo-btn" onclick="selTipo('muerte',this)">
+        <span class="tipo-ico">🕊️</span>
+        <span class="tipo-name">Fallecimiento</span>
+        <span class="tipo-desc">Art. 248 — 75%</span>
+      </div>
+      <div class="tipo-btn" onclick="selTipo('incapacidad',this)">
+        <span class="tipo-ico">🏥</span>
+        <span class="tipo-name">Incapacidad</span>
+        <span class="tipo-desc">Art. 254 LCT</span>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- DATOS -->
-<div class="card">
-  <div class="card-title">3. Datos del Empleado</div>
+<!-- 3. DATOS -->
+<div class="section">
+  <div class="sec-hdr">
+    <div class="sec-num">3</div>
+    <div class="sec-title">Datos del empleado</div>
+  </div>
+  <div class="card">
+    <div class="row2">
+      <div class="field">
+        <label class="field-label">Fecha ingreso</label>
+        <div class="input-wrap">
+          <span class="input-ico">📅</span>
+          <input type="date" id="fIngreso"/>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Fecha egreso</label>
+        <div class="input-wrap">
+          <span class="input-ico">📅</span>
+          <input type="date" id="fEgreso"/>
+        </div>
+      </div>
+    </div>
 
-  <div class="row2">
     <div class="field">
-      <label>Fecha de ingreso</label>
-      <input type="date" id="fIngreso"/>
+      <label class="field-label">Mejor remuneración mensual</label>
+      <div class="input-wrap">
+        <span class="input-ico">💰</span>
+        <input type="number" id="salario" placeholder="Ingresá tu sueldo" min="0" step="1000"/>
+      </div>
     </div>
-    <div class="field">
-      <label>Fecha de egreso</label>
-      <input type="date" id="fEgreso"/>
-    </div>
-  </div>
 
-  <div class="field">
-    <label>Mejor remuneración mensual <span>(normal y habitual)</span></label>
-    <div class="prefix-wrap">
-      <span class="prefix">$</span>
-      <input type="number" id="salario" placeholder="0" min="0" step="1000"/>
-    </div>
-  </div>
-
-  <!-- Categoría (visible según convenio) -->
-  <div class="field" id="catField" style="display:none;">
-    <label>Categoría laboral</label>
-    <select id="categoria"></select>
-  </div>
-
-  <!-- Preaviso -->
-  <div class="field" id="preavisoField">
-    <label>¿Se otorgó preaviso?</label>
-    <div class="toggle-group">
-      <button class="on-red" id="btnPreavisoNo" onclick="setPrv(false)">No</button>
-      <button id="btnPreavisoSi" onclick="setPrv(true)">Sí (trabajó el período)</button>
+    <div class="field hidden" id="catField">
+      <label class="field-label">Categoría laboral</label>
+      <div class="input-wrap">
+        <span class="input-ico">👤</span>
+        <select id="categoria"></select>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- MULTAS (solo despido sin causa) -->
-<div class="card" id="multasCard">
-  <div class="card-title">4. Multas e Irregularidades <span style="font-weight:400;text-transform:none;">(opcional)</span></div>
-
-  <div class="field">
-    <label>¿Estaba registrado correctamente?</label>
-    <div class="toggle-group">
-      <button class="on" id="btnRegSi" onclick="setReg(true)">Sí</button>
-      <button id="btnRegNo" onclick="setReg(false)">No (en negro)</button>
-    </div>
+<!-- 4. OPCIONES -->
+<div class="section" id="opcionesSection">
+  <div class="sec-hdr">
+    <div class="sec-num">4</div>
+    <div class="sec-title">Opciones adicionales</div>
   </div>
+  <div class="card">
 
-  <div class="field">
-    <label>¿Recibió certificados / documentación? <span>(Art. 80 LCT)</span></label>
-    <div class="toggle-group">
-      <button class="on" id="btnDocSi" onclick="setDoc(true)">Sí</button>
-      <button id="btnDocNo" onclick="setDoc(false)">No recibió</button>
+    <div class="toggle-row" id="preavisoRow">
+      <div>
+        <div class="toggle-lbl">¿Se otorgó preaviso?</div>
+        <span class="toggle-sub">Si trabajó el período no corresponde indemnizar</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="swPrv" onchange="preaviso=this.checked"/>
+        <span class="slider"></span>
+      </label>
     </div>
-  </div>
 
-  <div class="field">
-    <label>¿Debió iniciar juicio para cobrar? <span>(Art. 2 Ley 25.323)</span></label>
-    <div class="toggle-group">
-      <button class="on" id="btnJuiSi" onclick="setJui(false)">No</button>
-      <button id="btnJuiNo" onclick="setJui(true)">Sí (duplica indem.)</button>
+    <div class="toggle-row" id="regRow">
+      <div>
+        <div class="toggle-lbl">¿Estaba registrado?</div>
+        <span class="toggle-sub">Multa Ley 24.013 si trabajaba en negro</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="swReg" checked onchange="registrado=this.checked"/>
+        <span class="slider"></span>
+      </label>
     </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-lbl">¿Recibió documentación?</div>
+        <span class="toggle-sub">Art. 80 LCT — certificados y recibos</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="swDoc" checked onchange="documentacion=this.checked"/>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-lbl">¿Debió iniciar juicio?</div>
+        <span class="toggle-sub">Art. 2 Ley 25.323 — duplica la indemnización</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="swJui" onchange="juicio=this.checked"/>
+        <span class="slider red"></span>
+      </label>
+    </div>
+
   </div>
 </div>
 
-<!-- BOTON -->
-<button id="calcbtn" onclick="calcular()">CALCULAR INDEMNIZACION</button>
+<!-- CALCULAR -->
+<div class="calc-wrap">
+  <button id="calcbtn" onclick="calcular()">
+    <span>Calcular indemnización</span> <span>→</span>
+  </button>
+</div>
 
 <!-- RESULTADOS -->
 <div id="results">
-  <div class="total-card">
-    <div class="lbl">TOTAL ESTIMADO A COBRAR</div>
-    <div class="amt" id="resTotal">$0</div>
-    <div class="sub" id="resConvLabel">LCT General · Despido sin causa</div>
-  </div>
 
-  <div class="card">
-    <div class="card-title">Desglose</div>
-    <div id="resItems"></div>
-  </div>
+  <div class="section">
+    <div class="sec-hdr">
+      <div class="sec-num" style="background:var(--grn);">✓</div>
+      <div class="sec-title">Resultado</div>
+    </div>
 
-  <div class="card" id="multasResCard" style="display:none;">
-    <div class="multa-title">Multas aplicables</div>
-    <div id="multasItems"></div>
-  </div>
+    <div class="total-hero">
+      <div class="total-eyebrow">Total estimado a cobrar</div>
+      <div class="total-amount" id="resTotal">$0</div>
+      <div class="total-tag" id="resConvLabel">LCT · Despido sin causa</div>
+      <div class="total-ant" id="resAnt"></div>
+    </div>
 
-  <div class="disclaimer">
-    <strong>Aviso importante</strong>
-    Este calculo es orientativo y no constituye asesoramiento legal.
-    Los montos pueden variar segun actualizaciones de convenios, topes salariales y
-    circunstancias particulares. Consulte con un abogado laboralista.
-  </div>
+    <div class="card">
+      <div class="res-list" id="resItems"></div>
+    </div>
 
-  <button id="copybtn" onclick="copiarRes()">Copiar resultado</button>
+    <div id="multasBox" class="card hidden" style="margin-top:14px;">
+      <div class="multas-box">
+        <div class="multas-title">Multas aplicables</div>
+        <div id="multasItems"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="disclaimer">
+        <strong>Aviso importante</strong>
+        <p>Este cálculo es orientativo. Los montos pueden variar según actualizaciones de convenios, topes salariales y circunstancias particulares. Consultá con un abogado laboralista antes de tomar decisiones.</p>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="action-btn btn-copy" onclick="copiarRes()">📋 Copiar</button>
+      <button class="action-btn btn-recalc" onclick="recalcular()">↩ Nuevo cálculo</button>
+    </div>
+
+  </div>
 </div>
 
 </div><!-- /wrap -->
 
 <script>
 // ─── STATE ──────────────────────────────────────────────────────────────────
-let convenio = 'lct';
-let preaviso = false;   // false = no se otorgó (corresponde indemnizar)
+let convenio   = 'lct';
+let tipoEgreso = 'despido';
+let preaviso   = false;
 let registrado = true;
 let documentacion = true;
-let juicio = false;
+let juicio     = false;
 
-// ─── CATEGORIES PER CONVENIO ────────────────────────────────────────────────
-const CATS = {
-  comercio:[
-    'A - Auxiliar / Repositor',
-    'B - Vendedor / Cajero',
-    'C - Administrativo',
-    'D - Supervisor',
-    'E - Jefe de Sección',
-    'F - Sub-Gerente',
-    'G - Gerente'
-  ],
-  gastro:[
-    'Ayudante / Limpieza',
-    'Cocinero / Mozo',
-    'Encargado de Sección',
-    'Maitre / Chef',
-    'Gerente de Servicio'
-  ],
-  uocra:[
-    'Oficial Especializado',
-    'Oficial',
-    'Medio Oficial',
-    'Ayudante'
-  ],
-  smata:[
-    'Operario A',
-    'Operario B',
-    'Operario C',
-    'Mecánico Especializado',
-    'Encargado'
-  ],
-  camioneros:[
-    'Chofer de Larga Distancia',
-    'Chofer de Distribución',
-    'Chofer de Reparto Local',
-    'Repositor / Ayudante'
-  ]
+const CONV_NAMES={
+  lct:'LCT General',comercio:'Empleados de Comercio (CCT 130/75)',
+  gastro:'Gastronómico (CCT 389/04)',uocra:'UOCRA - Construcción',
+  smata:'SMATA - Mecánicos',camioneros:'Camioneros (CCT 40/89)'
 };
-
-const CONV_NAMES = {
-  lct:'LCT General',
-  comercio:'Empleados de Comercio (CCT 130/75)',
-  gastro:'Gastronómico (CCT 389/04)',
-  uocra:'UOCRA - Construcción',
-  smata:'SMATA - Mecánicos',
-  camioneros:'Camioneros (CCT 40/89)'
+const TIPO_NAMES={
+  despido:'Despido sin causa',renuncia:'Renuncia voluntaria',
+  causa:'Despido con causa',acuerdo:'Acuerdo de partes',
+  muerte:'Fallecimiento',incapacidad:'Incapacidad absoluta'
 };
-
-// Preaviso especial por convenio (algunos difieren)
-// [<3m, <1año, 1-5años, >5años] en días
-const PREAVISO_DIAS = {
-  lct:       {lt3m:15, lt5y:30, gt5y:60},
-  comercio:  {lt3m:15, lt5y:30, gt5y:60},
-  gastro:    {lt3m:15, lt5y:30, gt5y:60},
-  uocra:     {lt3m:15, lt5y:30, gt5y:60},
-  smata:     {lt3m:15, lt5y:30, gt5y:60},
-  camioneros:{lt3m:15, lt5y:30, gt5y:60},
+const CATS={
+  comercio:['A - Auxiliar / Repositor','B - Vendedor / Cajero','C - Administrativo','D - Supervisor','E - Jefe de Sección','F - Sub-Gerente','G - Gerente'],
+  gastro:['Cat. 1 - Bachero / Ayudante','Cat. 2 - Cocinero / Mozo','Cat. 3 - Cocinero Especializado','Cat. 4 - Chef de Partie','Cat. 5 - Sous-Chef','Cat. 6 - Chef Ejecutivo'],
+  uocra:['Oficial Especializado','Oficial','Medio Oficial','Ayudante'],
+  smata:['Aprendiz','Operario B','Operario A','Especializado','Técnico','Encargado'],
+  camioneros:['Chofer Larga Distancia','Chofer Media / Corta Distancia','Chofer Reparto Local','Acompañante / Ayudante','Estibador']
 };
+const DOT_COLORS=['#2563eb','#059669','#d97706','#7c3aed','#dc2626','#0891b2'];
 
-// ─── UI HELPERS ─────────────────────────────────────────────────────────────
-function selConv(c, el){
-  convenio = c;
+// ─── UI ──────────────────────────────────────────────────────────────────────
+function selConv(c,el){
+  convenio=c;
   document.querySelectorAll('.conv-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  const catField = document.getElementById('catField');
-  const sel = document.getElementById('categoria');
+  const cf=document.getElementById('catField');
+  const sel=document.getElementById('categoria');
   if(CATS[c]){
-    catField.style.display='block';
-    sel.innerHTML = CATS[c].map(x=>`<option>${x}</option>`).join('');
-  } else {
-    catField.style.display='none';
-  }
+    cf.classList.remove('hidden');
+    sel.innerHTML=CATS[c].map(x=>`<option>${x}</option>`).join('');
+  } else { cf.classList.add('hidden'); }
 }
 
-function setPrv(v){
-  preaviso = v;
-  document.getElementById('btnPreavisoNo').className = v ? '' : 'on-red';
-  document.getElementById('btnPreavisoSi').className = v ? 'on' : '';
-}
-
-function setReg(v){
-  registrado = v;
-  document.getElementById('btnRegSi').className = v ? 'on' : '';
-  document.getElementById('btnRegNo').className = v ? '' : 'on-red';
-}
-
-function setDoc(v){
-  documentacion = v;
-  document.getElementById('btnDocSi').className = v ? 'on' : '';
-  document.getElementById('btnDocNo').className = v ? '' : 'on-red';
-}
-
-function setJui(v){
-  juicio = v;
-  document.getElementById('btnJuiSi').className = v ? '' : 'on';
-  document.getElementById('btnJuiNo').className = v ? 'on-red' : '';
-}
-
-function onTipoChange(){
-  const t = document.getElementById('tipoEgreso').value;
-  const showPrv = (t==='despido'||t==='acuerdo');
-  document.getElementById('preavisoField').style.display = showPrv ? 'block' : 'none';
-  document.getElementById('multasCard').style.display = (t==='despido') ? 'block' : 'none';
+function selTipo(t,el){
+  tipoEgreso=t;
+  document.querySelectorAll('.tipo-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const isDespido=t==='despido'||t==='acuerdo';
+  document.getElementById('preavisoRow').style.display=isDespido?'flex':'none';
+  document.getElementById('regRow').style.display=isDespido?'flex':'none';
+  document.getElementById('opcionesSection').style.display=
+    (isDespido)?'block':'none';
 }
 
 // ─── CALCULATIONS ────────────────────────────────────────────────────────────
 function parseFecha(id){
-  const v = document.getElementById(id).value;
+  const v=document.getElementById(id).value;
   if(!v) return null;
-  const [y,m,d] = v.split('-').map(Number);
-  return new Date(y, m-1, d);
+  const[y,m,d]=v.split('-').map(Number);
+  return new Date(y,m-1,d);
+}
+function calcAnt(fi,fe){
+  let a=fe.getFullYear()-fi.getFullYear();
+  let m=fe.getMonth()-fi.getMonth();
+  let d=fe.getDate()-fi.getDate();
+  if(d<0)m--;
+  if(m<0){a--;m+=12;}
+  const ef=m>=3?a+1:a;
+  return {a,m,ef:Math.max(1,ef)};
+}
+function diasVac(ef){
+  if(ef<5)return 14; if(ef<10)return 21; if(ef<20)return 28; return 35;
+}
+function calcVac(fi,fe,sal,ef){
+  const dv=diasVac(ef);
+  const ini=fi.getFullYear()===fe.getFullYear()?fi:new Date(fe.getFullYear(),0,1);
+  const dias=(fe-ini)/86400000;
+  return(sal/25)*Math.max(1,Math.round(dv*dias/365));
+}
+function calcSAC(fi,fe,sal){
+  const ps=fe.getMonth()<6;
+  const is=new Date(fe.getFullYear(),ps?0:6,1);
+  const ic=fi>is?fi:is;
+  return(sal/2)*((fe-ic)/86400000)/(ps?181:184);
+}
+function calcInteg(fe,sal){
+  const ud=new Date(fe.getFullYear(),fe.getMonth()+1,0).getDate();
+  const d=ud-fe.getDate();
+  return d>0?(sal/30)*d:0;
+}
+function prvDias(fi,fe){
+  const m=(fe.getFullYear()-fi.getFullYear())*12+(fe.getMonth()-fi.getMonth());
+  if(m<3)return 15; if(m<60)return 30; return 60;
 }
 
-function calcAntiguedad(fi, fe){
-  let anos = fe.getFullYear() - fi.getFullYear();
-  let mesesDiff = fe.getMonth() - fi.getMonth();
-  let diasDiff = fe.getDate() - fi.getDate();
-  if(diasDiff < 0){ mesesDiff--; }
-  if(mesesDiff < 0){ anos--; mesesDiff += 12; }
-  // Fraccion > 3 meses suma un año
-  const fraccion = mesesDiff + (diasDiff < 0 ? -1 : 0);
-  const efectivos = fraccion >= 3 ? anos + 1 : anos;
-  return { anos, meses: mesesDiff, efectivos: Math.max(1, efectivos) };
-}
-
-function diasVac(anosEfectivos){
-  if(anosEfectivos < 5)  return 14;
-  if(anosEfectivos < 10) return 21;
-  if(anosEfectivos < 20) return 28;
-  return 35;
-}
-
-function preavisoDias(fi, fe, p){
-  const meses = (fe.getFullYear()-fi.getFullYear())*12 + (fe.getMonth()-fi.getMonth());
-  const cfg = PREAVISO_DIAS[convenio];
-  if(meses < 3)  return cfg.lt3m;
-  if(meses < 60) return cfg.lt5y;
-  return cfg.gt5y;
-}
-
-function calcVacProp(fi, fe, salario, anosEf){
-  const dv = diasVac(anosEf);
-  const anioEg = fe.getFullYear();
-  const ini = fi.getFullYear() === anioEg ? fi : new Date(anioEg, 0, 1);
-  const diasAnio = (fe - ini) / 86400000;
-  const diasProp = Math.max(1, Math.round(dv * diasAnio / 365));
-  return (salario / 25) * diasProp;
-}
-
-function calcSAC(fi, fe, salario){
-  const mesEg = fe.getMonth(); // 0-11
-  const esPrimSem = mesEg < 6;
-  const iniSem = new Date(fe.getFullYear(), esPrimSem ? 0 : 6, 1);
-  const iniCalc = fi > iniSem ? fi : iniSem;
-  const diasTrab = (fe - iniCalc) / 86400000;
-  const diasSem = esPrimSem ? 181 : 184;
-  return (salario / 2) * (diasTrab / diasSem);
-}
-
-function calcIntegracion(fe, salario){
-  const ultimoDia = new Date(fe.getFullYear(), fe.getMonth()+1, 0).getDate();
-  const dias = ultimoDia - fe.getDate();
-  return dias > 0 ? (salario / 30) * dias : 0;
-}
-
-// ─── MAIN CALCULATE ─────────────────────────────────────────────────────────
+// ─── MAIN ────────────────────────────────────────────────────────────────────
 function calcular(){
-  const fi = parseFecha('fIngreso');
-  const fe = parseFecha('fEgreso');
-  const salario = parseFloat(document.getElementById('salario').value) || 0;
-  const tipo = document.getElementById('tipoEgreso').value;
+  const fi=parseFecha('fIngreso'), fe=parseFecha('fEgreso');
+  const sal=parseFloat(document.getElementById('salario').value)||0;
+  if(!fi||!fe||!sal){alert('Completá todos los campos obligatorios.');return;}
+  if(fe<=fi){alert('La fecha de egreso debe ser posterior al ingreso.');return;}
 
-  if(!fi||!fe||!salario){
-    alert('Completá todos los campos obligatorios.');
-    return;
-  }
-  if(fe <= fi){
-    alert('La fecha de egreso debe ser posterior a la de ingreso.');
-    return;
-  }
-  if(salario <= 0){
-    alert('Ingresá la remuneración mensual.');
-    return;
-  }
+  const ant=calcAnt(fi,fe);
+  const items=[], multas=[];
+  let total=0;
 
-  const ant = calcAntiguedad(fi, fe);
-  const prvDias = preavisoDias(fi, fe);
-  const vacProp = calcVacProp(fi, fe, salario, ant.efectivos);
-  const sac = calcSAC(fi, fe, salario);
+  const add=(label,sub,val,zero)=>{
+    items.push({label,sub,val:val||0,zero:!!zero});
+    if(!zero)total+=val||0;
+  };
 
-  let items = [];
-  let multas = [];
-  let total = 0;
-
-  // ── DESPIDO SIN CAUSA ──
-  if(tipo === 'despido' || tipo === 'acuerdo'){
-    // Indemnización por antigüedad (Art. 245)
-    const indem = salario * ant.efectivos;
-    items.push({
-      label: 'Indemnización por antigüedad',
-      sub: `Art. 245 LCT · ${ant.efectivos} año${ant.efectivos>1?'s':''} × $${fmt(salario)}`,
-      val: indem
-    });
-    total += indem;
-
-    // Preaviso (si no se otorgó)
+  if(tipoEgreso==='despido'||tipoEgreso==='acuerdo'){
+    const ind=sal*ant.ef;
+    add('Indemnización por antigüedad',`Art. 245 LCT · ${ant.ef} año${ant.ef>1?'s':''} × ${fmt(sal)}`,ind);
     if(!preaviso){
-      const prvMonto = (salario / 30) * prvDias;
-      items.push({
-        label: `Preaviso (${prvDias} días)`,
-        sub: 'Art. 231/232 LCT · No otorgado',
-        val: prvMonto
-      });
-      total += prvMonto;
-
-      // Integración mes de despido (solo si no hubo preaviso)
-      const integ = calcIntegracion(fe, salario);
-      if(integ > 0){
-        items.push({
-          label: 'Integración mes de despido',
-          sub: `Art. 233 LCT · ${new Date(fe.getFullYear(),fe.getMonth()+1,0).getDate() - fe.getDate()} días restantes del mes`,
-          val: integ
-        });
-        total += integ;
-      }
+      const pd=prvDias(fi,fe);
+      add(`Preaviso (${pd} días)`,`Art. 231 LCT · No otorgado`,(sal/30)*pd);
+      const integ=calcInteg(fe,sal);
+      if(integ>0) add('Integración mes de despido',`Art. 233 · ${new Date(fe.getFullYear(),fe.getMonth()+1,0).getDate()-fe.getDate()} días restantes`,integ);
+    } else {
+      add('Preaviso','Otorgado — no corresponde',0,true);
     }
-
-    // Multas
-    if(!registrado){
-      const m8 = salario * 24 * 0.25;
-      multas.push({label:'Art. 8 Ley 24.013 (no registrado)', val: m8});
-    }
-    if(!documentacion){
-      const m80 = salario * 3;
-      multas.push({label:'Art. 80 LCT (falta de documentación)', val: m80});
-    }
-    if(juicio){
-      const duplic = salario * ant.efectivos; // duplica la indemnización
-      multas.push({label:'Art. 2 Ley 25.323 (duplicación por juicio)', val: duplic});
-    }
+  } else if(tipoEgreso==='muerte'){
+    const ind=sal*ant.ef*0.75;
+    add('Indemnización por fallecimiento',`Art. 248 LCT · 75% · ${ant.ef} año${ant.ef>1?'s':''}`,ind);
+  } else if(tipoEgreso==='incapacidad'){
+    add('Indemnización por incapacidad',`Art. 254 LCT · ${ant.ef} año${ant.ef>1?'s':''}`,sal*ant.ef);
+  } else {
+    add('Indemnización por antigüedad',`No corresponde en ${TIPO_NAMES[tipoEgreso].toLowerCase()}`,0,true);
+    add('Preaviso','No corresponde',0,true);
   }
 
-  // ── RENUNCIA ──
-  if(tipo === 'renuncia'){
-    items.push({label:'Indemnización por antigüedad',sub:'No corresponde en renuncia voluntaria',val:0,zero:true});
-    items.push({label:'Preaviso',sub:'No corresponde en renuncia voluntaria',val:0,zero:true});
-  }
+  add('Vacaciones proporcionales',`Art. 156 · ${diasVac(ant.ef)} días según antigüedad`,calcVac(fi,fe,sal,ant.ef));
+  add('SAC proporcional (aguinaldo)','Art. 123 · Semestre en curso',calcSAC(fi,fe,sal));
 
-  // ── DESPIDO CON CAUSA ──
-  if(tipo === 'causa'){
-    items.push({label:'Indemnización por antigüedad',sub:'No corresponde en despido con causa',val:0,zero:true});
-    items.push({label:'Preaviso',sub:'No corresponde en despido con causa',val:0,zero:true});
-  }
+  // Multas
+  if((tipoEgreso==='despido')&&!registrado) multas.push({label:'Art. 8 Ley 24.013 — trabajo no registrado',val:sal*24*0.25});
+  if((tipoEgreso==='despido')&&!documentacion) multas.push({label:'Art. 80 LCT — falta de documentación',val:sal*3});
+  if((tipoEgreso==='despido')&&juicio) multas.push({label:'Art. 2 Ley 25.323 — duplicación por juicio',val:sal*ant.ef});
+  multas.forEach(m=>total+=m.val);
 
-  // ── FALLECIMIENTO ──
-  if(tipo === 'muerte'){
-    const indemMuerte = salario * ant.efectivos * 0.75;
-    items.push({
-      label:'Indemnización por fallecimiento',
-      sub:`Art. 248 LCT · 75% de la indemnización normal · ${ant.efectivos} año${ant.efectivos>1?'s':''}`,
-      val: indemMuerte
-    });
-    total += indemMuerte;
-  }
+  // Render total
+  animCount(document.getElementById('resTotal'),total);
+  document.getElementById('resConvLabel').textContent=`${CONV_NAMES[convenio]} · ${TIPO_NAMES[tipoEgreso]}`;
+  document.getElementById('resAnt').textContent=`Antigüedad: ${ant.a} año${ant.a!==1?'s':''} y ${ant.m} mes${ant.m!==1?'es':''}`;
 
-  // ── INCAPACIDAD ──
-  if(tipo === 'incapacidad'){
-    const indemInc = salario * ant.efectivos;
-    items.push({
-      label:'Indemnización por incapacidad absoluta',
-      sub:`Art. 254 LCT · ${ant.efectivos} año${ant.efectivos>1?'s':''}`,
-      val: indemInc
-    });
-    total += indemInc;
-  }
-
-  // VACACIONES Y SAC (siempre corresponden)
-  items.push({
-    label:'Vacaciones proporcionales',
-    sub:`Art. 156 LCT · ${diasVac(ant.efectivos)} días según antigüedad`,
-    val: vacProp
-  });
-  total += vacProp;
-
-  items.push({
-    label:'SAC proporcional (aguinaldo)',
-    sub:'Art. 123 LCT · Semestre en curso',
-    val: sac
-  });
-  total += sac;
-
-  // Sumar multas al total
-  const totalMultas = multas.reduce((s,m)=>s+m.val,0);
-  total += totalMultas;
-
-  // ── RENDER ──
-  const tipo_label = document.getElementById('tipoEgreso').options[document.getElementById('tipoEgreso').selectedIndex].text;
-  document.getElementById('resTotal').textContent = '$' + fmt(total);
-  document.getElementById('resConvLabel').textContent = CONV_NAMES[convenio] + ' · ' + tipo_label;
-
-  const resItems = document.getElementById('resItems');
-  resItems.innerHTML = items.map(it=>`
+  // Render items
+  document.getElementById('resItems').innerHTML=items.map((it,i)=>`
     <div class="res-item">
-      <div>
-        <div class="res-label">${it.label}</div>
-        <div class="res-sub">${it.sub}</div>
+      <div class="res-item-left">
+        <div class="res-dot" style="background:${DOT_COLORS[i%DOT_COLORS.length]};opacity:${it.zero?.3:1}"></div>
+        <div class="res-text">
+          <div class="res-name">${it.label}</div>
+          <div class="res-sub">${it.sub}</div>
+        </div>
       </div>
-      <div class="res-val ${it.zero?'zero':''}">${it.zero?'—':'$'+fmt(it.val)}</div>
+      <div class="res-val ${it.zero?'zero':'green'}">
+        ${it.zero?'—':'$'+fmt(it.val)}
+      </div>
     </div>
   `).join('');
 
   // Multas
-  const multasCard = document.getElementById('multasResCard');
+  const mb=document.getElementById('multasBox');
   if(multas.length){
-    document.getElementById('multasItems').innerHTML = multas.map(m=>`
-      <div class="res-item">
-        <div><div class="res-label">${m.label}</div></div>
-        <div class="res-val warn">$${fmt(m.val)}</div>
+    document.getElementById('multasItems').innerHTML=multas.map(m=>`
+      <div class="res-item" style="border-bottom:1px solid rgba(220,38,38,.15);">
+        <div class="res-item-left">
+          <div class="res-dot" style="background:#dc2626;"></div>
+          <div class="res-text"><div class="res-name">${m.label}</div></div>
+        </div>
+        <div class="res-val amber">$${fmt(m.val)}</div>
       </div>
     `).join('');
-    multasCard.style.display='block';
-  } else {
-    multasCard.style.display='none';
-  }
+    mb.classList.remove('hidden');
+  } else { mb.classList.add('hidden'); }
 
   document.getElementById('results').style.display='block';
-  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
-
-  // Store for copy
-  window._lastResult = {total, items, multas, convenio, tipo_label};
+  setTimeout(()=>document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'}),50);
+  window._res={total,items,multas};
 }
 
-function fmt(n){
-  return Math.round(n).toLocaleString('es-AR');
+function animCount(el,target){
+  const start=Date.now(), dur=600, from=0;
+  const tick=()=>{
+    const p=Math.min(1,(Date.now()-start)/dur);
+    const ease=1-Math.pow(1-p,3);
+    el.textContent='$'+fmt(from+Math.round((target-from)*ease));
+    if(p<1)requestAnimationFrame(tick);
+  };
+  tick();
 }
+
+function fmt(n){return Math.round(n).toLocaleString('es-AR');}
 
 function copiarRes(){
-  if(!window._lastResult) return;
-  const {total, items, multas, convenio, tipo_label} = window._lastResult;
-  let txt = `CALCULADORA LABORAL ARGENTINA\n${CONV_NAMES[convenio]} · ${tipo_label}\n\n`;
-  items.forEach(it=>{ txt += `${it.label}: ${it.zero?'No corresponde':'$'+fmt(it.val)}\n`; });
-  if(multas.length){
-    txt += '\nMULTAS:\n';
-    multas.forEach(m=>{ txt += `${m.label}: $${fmt(m.val)}\n`; });
-  }
-  txt += `\nTOTAL ESTIMADO: $${fmt(total)}\n`;
-  txt += '\nCalculado con Calculadora Laboral Argentina';
-  navigator.clipboard.writeText(txt).then(()=>{
-    const btn = document.getElementById('copybtn');
-    btn.textContent = 'Copiado!';
-    setTimeout(()=>{ btn.textContent='Copiar resultado'; },2000);
-  }).catch(()=>{ alert('No se pudo copiar automáticamente.'); });
+  if(!window._res)return;
+  const{total,items,multas}=window._res;
+  let t=`CALCULADORA LABORAL ARGENTINA\n${CONV_NAMES[convenio]} · ${TIPO_NAMES[tipoEgreso]}\n${'─'.repeat(40)}\n`;
+  items.forEach(it=>{ t+=`${it.label}:\n  ${it.zero?'No corresponde':'$ '+fmt(it.val)}\n`; });
+  if(multas.length){ t+=`\nMULTAS:\n`; multas.forEach(m=>{ t+=`${m.label}:\n  $ ${fmt(m.val)}\n`; }); }
+  t+=`${'─'.repeat(40)}\nTOTAL: $ ${fmt(total)}\n\nCalculadora Laboral Argentina`;
+  navigator.clipboard.writeText(t).then(()=>{
+    const b=document.querySelector('.btn-copy');
+    b.textContent='✓ Copiado';setTimeout(()=>b.textContent='📋 Copiar',2000);
+  }).catch(()=>alert('Copiá el texto manualmente.'));
 }
 
-// ─── INIT ───────────────────────────────────────────────────────────────────
-// Set today as default egreso date
-const today = new Date();
-const pad = n => String(n).padStart(2,'0');
-document.getElementById('fEgreso').value = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
-onTipoChange();
+function recalcular(){
+  document.getElementById('results').style.display='none';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// Init
+const t=new Date(), pad=n=>String(n).padStart(2,'0');
+document.getElementById('fEgreso').value=`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;
+document.getElementById('swPrv').checked=false;
+document.getElementById('swReg').checked=true;
+document.getElementById('swDoc').checked=true;
+document.getElementById('swJui').checked=false;
+selTipo('despido',document.querySelector('.tipo-btn.active'));
 </script>
 </body>
 </html>
