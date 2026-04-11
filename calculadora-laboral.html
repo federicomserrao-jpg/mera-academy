@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#1a56db"/>
+<meta name="description" content="Calculadora de indemnizaciones laborales Argentina. LCT, Empleados de Comercio, Gastronómico, UOCRA, SMATA."/>
+<title>Calculadora Laboral Argentina</title>
+<style>
+:root{
+  --pri:#1a56db; --pri-d:#1e429f; --pri-l:#e8effd;
+  --grn:#057a55; --grn-l:#d1fae5;
+  --red:#dc2626; --red-l:#fee2e2;
+  --yel:#92400e; --yel-l:#fef3c7;
+  --bg:#f3f4f6; --card:#fff;
+  --txt:#111827; --mut:#6b7280; --bor:#e5e7eb;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--txt);min-height:100vh;}
+
+/* HEADER */
+#hdr{background:linear-gradient(135deg,var(--pri-d),var(--pri));color:#fff;
+  padding:20px 16px 16px;text-align:center;}
+#hdr h1{font-size:20px;font-weight:800;letter-spacing:.5px;}
+#hdr p{font-size:13px;opacity:.85;margin-top:4px;}
+
+/* CONTAINER */
+.wrap{max-width:560px;margin:0 auto;padding:16px 12px 40px;}
+
+/* CARDS */
+.card{background:var(--card);border-radius:14px;padding:18px 16px;
+  margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.card-title{font-size:13px;font-weight:700;color:var(--mut);
+  text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;}
+
+/* CONVENIO GRID */
+.conv-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.conv-btn{border:2px solid var(--bor);border-radius:10px;padding:10px 8px;
+  text-align:center;cursor:pointer;transition:all .15s;background:#fff;}
+.conv-btn.active{border-color:var(--pri);background:var(--pri-l);}
+.conv-btn .icon{font-size:22px;display:block;margin-bottom:4px;}
+.conv-btn .name{font-size:12px;font-weight:700;color:var(--txt);}
+.conv-btn .desc{font-size:10px;color:var(--mut);margin-top:2px;}
+
+/* FORM */
+.field{margin-bottom:14px;}
+label{display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:5px;}
+label span{font-weight:400;color:var(--mut);}
+input,select{width:100%;padding:11px 12px;border:1.5px solid var(--bor);border-radius:9px;
+  font-size:15px;color:var(--txt);background:#fff;appearance:none;outline:none;
+  transition:border-color .15s;}
+input:focus,select:focus{border-color:var(--pri);}
+.prefix-wrap{position:relative;}
+.prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+  font-size:15px;color:var(--mut);pointer-events:none;}
+.prefix-wrap input{padding-left:28px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* TOGGLE */
+.toggle-group{display:flex;gap:0;}
+.toggle-group button{flex:1;padding:10px 6px;border:1.5px solid var(--bor);background:#fff;
+  font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--mut);}
+.toggle-group button:first-child{border-radius:8px 0 0 8px;}
+.toggle-group button:last-child{border-radius:0 8px 8px 0;border-left:none;}
+.toggle-group button.on{background:var(--pri);border-color:var(--pri);color:#fff;}
+.toggle-group button.on-red{background:var(--red);border-color:var(--red);color:#fff;}
+
+/* CALCULATE BUTTON */
+#calcbtn{width:100%;padding:16px;background:var(--pri);color:#fff;border:none;
+  border-radius:12px;font-size:17px;font-weight:800;cursor:pointer;
+  letter-spacing:.5px;transition:background .15s;margin-top:4px;}
+#calcbtn:active{background:var(--pri-d);}
+
+/* RESULTS */
+#results{display:none;}
+.res-item{display:flex;justify-content:space-between;align-items:center;
+  padding:12px 0;border-bottom:1px solid var(--bor);}
+.res-item:last-child{border-bottom:none;}
+.res-label{font-size:14px;color:var(--txt);}
+.res-sub{font-size:11px;color:var(--mut);margin-top:2px;}
+.res-val{font-size:15px;font-weight:700;color:var(--grn);white-space:nowrap;margin-left:12px;}
+.res-val.zero{color:var(--mut);font-weight:400;}
+.res-val.warn{color:var(--yel);}
+
+.total-card{background:var(--grn);border-radius:14px;padding:20px 16px;
+  text-align:center;margin-bottom:14px;}
+.total-card .lbl{font-size:13px;color:rgba(255,255,255,.8);margin-bottom:4px;}
+.total-card .amt{font-size:38px;font-weight:900;color:#fff;}
+.total-card .sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:4px;}
+
+.multa-card{background:var(--red-l);border:1px solid #fca5a5;border-radius:10px;padding:12px;}
+.multa-title{font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px;
+  text-transform:uppercase;letter-spacing:.5px;}
+
+.disclaimer{background:var(--yel-l);border-radius:10px;padding:12px 14px;
+  font-size:11px;color:var(--yel);line-height:1.5;}
+.disclaimer strong{display:block;margin-bottom:3px;}
+
+#copybtn{width:100%;padding:13px;background:var(--pri-l);color:var(--pri);border:none;
+  border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;}
+
+/* SECTION DIVIDER */
+.sec-div{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;
+  letter-spacing:.8px;padding:6px 0 10px;border-top:1px solid var(--bor);margin-top:4px;}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <h1>Calculadora Laboral Argentina</h1>
+  <p>Indemnizaciones · LCT · Convenios Colectivos</p>
+</div>
+
+<div class="wrap">
+
+<!-- CONVENIO -->
+<div class="card">
+  <div class="card-title">1. Seleccionar Convenio</div>
+  <div class="conv-grid" id="convGrid">
+    <div class="conv-btn active" data-conv="lct" onclick="selConv('lct',this)">
+      <span class="icon">⚖️</span>
+      <div class="name">LCT General</div>
+      <div class="desc">Ley Contrato de Trabajo</div>
+    </div>
+    <div class="conv-btn" data-conv="comercio" onclick="selConv('comercio',this)">
+      <span class="icon">🏪</span>
+      <div class="name">Comercio</div>
+      <div class="desc">CCT 130/75</div>
+    </div>
+    <div class="conv-btn" data-conv="gastro" onclick="selConv('gastro',this)">
+      <span class="icon">🍽️</span>
+      <div class="name">Gastronómico</div>
+      <div class="desc">CCT 389/04</div>
+    </div>
+    <div class="conv-btn" data-conv="uocra" onclick="selConv('uocra',this)">
+      <span class="icon">🏗️</span>
+      <div class="name">UOCRA</div>
+      <div class="desc">Construcción</div>
+    </div>
+    <div class="conv-btn" data-conv="smata" onclick="selConv('smata',this)">
+      <span class="icon">🔧</span>
+      <div class="name">SMATA</div>
+      <div class="desc">Mecánicos / Automotriz</div>
+    </div>
+    <div class="conv-btn" data-conv="camioneros" onclick="selConv('camioneros',this)">
+      <span class="icon">🚛</span>
+      <div class="name">Camioneros</div>
+      <div class="desc">CCT 40/89</div>
+    </div>
+  </div>
+</div>
+
+<!-- TIPO DE EGRESO -->
+<div class="card">
+  <div class="card-title">2. Tipo de Egreso</div>
+  <div class="field">
+    <select id="tipoEgreso" onchange="onTipoChange()">
+      <option value="despido">Despido sin causa</option>
+      <option value="renuncia">Renuncia voluntaria</option>
+      <option value="causa">Despido con causa justificada</option>
+      <option value="acuerdo">Acuerdo de partes (Art. 241)</option>
+      <option value="muerte">Fallecimiento del trabajador</option>
+      <option value="incapacidad">Incapacidad absoluta</option>
+    </select>
+  </div>
+</div>
+
+<!-- DATOS -->
+<div class="card">
+  <div class="card-title">3. Datos del Empleado</div>
+
+  <div class="row2">
+    <div class="field">
+      <label>Fecha de ingreso</label>
+      <input type="date" id="fIngreso"/>
+    </div>
+    <div class="field">
+      <label>Fecha de egreso</label>
+      <input type="date" id="fEgreso"/>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Mejor remuneración mensual <span>(normal y habitual)</span></label>
+    <div class="prefix-wrap">
+      <span class="prefix">$</span>
+      <input type="number" id="salario" placeholder="0" min="0" step="1000"/>
+    </div>
+  </div>
+
+  <!-- Categoría (visible según convenio) -->
+  <div class="field" id="catField" style="display:none;">
+    <label>Categoría laboral</label>
+    <select id="categoria"></select>
+  </div>
+
+  <!-- Preaviso -->
+  <div class="field" id="preavisoField">
+    <label>¿Se otorgó preaviso?</label>
+    <div class="toggle-group">
+      <button class="on-red" id="btnPreavisoNo" onclick="setPrv(false)">No</button>
+      <button id="btnPreavisoSi" onclick="setPrv(true)">Sí (trabajó el período)</button>
+    </div>
+  </div>
+</div>
+
+<!-- MULTAS (solo despido sin causa) -->
+<div class="card" id="multasCard">
+  <div class="card-title">4. Multas e Irregularidades <span style="font-weight:400;text-transform:none;">(opcional)</span></div>
+
+  <div class="field">
+    <label>¿Estaba registrado correctamente?</label>
+    <div class="toggle-group">
+      <button class="on" id="btnRegSi" onclick="setReg(true)">Sí</button>
+      <button id="btnRegNo" onclick="setReg(false)">No (en negro)</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>¿Recibió certificados / documentación? <span>(Art. 80 LCT)</span></label>
+    <div class="toggle-group">
+      <button class="on" id="btnDocSi" onclick="setDoc(true)">Sí</button>
+      <button id="btnDocNo" onclick="setDoc(false)">No recibió</button>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>¿Debió iniciar juicio para cobrar? <span>(Art. 2 Ley 25.323)</span></label>
+    <div class="toggle-group">
+      <button class="on" id="btnJuiSi" onclick="setJui(false)">No</button>
+      <button id="btnJuiNo" onclick="setJui(true)">Sí (duplica indem.)</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTON -->
+<button id="calcbtn" onclick="calcular()">CALCULAR INDEMNIZACION</button>
+
+<!-- RESULTADOS -->
+<div id="results">
+  <div class="total-card">
+    <div class="lbl">TOTAL ESTIMADO A COBRAR</div>
+    <div class="amt" id="resTotal">$0</div>
+    <div class="sub" id="resConvLabel">LCT General · Despido sin causa</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Desglose</div>
+    <div id="resItems"></div>
+  </div>
+
+  <div class="card" id="multasResCard" style="display:none;">
+    <div class="multa-title">Multas aplicables</div>
+    <div id="multasItems"></div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Aviso importante</strong>
+    Este calculo es orientativo y no constituye asesoramiento legal.
+    Los montos pueden variar segun actualizaciones de convenios, topes salariales y
+    circunstancias particulares. Consulte con un abogado laboralista.
+  </div>
+
+  <button id="copybtn" onclick="copiarRes()">Copiar resultado</button>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let convenio = 'lct';
+let preaviso = false;   // false = no se otorgó (corresponde indemnizar)
+let registrado = true;
+let documentacion = true;
+let juicio = false;
+
+// ─── CATEGORIES PER CONVENIO ────────────────────────────────────────────────
+const CATS = {
+  comercio:[
+    'A - Auxiliar / Repositor',
+    'B - Vendedor / Cajero',
+    'C - Administrativo',
+    'D - Supervisor',
+    'E - Jefe de Sección',
+    'F - Sub-Gerente',
+    'G - Gerente'
+  ],
+  gastro:[
+    'Ayudante / Limpieza',
+    'Cocinero / Mozo',
+    'Encargado de Sección',
+    'Maitre / Chef',
+    'Gerente de Servicio'
+  ],
+  uocra:[
+    'Oficial Especializado',
+    'Oficial',
+    'Medio Oficial',
+    'Ayudante'
+  ],
+  smata:[
+    'Operario A',
+    'Operario B',
+    'Operario C',
+    'Mecánico Especializado',
+    'Encargado'
+  ],
+  camioneros:[
+    'Chofer de Larga Distancia',
+    'Chofer de Distribución',
+    'Chofer de Reparto Local',
+    'Repositor / Ayudante'
+  ]
+};
+
+const CONV_NAMES = {
+  lct:'LCT General',
+  comercio:'Empleados de Comercio (CCT 130/75)',
+  gastro:'Gastronómico (CCT 389/04)',
+  uocra:'UOCRA - Construcción',
+  smata:'SMATA - Mecánicos',
+  camioneros:'Camioneros (CCT 40/89)'
+};
+
+// Preaviso especial por convenio (algunos difieren)
+// [<3m, <1año, 1-5años, >5años] en días
+const PREAVISO_DIAS = {
+  lct:       {lt3m:15, lt5y:30, gt5y:60},
+  comercio:  {lt3m:15, lt5y:30, gt5y:60},
+  gastro:    {lt3m:15, lt5y:30, gt5y:60},
+  uocra:     {lt3m:15, lt5y:30, gt5y:60},
+  smata:     {lt3m:15, lt5y:30, gt5y:60},
+  camioneros:{lt3m:15, lt5y:30, gt5y:60},
+};
+
+// ─── UI HELPERS ─────────────────────────────────────────────────────────────
+function selConv(c, el){
+  convenio = c;
+  document.querySelectorAll('.conv-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const catField = document.getElementById('catField');
+  const sel = document.getElementById('categoria');
+  if(CATS[c]){
+    catField.style.display='block';
+    sel.innerHTML = CATS[c].map(x=>`<option>${x}</option>`).join('');
+  } else {
+    catField.style.display='none';
+  }
+}
+
+function setPrv(v){
+  preaviso = v;
+  document.getElementById('btnPreavisoNo').className = v ? '' : 'on-red';
+  document.getElementById('btnPreavisoSi').className = v ? 'on' : '';
+}
+
+function setReg(v){
+  registrado = v;
+  document.getElementById('btnRegSi').className = v ? 'on' : '';
+  document.getElementById('btnRegNo').className = v ? '' : 'on-red';
+}
+
+function setDoc(v){
+  documentacion = v;
+  document.getElementById('btnDocSi').className = v ? 'on' : '';
+  document.getElementById('btnDocNo').className = v ? '' : 'on-red';
+}
+
+function setJui(v){
+  juicio = v;
+  document.getElementById('btnJuiSi').className = v ? '' : 'on';
+  document.getElementById('btnJuiNo').className = v ? 'on-red' : '';
+}
+
+function onTipoChange(){
+  const t = document.getElementById('tipoEgreso').value;
+  const showPrv = (t==='despido'||t==='acuerdo');
+  document.getElementById('preavisoField').style.display = showPrv ? 'block' : 'none';
+  document.getElementById('multasCard').style.display = (t==='despido') ? 'block' : 'none';
+}
+
+// ─── CALCULATIONS ────────────────────────────────────────────────────────────
+function parseFecha(id){
+  const v = document.getElementById(id).value;
+  if(!v) return null;
+  const [y,m,d] = v.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+
+function calcAntiguedad(fi, fe){
+  let anos = fe.getFullYear() - fi.getFullYear();
+  let mesesDiff = fe.getMonth() - fi.getMonth();
+  let diasDiff = fe.getDate() - fi.getDate();
+  if(diasDiff < 0){ mesesDiff--; }
+  if(mesesDiff < 0){ anos--; mesesDiff += 12; }
+  // Fraccion > 3 meses suma un año
+  const fraccion = mesesDiff + (diasDiff < 0 ? -1 : 0);
+  const efectivos = fraccion >= 3 ? anos + 1 : anos;
+  return { anos, meses: mesesDiff, efectivos: Math.max(1, efectivos) };
+}
+
+function diasVac(anosEfectivos){
+  if(anosEfectivos < 5)  return 14;
+  if(anosEfectivos < 10) return 21;
+  if(anosEfectivos < 20) return 28;
+  return 35;
+}
+
+function preavisoDias(fi, fe, p){
+  const meses = (fe.getFullYear()-fi.getFullYear())*12 + (fe.getMonth()-fi.getMonth());
+  const cfg = PREAVISO_DIAS[convenio];
+  if(meses < 3)  return cfg.lt3m;
+  if(meses < 60) return cfg.lt5y;
+  return cfg.gt5y;
+}
+
+function calcVacProp(fi, fe, salario, anosEf){
+  const dv = diasVac(anosEf);
+  const anioEg = fe.getFullYear();
+  const ini = fi.getFullYear() === anioEg ? fi : new Date(anioEg, 0, 1);
+  const diasAnio = (fe - ini) / 86400000;
+  const diasProp = Math.max(1, Math.round(dv * diasAnio / 365));
+  return (salario / 25) * diasProp;
+}
+
+function calcSAC(fi, fe, salario){
+  const mesEg = fe.getMonth(); // 0-11
+  const esPrimSem = mesEg < 6;
+  const iniSem = new Date(fe.getFullYear(), esPrimSem ? 0 : 6, 1);
+  const iniCalc = fi > iniSem ? fi : iniSem;
+  const diasTrab = (fe - iniCalc) / 86400000;
+  const diasSem = esPrimSem ? 181 : 184;
+  return (salario / 2) * (diasTrab / diasSem);
+}
+
+function calcIntegracion(fe, salario){
+  const ultimoDia = new Date(fe.getFullYear(), fe.getMonth()+1, 0).getDate();
+  const dias = ultimoDia - fe.getDate();
+  return dias > 0 ? (salario / 30) * dias : 0;
+}
+
+// ─── MAIN CALCULATE ─────────────────────────────────────────────────────────
+function calcular(){
+  const fi = parseFecha('fIngreso');
+  const fe = parseFecha('fEgreso');
+  const salario = parseFloat(document.getElementById('salario').value) || 0;
+  const tipo = document.getElementById('tipoEgreso').value;
+
+  if(!fi||!fe||!salario){
+    alert('Completá todos los campos obligatorios.');
+    return;
+  }
+  if(fe <= fi){
+    alert('La fecha de egreso debe ser posterior a la de ingreso.');
+    return;
+  }
+  if(salario <= 0){
+    alert('Ingresá la remuneración mensual.');
+    return;
+  }
+
+  const ant = calcAntiguedad(fi, fe);
+  const prvDias = preavisoDias(fi, fe);
+  const vacProp = calcVacProp(fi, fe, salario, ant.efectivos);
+  const sac = calcSAC(fi, fe, salario);
+
+  let items = [];
+  let multas = [];
+  let total = 0;
+
+  // ── DESPIDO SIN CAUSA ──
+  if(tipo === 'despido' || tipo === 'acuerdo'){
+    // Indemnización por antigüedad (Art. 245)
+    const indem = salario * ant.efectivos;
+    items.push({
+      label: 'Indemnización por antigüedad',
+      sub: `Art. 245 LCT · ${ant.efectivos} año${ant.efectivos>1?'s':''} × $${fmt(salario)}`,
+      val: indem
+    });
+    total += indem;
+
+    // Preaviso (si no se otorgó)
+    if(!preaviso){
+      const prvMonto = (salario / 30) * prvDias;
+      items.push({
+        label: `Preaviso (${prvDias} días)`,
+        sub: 'Art. 231/232 LCT · No otorgado',
+        val: prvMonto
+      });
+      total += prvMonto;
+
+      // Integración mes de despido (solo si no hubo preaviso)
+      const integ = calcIntegracion(fe, salario);
+      if(integ > 0){
+        items.push({
+          label: 'Integración mes de despido',
+          sub: `Art. 233 LCT · ${new Date(fe.getFullYear(),fe.getMonth()+1,0).getDate() - fe.getDate()} días restantes del mes`,
+          val: integ
+        });
+        total += integ;
+      }
+    }
+
+    // Multas
+    if(!registrado){
+      const m8 = salario * 24 * 0.25;
+      multas.push({label:'Art. 8 Ley 24.013 (no registrado)', val: m8});
+    }
+    if(!documentacion){
+      const m80 = salario * 3;
+      multas.push({label:'Art. 80 LCT (falta de documentación)', val: m80});
+    }
+    if(juicio){
+      const duplic = salario * ant.efectivos; // duplica la indemnización
+      multas.push({label:'Art. 2 Ley 25.323 (duplicación por juicio)', val: duplic});
+    }
+  }
+
+  // ── RENUNCIA ──
+  if(tipo === 'renuncia'){
+    items.push({label:'Indemnización por antigüedad',sub:'No corresponde en renuncia voluntaria',val:0,zero:true});
+    items.push({label:'Preaviso',sub:'No corresponde en renuncia voluntaria',val:0,zero:true});
+  }
+
+  // ── DESPIDO CON CAUSA ──
+  if(tipo === 'causa'){
+    items.push({label:'Indemnización por antigüedad',sub:'No corresponde en despido con causa',val:0,zero:true});
+    items.push({label:'Preaviso',sub:'No corresponde en despido con causa',val:0,zero:true});
+  }
+
+  // ── FALLECIMIENTO ──
+  if(tipo === 'muerte'){
+    const indemMuerte = salario * ant.efectivos * 0.75;
+    items.push({
+      label:'Indemnización por fallecimiento',
+      sub:`Art. 248 LCT · 75% de la indemnización normal · ${ant.efectivos} año${ant.efectivos>1?'s':''}`,
+      val: indemMuerte
+    });
+    total += indemMuerte;
+  }
+
+  // ── INCAPACIDAD ──
+  if(tipo === 'incapacidad'){
+    const indemInc = salario * ant.efectivos;
+    items.push({
+      label:'Indemnización por incapacidad absoluta',
+      sub:`Art. 254 LCT · ${ant.efectivos} año${ant.efectivos>1?'s':''}`,
+      val: indemInc
+    });
+    total += indemInc;
+  }
+
+  // VACACIONES Y SAC (siempre corresponden)
+  items.push({
+    label:'Vacaciones proporcionales',
+    sub:`Art. 156 LCT · ${diasVac(ant.efectivos)} días según antigüedad`,
+    val: vacProp
+  });
+  total += vacProp;
+
+  items.push({
+    label:'SAC proporcional (aguinaldo)',
+    sub:'Art. 123 LCT · Semestre en curso',
+    val: sac
+  });
+  total += sac;
+
+  // Sumar multas al total
+  const totalMultas = multas.reduce((s,m)=>s+m.val,0);
+  total += totalMultas;
+
+  // ── RENDER ──
+  const tipo_label = document.getElementById('tipoEgreso').options[document.getElementById('tipoEgreso').selectedIndex].text;
+  document.getElementById('resTotal').textContent = '$' + fmt(total);
+  document.getElementById('resConvLabel').textContent = CONV_NAMES[convenio] + ' · ' + tipo_label;
+
+  const resItems = document.getElementById('resItems');
+  resItems.innerHTML = items.map(it=>`
+    <div class="res-item">
+      <div>
+        <div class="res-label">${it.label}</div>
+        <div class="res-sub">${it.sub}</div>
+      </div>
+      <div class="res-val ${it.zero?'zero':''}">${it.zero?'—':'$'+fmt(it.val)}</div>
+    </div>
+  `).join('');
+
+  // Multas
+  const multasCard = document.getElementById('multasResCard');
+  if(multas.length){
+    document.getElementById('multasItems').innerHTML = multas.map(m=>`
+      <div class="res-item">
+        <div><div class="res-label">${m.label}</div></div>
+        <div class="res-val warn">$${fmt(m.val)}</div>
+      </div>
+    `).join('');
+    multasCard.style.display='block';
+  } else {
+    multasCard.style.display='none';
+  }
+
+  document.getElementById('results').style.display='block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+
+  // Store for copy
+  window._lastResult = {total, items, multas, convenio, tipo_label};
+}
+
+function fmt(n){
+  return Math.round(n).toLocaleString('es-AR');
+}
+
+function copiarRes(){
+  if(!window._lastResult) return;
+  const {total, items, multas, convenio, tipo_label} = window._lastResult;
+  let txt = `CALCULADORA LABORAL ARGENTINA\n${CONV_NAMES[convenio]} · ${tipo_label}\n\n`;
+  items.forEach(it=>{ txt += `${it.label}: ${it.zero?'No corresponde':'$'+fmt(it.val)}\n`; });
+  if(multas.length){
+    txt += '\nMULTAS:\n';
+    multas.forEach(m=>{ txt += `${m.label}: $${fmt(m.val)}\n`; });
+  }
+  txt += `\nTOTAL ESTIMADO: $${fmt(total)}\n`;
+  txt += '\nCalculado con Calculadora Laboral Argentina';
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn = document.getElementById('copybtn');
+    btn.textContent = 'Copiado!';
+    setTimeout(()=>{ btn.textContent='Copiar resultado'; },2000);
+  }).catch(()=>{ alert('No se pudo copiar automáticamente.'); });
+}
+
+// ─── INIT ───────────────────────────────────────────────────────────────────
+// Set today as default egreso date
+const today = new Date();
+const pad = n => String(n).padStart(2,'0');
+document.getElementById('fEgreso').value = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+onTipoChange();
+</script>
+</body>
+</html>
