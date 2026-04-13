@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id         String    @id @default(uuid())
+  full_name  String
+  username   String    @unique
+  password   String
+  campaign   String
+  role       String    @default("col")
+  start_date DateTime?
+
+  completions      Completion[]
+  assignments      ModuleAssignment[] @relation("AssignedTo")
+  made_assignments ModuleAssignment[] @relation("AssignedBy")
+  module_logs      ModuleLog[]
+  surveys          Survey[]
+
+  @@map("users")
+}
+
+model Module {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  campaign     String
+  video_url    String?
+  meeting_url  String?
+  pdf_url      String?
+  sort_order   Int      @default(0)
+  days_limit   Int      @default(7)
+  max_attempts Int      @default(3)
+  is_required  Boolean  @default(false)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  questions   Question[]
+  completions Completion[]
+  assignments ModuleAssignment[]
+  module_logs ModuleLog[]
+  surveys     Survey[]
+
+  @@map("modules")
+}
+
+model Question {
+  id             String   @id @default(uuid())
+  module_id      String
+  question_text  String
+  type           String   @default("multi")
+  option_a       String
+  option_b       String
+  option_c       String?
+  option_d       String?
+  correct_option String
+  explanation    String?
+  created_at     DateTime @default(now())
+
+  module Module @relation(fields: [module_id], references: [id], onDelete: Cascade)
+
+  @@map("questions")
+}
+
+model Completion {
+  id         String   @id @default(uuid())
+  user_id    String
+  module_id  String
+  score      Int
+  passed     Boolean
+  created_at DateTime @default(now())
+
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [module_id], references: [id], onDelete: Cascade)
+
+  @@map("completions")
+}
+
+model ModuleAssignment {
+  id          String   @id @default(uuid())
+  user_id     String
+  module_id   String
+  assigned_by String?
+  created_at  DateTime @default(now())
+
+  user     User   @relation("AssignedTo", fields: [user_id], references: [id], onDelete: Cascade)
+  module   Module @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  assigner User?  @relation("AssignedBy", fields: [assigned_by], references: [id])
+
+  @@unique([user_id, module_id])
+  @@map("module_assignments")
+}
+
+model ModuleLog {
+  id         String   @id @default(uuid())
+  user_id    String?
+  module_id  String?
+  action     String
+  details    String?
+  created_at DateTime @default(now())
+
+  user   User?   @relation(fields: [user_id], references: [id])
+  module Module? @relation(fields: [module_id], references: [id])
+
+  @@map("module_logs")
+}
+
+model Survey {
+  id         String   @id @default(uuid())
+  user_id    String
+  module_id  String?
+  rating     Int
+  comment    String?
+  created_at DateTime @default(now())
+
+  user   User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  module Module? @relation(fields: [module_id], references: [id])
+
+  @@map("surveys")
+}
