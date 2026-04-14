@@ -1,336 +1,143 @@
+// prisma/seed.ts
+// Ejecutar con: npm run db:seed
+
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('Limpiando datos anteriores...')
-  await prisma.survey.deleteMany()
-  await prisma.moduleLog.deleteMany()
-  await prisma.completion.deleteMany()
-  await prisma.moduleAssignment.deleteMany()
-  await prisma.question.deleteMany()
-  await prisma.module.deleteMany()
-  await prisma.user.deleteMany()
+  console.log('🌱 Seeding MERA Tracker...')
 
-  console.log('Creando usuarios...')
+  // Limpiar todo primero
+  await prisma.historial.deleteMany()
+  await prisma.alerta.deleteMany()
+  await prisma.evalCapacitacion.deleteMany()
+  await prisma.evalRRHH.deleteMany()
+  await prisma.evalOperaciones.deleteMany()
+  await prisma.candidato.deleteMany()
 
-  const admin = await prisma.user.create({
+  // ── Federico Serrao — ADT — RIESGO ALTO ──
+  await prisma.candidato.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000001',
-      full_name: 'Administrador MERA',
-      username: 'admin',
-      password: 'admin123',
-      campaign: 'General',
-      role: 'adm',
+      nombre: 'Federico Serrao', dni: '37241100', puesto: 'Agente Contact Center',
+      campana: 'ADT', estado: 'INGRESADO', riesgo: 'ALTO',
+      fechaPostulacion: new Date('2024-01-15'),
+      evalOps: { create: { score: 5, tecnica: 4, recomendado: true, comentarios: 'Gran perfil, muy proactivo.' } },
+      evalRRHH: { create: { blandas: 5, comunicacion: 5, adaptabilidad: 4, aptoC: true, comentarios: 'Excelente fit cultural.' } },
+      evalCap: { create: { herramientas: 2, curva: 3, cumplimiento: 4, listo: false, tieneAlerta: true, tipoAlerta: 'TECNICA', comentarios: 'Problemas con herramientas CRM.' } },
+      alertas: { create: [{ etapa: 'CAPACITACION', tipo: 'TECNICA', descripcion: 'Dificultades con sistema CRM', esDeEstado: false }] },
+      historial: { create: [
+        { evento: 'Candidato creado', detalle: 'Postulación registrada para campaña ADT', color: 'blue' },
+        { evento: 'Evaluación Operaciones', detalle: 'Score 5/5 — Recomendado', color: 'blue' },
+        { evento: 'Evaluación RRHH', detalle: 'Blandas 5/5 — Apto Cultural', color: 'purple' },
+        { evento: 'Evaluación Capacitación', detalle: 'Herramientas 2/5 — No listo', color: 'red' },
+        { evento: '✅ Ingresó', detalle: 'Incorporado como Agente Contact Center en campaña ADT', color: 'green' },
+      ]},
     },
   })
 
-  const supervisor = await prisma.user.create({
+  // ── Luciana Torres — TLMK ──
+  await prisma.candidato.create({
     data: {
-      id: '00000000-0000-0000-0000-000000000002',
-      full_name: 'Laura González',
-      username: 'supervisor1',
-      password: '1234',
-      campaign: 'VISA',
-      role: 'sup',
+      nombre: 'Luciana Torres', dni: '38500222', puesto: 'Agente Telemarketing',
+      campana: 'TLMK', estado: 'EN_CAPACITACION', riesgo: 'BAJO',
+      fechaPostulacion: new Date('2024-01-20'),
+      evalOps: { create: { score: 4, tecnica: 4, recomendado: true, comentarios: 'Buen perfil comercial.' } },
+      evalRRHH: { create: { blandas: 3, comunicacion: 3, adaptabilidad: 4, aptoC: true, comentarios: 'OK.' } },
+      evalCap: { create: { herramientas: 4, curva: 4, cumplimiento: 3, listo: false, tieneAlerta: false, comentarios: 'Buen ritmo de aprendizaje.' } },
+      historial: { create: [
+        { evento: 'Candidato creado', color: 'blue' },
+        { evento: 'Evaluación Operaciones', detalle: 'Score 4/5 — Recomendado', color: 'blue' },
+      ]},
     },
   })
 
-  // 7 colaboradores (los "7 candidatos con evaluaciones")
-  const colaboradores = await Promise.all([
-    prisma.user.create({
-      data: {
-        id: '00000000-0000-0000-0001-000000000001',
-        full_name: 'Martín Rodríguez',
-        username: 'mrodriguez',
-        password: '1234',
-        campaign: 'VISA',
-        role: 'col',
-        start_date: new Date('2026-04-01'),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        id: '00000000-0000-0000-0001-000000000002',
-        full_name: 'Ana Fernández',
-        username: 'afernandez',
-        password: '1234',
-        campaign: 'VISA',
-        role: 'col',
-        start_date: new Date('2026-04-02'),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        id: '00000000-0000-0000-0001-000000000003',
-        full_name: 'Carlos Pérez',
-        username: 'cperez',
-        password: '1234',
-        campaign: 'TLMK',
-        role: 'col',
-        start_date: new Date('2026-04-01'),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        id: '00000000-0000-0000-0001-000000000004',
-        full_name: 'Sofía López',
-        username: 'slopez',
-        password: '1234',
-        campaign: 'TLMK',
-        role: 'col',
-        start_date: new Date('2026-04-03'),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        id: '00000000-0000-0000-0001-000000000005',
-        full_name: 'Diego Martínez',
-        username: 'dmartinez',
-        password: '1234',
-        campaign: 'EDESUR',
-        role: 'col',
-        start_date: new Date('2026-04-02'),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        id: '00000000-0000-0000-0001-000000000006',
-        full_name: 'Valentina García',
-        username: 'vgarcia',
-        password: '1234',
-        campaign: 'FARMACITY',
-        role: 'col',
-        start_date: new Date('2026-04-04'),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        id: '00000000-0000-0000-0001-000000000007',
-        full_name: 'Lucas Sánchez',
-        username: 'lsanchez',
-        password: '1234',
-        campaign: 'ADT',
-        role: 'col',
-        start_date: new Date('2026-04-01'),
-      },
-    }),
-  ])
-
-  console.log('Creando módulos...')
-
-  const modInduccion = await prisma.module.create({
+  // ── Marcos Villalba — EDESUR — RIESGO ALTO, RECHAZADO ──
+  await prisma.candidato.create({
     data: {
-      id: '00000000-0000-0000-0002-000000000001',
-      title: 'Inducción General',
-      description: 'Módulo de bienvenida e introducción a MERA. Políticas, valores y procedimientos de la empresa.',
-      campaign: 'General',
-      sort_order: 1,
-      days_limit: 3,
-      max_attempts: 5,
-      is_required: true,
+      nombre: 'Marcos Villalba', dni: '39100400', puesto: 'Agente Atención',
+      campana: 'EDESUR', estado: 'RECHAZADO', riesgo: 'ALTO',
+      fechaPostulacion: new Date('2024-01-22'),
+      evalOps: { create: { score: 2, tecnica: 2, recomendado: false, comentarios: 'No cumple perfil técnico.' } },
+      evalRRHH: { create: { blandas: 2, comunicacion: 2, adaptabilidad: 2, aptoC: false, comentarios: 'Actitud defensiva en entrevista.' } },
+      alertas: { create: [
+        { etapa: 'RRHH', tipo: 'CONDUCTUAL', descripcion: 'Actitud conflictiva en entrevista', esDeEstado: false },
+        { etapa: 'OPERACIONES', tipo: 'TECNICA', descripcion: 'No alcanza mínimos técnicos requeridos', esDeEstado: false },
+      ]},
+      historial: { create: [
+        { evento: 'Candidato creado', color: 'blue' },
+        { evento: '⚠ Alerta — RRHH', detalle: '[CONDUCTUAL] Actitud conflictiva', color: 'red' },
+        { evento: '✗ Rechazado', detalle: 'No superó el proceso de selección', color: 'red' },
+      ]},
     },
   })
 
-  const modVisa = await prisma.module.create({
+  // ── Valentina Ríos — FARMACITY — INGRESADA ──
+  await prisma.candidato.create({
     data: {
-      id: '00000000-0000-0000-0002-000000000002',
-      title: 'Productos VISA - Nivel 1',
-      description: 'Conocimiento básico de productos y servicios VISA. Tipos de tarjetas, beneficios y atención al cliente.',
-      campaign: 'VISA',
-      sort_order: 1,
-      days_limit: 7,
-      max_attempts: 3,
-      is_required: true,
+      nombre: 'Valentina Ríos', dni: '40200150', puesto: 'Agente CSR',
+      campana: 'FARMACITY', estado: 'INGRESADO', riesgo: 'BAJO',
+      fechaPostulacion: new Date('2024-02-01'),
+      evalOps: { create: { score: 4, tecnica: 5, recomendado: true, comentarios: 'Muy buena trayectoria.' } },
+      evalRRHH: { create: { blandas: 5, comunicacion: 5, adaptabilidad: 5, aptoC: true, comentarios: 'Perfil sobresaliente.' } },
+      evalCap: { create: { herramientas: 5, curva: 5, cumplimiento: 5, listo: true, tieneAlerta: false, comentarios: 'Lista para piso desde el día 3.' } },
+      historial: { create: [
+        { evento: 'Candidato creado', color: 'blue' },
+        { evento: 'Evaluación Operaciones', detalle: 'Score 4/5 — Recomendado', color: 'blue' },
+        { evento: 'Evaluación RRHH', detalle: 'Blandas 5/5 — Apto Cultural', color: 'purple' },
+        { evento: 'Evaluación Capacitación', detalle: 'Herramientas 5/5 — Lista para piso', color: 'green' },
+        { evento: '✅ Ingresó', color: 'green' },
+      ]},
     },
   })
 
-  const modTlmk = await prisma.module.create({
+  // ── Rodrigo Mendez — MIRGOR ──
+  await prisma.candidato.create({
     data: {
-      id: '00000000-0000-0000-0002-000000000003',
-      title: 'Técnicas de Telemarketing',
-      description: 'Estrategias de venta y atención telefónica. Manejo de objeciones y cierre de ventas.',
-      campaign: 'TLMK',
-      sort_order: 1,
-      days_limit: 7,
-      max_attempts: 3,
-      is_required: true,
+      nombre: 'Rodrigo Mendez', dni: '41300700', puesto: 'Agente Cobranzas',
+      campana: 'MIRGOR', estado: 'EN_PROCESO', riesgo: 'MEDIO',
+      fechaPostulacion: new Date('2024-02-05'),
+      evalOps: { create: { score: 3, tecnica: 3, recomendado: true, comentarios: 'Perfil aceptable.' } },
+      evalRRHH: { create: { blandas: 4, comunicacion: 4, adaptabilidad: 3, aptoC: true, comentarios: 'Buen potencial.' } },
+      evalCap: { create: { herramientas: 2, curva: 2, cumplimiento: 3, listo: false, tieneAlerta: true, tipoAlerta: 'TECNICA', comentarios: 'Bajo rendimiento en simulaciones.' } },
+      alertas: { create: [{ etapa: 'CAPACITACION', tipo: 'TECNICA', descripcion: 'Bajo rendimiento en simulaciones de atención', esDeEstado: false }] },
+      historial: { create: [{ evento: 'Candidato creado', color: 'blue' }] },
     },
   })
 
-  console.log('Creando preguntas...')
-
-  await prisma.question.createMany({
-    data: [
-      // Inducción General
-      {
-        id: '00000000-0000-0000-0003-000000000001',
-        module_id: modInduccion.id,
-        question_text: '¿Cuál es la puntuación mínima para aprobar un módulo?',
-        type: 'multi',
-        option_a: '50%',
-        option_b: '60%',
-        option_c: '70%',
-        option_d: '80%',
-        correct_option: 'b',
-        explanation: 'La nota mínima de aprobación es 60% en todos los módulos.',
-      },
-      {
-        id: '00000000-0000-0000-0003-000000000002',
-        module_id: modInduccion.id,
-        question_text: '¿Ante un problema con un cliente, cuál es el procedimiento correcto?',
-        type: 'multi',
-        option_a: 'Transferir sin aviso',
-        option_b: 'Ignorar y esperar',
-        option_c: 'Escuchar, buscar solución y escalar si es necesario',
-        option_d: 'Colgar la llamada',
-        correct_option: 'c',
-        explanation: 'La atención al cliente requiere escucha activa y búsqueda de solución antes de escalar.',
-      },
-      {
-        id: '00000000-0000-0000-0003-000000000003',
-        module_id: modInduccion.id,
-        question_text: '¿Los datos de los clientes pueden compartirse fuera de la empresa?',
-        type: 'tf',
-        option_a: 'Verdadero',
-        option_b: 'Falso',
-        correct_option: 'b',
-        explanation: 'Los datos de clientes son confidenciales según las políticas de privacidad.',
-      },
-      // VISA
-      {
-        id: '00000000-0000-0000-0003-000000000004',
-        module_id: modVisa.id,
-        question_text: '¿Cuál es el plazo máximo para gestionar un reclamo VISA?',
-        type: 'multi',
-        option_a: '24 horas',
-        option_b: '48 horas',
-        option_c: '72 horas',
-        option_d: '5 días hábiles',
-        correct_option: 'd',
-        explanation: 'Los reclamos VISA deben gestionarse en un máximo de 5 días hábiles.',
-      },
-      {
-        id: '00000000-0000-0000-0003-000000000005',
-        module_id: modVisa.id,
-        question_text: '¿Una tarjeta VISA Débito puede usarse para compras internacionales?',
-        type: 'tf',
-        option_a: 'Verdadero',
-        option_b: 'Falso',
-        correct_option: 'a',
-        explanation: 'Las tarjetas VISA Débito habilitadas pueden usarse internacionalmente, sujeto al banco emisor.',
-      },
-      // TLMK
-      {
-        id: '00000000-0000-0000-0003-000000000006',
-        module_id: modTlmk.id,
-        question_text: '¿Cuál es la técnica más efectiva para el cierre de una venta telefónica?',
-        type: 'multi',
-        option_a: 'Presionar al cliente con urgencia falsa',
-        option_b: 'Resumir los beneficios y pedir una decisión concreta',
-        option_c: 'Leer el script sin pausas',
-        option_d: 'Extender la llamada lo más posible',
-        correct_option: 'b',
-        explanation: 'Resumir beneficios y guiar al cliente hacia una decisión concreta es la técnica más efectiva.',
-      },
-      {
-        id: '00000000-0000-0000-0003-000000000007',
-        module_id: modTlmk.id,
-        question_text: '¿Se puede hacer una promesa de descuento no autorizada para cerrar una venta?',
-        type: 'tf',
-        option_a: 'Verdadero',
-        option_b: 'Falso',
-        correct_option: 'b',
-        explanation: 'Solo se pueden ofrecer descuentos y beneficios que estén autorizados por la empresa.',
-      },
-    ],
+  // ── Sabrina Castro — AYSA ──
+  await prisma.candidato.create({
+    data: {
+      nombre: 'Sabrina Castro', dni: '42100900', puesto: 'Agente Atención',
+      campana: 'AYSA', estado: 'EN_CAPACITACION', riesgo: 'BAJO',
+      fechaPostulacion: new Date('2024-02-08'),
+      evalOps: { create: { score: 5, tecnica: 4, recomendado: true, comentarios: 'Excelente perfil.' } },
+      evalRRHH: { create: { blandas: 5, comunicacion: 5, adaptabilidad: 5, aptoC: true, comentarios: 'Ideal.' } },
+      evalCap: { create: { herramientas: 4, curva: 5, cumplimiento: 5, listo: true, tieneAlerta: false, comentarios: 'Rápida curva de aprendizaje.' } },
+      historial: { create: [{ evento: 'Candidato creado', color: 'blue' }] },
+    },
   })
 
-  console.log('Creando asignaciones y evaluaciones...')
+  // ── Diego Herrera — CSV ──
+  await prisma.candidato.create({
+    data: {
+      nombre: 'Diego Herrera', dni: '39800300', puesto: 'Agente CSR',
+      campana: 'CSV', estado: 'INGRESADO', riesgo: 'MEDIO',
+      fechaPostulacion: new Date('2024-01-10'),
+      evalOps: { create: { score: 4, tecnica: 3, recomendado: true, comentarios: 'Buena actitud.' } },
+      evalRRHH: { create: { blandas: 2, comunicacion: 3, adaptabilidad: 2, aptoC: false, comentarios: 'Poca adaptabilidad al cambio.' } },
+      evalCap: { create: { herramientas: 3, curva: 3, cumplimiento: 4, listo: true, tieneAlerta: false, comentarios: 'Mejoró durante capacitación.' } },
+      alertas: { create: [{ etapa: 'RRHH', tipo: 'CONDUCTUAL', descripcion: 'Baja adaptabilidad al cambio detectada en entrevista', esDeEstado: false }] },
+      historial: { create: [
+        { evento: 'Candidato creado', color: 'blue' },
+        { evento: '✅ Ingresó', color: 'green' },
+      ]},
+    },
+  })
 
-  // Scores por colaborador: [induccion, campaña específica]
-  const scores: Record<string, number[]> = {
-    mrodriguez: [85, 72],
-    afernandez: [90, 65],
-    cperez: [75, 80],
-    slopez: [60, 55],   // Sofía desaprueba TLMK
-    dmartinez: [95],
-    vgarcia: [70],
-    lsanchez: [80],
-  }
-
-  for (const col of colaboradores) {
-    const colScores = scores[col.username]
-
-    // Asignación + completion de Inducción General (todos)
-    await prisma.moduleAssignment.create({
-      data: {
-        user_id: col.id,
-        module_id: modInduccion.id,
-        assigned_by: admin.id,
-      },
-    })
-    await prisma.completion.create({
-      data: {
-        user_id: col.id,
-        module_id: modInduccion.id,
-        score: colScores[0],
-        passed: colScores[0] >= 60,
-        created_at: new Date('2026-04-05'),
-      },
-    })
-
-    // Módulo de campaña
-    if (col.campaign === 'VISA' && colScores[1] !== undefined) {
-      await prisma.moduleAssignment.create({
-        data: {
-          user_id: col.id,
-          module_id: modVisa.id,
-          assigned_by: supervisor.id,
-        },
-      })
-      await prisma.completion.create({
-        data: {
-          user_id: col.id,
-          module_id: modVisa.id,
-          score: colScores[1],
-          passed: colScores[1] >= 60,
-          created_at: new Date('2026-04-08'),
-        },
-      })
-    }
-
-    if (col.campaign === 'TLMK' && colScores[1] !== undefined) {
-      await prisma.moduleAssignment.create({
-        data: {
-          user_id: col.id,
-          module_id: modTlmk.id,
-          assigned_by: admin.id,
-        },
-      })
-      await prisma.completion.create({
-        data: {
-          user_id: col.id,
-          module_id: modTlmk.id,
-          score: colScores[1],
-          passed: colScores[1] >= 60,
-          created_at: new Date('2026-04-09'),
-        },
-      })
-    }
-  }
-
-  console.log('\n✓ Seed completado:')
-  console.log(`  - 1 admin (admin / admin123)`)
-  console.log(`  - 1 supervisor (supervisor1 / 1234)`)
-  console.log(`  - 7 colaboradores (password: 1234)`)
-  console.log(`  - 3 módulos con preguntas`)
-  console.log(`  - Evaluaciones cargadas para los 7 colaboradores`)
+  console.log('✅ Seed completado — 7 candidatos cargados')
 }
 
 main()
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
-  .finally(() => prisma.$disconnect())
+  .catch(e => { console.error(e); process.exit(1) })
+  .finally(async () => { await prisma.$disconnect() })

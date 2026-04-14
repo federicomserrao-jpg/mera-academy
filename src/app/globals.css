@@ -1,0 +1,57 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+
+:root {
+  --bg: #0f1117;
+  --bg2: #161b27;
+  --card: #1e2535;
+  --card-hover: #232b3c;
+  --border: #2a3348;
+  --border2: #3a4560;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #5a6a88;
+  --accent: #6366f1;
+  --accent-l: #818cf8;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --purple: #a855f7;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+/* ── Badges ── */
+.badge-green { background: #16a34a20; color: #22c55e; border: 1px solid #22c55e30; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge-blue  { background: #2563eb20; color: #60a5fa; border: 1px solid #3b82f630; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge-gray  { background: #334155;   color: #94a3b8; border: 1px solid #47556930; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge-red   { background: #ef444420; color: #f87171; border: 1px solid #ef444430; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+
+/* ── Risk badges ── */
+.risk-alto  { background: #ef444420; color: #f87171; border: 1px solid #ef444430; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.risk-medio { background: #eab30820; color: #facc15; border: 1px solid #eab30830; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+
+/* ── Alert chip ── */
+.alert-chip { background: #eab30820; color: #facc15; border: 1px solid #eab30830; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+
+/* ── Buttons ── */
+.btn-primary   { background: #6366f1; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500; transition: background .15s; font-family: inherit; }
+.btn-primary:hover { background: #818cf8; }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-secondary { background: transparent; color: var(--text2); border: 1px solid var(--border2); padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all .15s; font-family: inherit; }
+.btn-secondary:hover { border-color: var(--text3); color: var(--text); }
+
+.btn-warning { background: #eab30820; color: #facc15; border: 1px solid #eab30830; padding: 8px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all .15s; font-family: inherit; }
+.btn-warning:hover { background: #eab30840; }
+.btn-warning:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
