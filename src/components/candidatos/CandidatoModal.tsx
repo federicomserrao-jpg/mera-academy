@@ -4,47 +4,107 @@
 import { useState } from 'react'
 import type { Candidato, TipoAlerta, EtapaAlerta } from '@/types'
 import { CAMPANA_LABELS, ESTADO_LABELS, ALERTA_TIPO_LABELS } from '@/types'
-import { Avatar, EstadoBadge, RiesgoBadge, ProgressDots, ScoreBar } from '@/components/ui'
+import { Avatar, EstadoBadge, RiesgoBadge, ProgressDots } from '@/components/ui'
+
+// ─── Sub-components ───────────────────────────────────────
 
 const Stars = ({ value }: { value: number }) => (
-  <div style={{ display: 'flex', gap: 3 }}>
+  <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
     {[1,2,3,4,5].map(s => (
-      <span key={s} style={{ fontSize: 16, color: value >= s ? 'var(--yellow)' : 'var(--border2)' }}>★</span>
+      <span key={s} style={{ fontSize: 20, color: value >= s ? 'var(--yellow)' : 'var(--border)' }}>★</span>
+    ))}
+    <span style={{ fontSize: 13, color: 'var(--text3)', marginLeft: 6, fontWeight: 500 }}>{value}/5</span>
+  </div>
+)
+
+const ClickableStars = ({ value, onChange }: { value: number; onChange: (v: number) => void }) => (
+  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+    {[1,2,3,4,5].map(s => (
+      <button
+        key={s} type="button" onClick={() => onChange(s)}
+        style={{
+          fontSize: 34, background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px',
+          color: value >= s ? 'var(--yellow)' : 'var(--border)', lineHeight: 1,
+          transition: 'color 0.1s',
+        }}
+      >★</button>
+    ))}
+    <span style={{ fontSize: 15, color: 'var(--text2)', marginLeft: 8, fontWeight: 600 }}>{value}/5</span>
+  </div>
+)
+
+const BoolPill = ({ value, onChange, yes, no }: { value: boolean; onChange: (v: boolean) => void; yes: string; no: string }) => (
+  <div style={{ display: 'flex', gap: 8 }}>
+    {[{ v: true, l: yes }, { v: false, l: no }].map(opt => (
+      <button
+        key={String(opt.v)} type="button" onClick={() => onChange(opt.v)}
+        style={{
+          padding: '8px 20px', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+          border: `1.5px solid ${value === opt.v ? (opt.v ? 'var(--green)' : 'var(--red)') : 'var(--border)'}`,
+          background: value === opt.v ? (opt.v ? '#22c55e18' : '#ef444418') : 'transparent',
+          color: value === opt.v ? (opt.v ? 'var(--green)' : 'var(--red)') : 'var(--text3)',
+        }}
+      >
+        {opt.v ? '✔ ' : '✗ '}{opt.l}
+      </button>
     ))}
   </div>
 )
 
-const Section = ({ title, children, right }: { title: string; children: React.ReactNode; right?: React.ReactNode }) => (
-  <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 14, marginBottom: 12 }}>
+const FeedbackSection = ({
+  title, icon, score, feedback, badge, badgeClass, empty,
+}: {
+  title: string; icon: string; score?: number | null; feedback?: string | null;
+  badge: string; badgeClass: string; empty?: boolean;
+}) => (
+  <div style={{
+    background: 'var(--card)', border: '1px solid var(--border)',
+    borderRadius: 10, padding: 16, marginBottom: 12,
+  }}>
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-      <span style={{ fontSize: 13, fontWeight: 600 }}>{title}</span>
-      {right}
+      <span style={{ fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 7 }}>
+        <span style={{ fontSize: 16 }}>{icon}</span>{title}
+      </span>
+      <span className={badgeClass}>{badge}</span>
     </div>
-    {children}
+    {empty ? (
+      <div style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic', padding: '4px 0' }}>
+        Pendiente de evaluación.
+      </div>
+    ) : (
+      <>
+        {score != null && <Stars value={score} />}
+        {feedback ? (
+          <blockquote style={{
+            margin: '12px 0 0', padding: '10px 14px',
+            background: 'var(--bg)', borderLeft: '3px solid var(--accent)',
+            borderRadius: '0 8px 8px 0', fontSize: 13, color: 'var(--text2)',
+            lineHeight: 1.7, fontStyle: 'italic',
+          }}>
+            "{feedback}"
+          </blockquote>
+        ) : (
+          <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>
+            Sin feedback escrito.
+          </div>
+        )}
+      </>
+    )}
   </div>
 )
 
-const NumberInput = ({ id, label, value }: { id: string; label: string; value?: number }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-    <label style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
-    <input
-      id={id} type="number" min={1} max={5} defaultValue={value ?? 3}
-      style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13 }}
-    />
-  </div>
-)
+// ─── Form state type ──────────────────────────────────────
 
-const SelectInput = ({ id, label, options, value }: { id: string; label: string; options: {v:string,l:string}[]; value?: string }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-    <label style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
-    <select
-      id={id} defaultValue={value ?? options[0]?.v}
-      style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13 }}
-    >
-      {options.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
-    </select>
-  </div>
-)
+interface FormState {
+  score: number
+  recomendado: boolean
+  aptoC: boolean
+  listo: boolean
+  tipoAlerta: string
+  feedback: string
+}
+
+// ─── Main component ───────────────────────────────────────
 
 interface Props {
   candidato: Candidato
@@ -63,173 +123,211 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
   const [subview, setSubview] = useState<SubView>('profile')
   const [saving, setSaving] = useState(false)
 
+  const stageMap: Record<string, string> = { admin: 'ops', operaciones: 'ops', rrhh: 'rrhh', capacitacion: 'cap' }
+  const curStage = stageMap[role] ?? 'ops'
   const canEdit = { admin: ['ops','rrhh','cap'], operaciones: ['ops'], rrhh: ['rrhh'], capacitacion: ['cap'] }[role] ?? []
-  const discrepancia = c.evalOps && c.evalCap && Math.abs(c.evalOps.score - c.evalCap.herramientas) >= 2
+
+  const curEvalForForm = curStage === 'ops' ? c.evalOps : curStage === 'rrhh' ? c.evalRRHH : c.evalCap
+
+  const [form, setForm] = useState<FormState>({
+    score: curEvalForForm?.score ?? 3,
+    recomendado: (curEvalForForm as typeof c.evalOps)?.recomendado ?? true,
+    aptoC: (curEvalForForm as typeof c.evalRRHH)?.aptoC ?? true,
+    listo: (curEvalForForm as typeof c.evalCap)?.listo ?? false,
+    tipoAlerta: (curEvalForForm as typeof c.evalCap)?.tipoAlerta ?? '',
+    feedback: curEvalForForm?.feedback ?? '',
+  })
+
+  // Alert form state
+  const [alertForm, setAlertForm] = useState({ etapa: 'OPERACIONES' as EtapaAlerta, tipo: 'TECNICA' as TipoAlerta, descripcion: '' })
+
+  const discrepancia = c.evalOps && c.evalCap && Math.abs(c.evalOps.score - c.evalCap.score) >= 2
   const realAlerts = c.alertas.filter(a => !a.esDeEstado)
 
+  function openEditForm() {
+    const ev = curStage === 'ops' ? c.evalOps : curStage === 'rrhh' ? c.evalRRHH : c.evalCap
+    setForm({
+      score: ev?.score ?? 3,
+      recomendado: (ev as typeof c.evalOps)?.recomendado ?? true,
+      aptoC: (ev as typeof c.evalRRHH)?.aptoC ?? true,
+      listo: (ev as typeof c.evalCap)?.listo ?? false,
+      tipoAlerta: (ev as typeof c.evalCap)?.tipoAlerta ?? '',
+      feedback: ev?.feedback ?? '',
+    })
+    setSubview('eval_form')
+  }
+
   async function handleSaveEval() {
-    const g = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)?.value
-    const n = (id: string, fb = 3) => Math.min(5, Math.max(1, parseInt(g(id) ?? '') || fb))
-
-    const stageMap: Record<string, string> = { admin: 'ops', operaciones: 'ops', rrhh: 'rrhh', capacitacion: 'cap' }
-    const stage = stageMap[role]
     let data: Record<string, unknown> = {}
-
-    if (stage === 'ops') data = { action: 'eval_ops', score: n('ev-score'), tecnica: n('ev-tecnica'), recomendado: g('ev-rec') === 'true', comentarios: g('ev-com') }
-    else if (stage === 'rrhh') data = { action: 'eval_rrhh', blandas: n('ev-blandas'), comunicacion: n('ev-com2'), adaptabilidad: n('ev-adapt'), aptoC: g('ev-apto') === 'true', comentarios: g('ev-com') }
-    else if (stage === 'cap') {
-      const at = g('ev-alerta-tipo') || undefined
-      data = { action: 'eval_cap', herramientas: n('ev-herr'), curva: n('ev-curva'), cumplimiento: n('ev-cumpl'), listo: g('ev-listo') === 'true', tieneAlerta: !!at, tipoAlerta: at || null, comentarios: g('ev-com') }
-    }
+    if (curStage === 'ops')   data = { action: 'eval_ops',  score: form.score, recomendado: form.recomendado, feedback: form.feedback }
+    if (curStage === 'rrhh')  data = { action: 'eval_rrhh', score: form.score, aptoC: form.aptoC, feedback: form.feedback }
+    if (curStage === 'cap')   data = { action: 'eval_cap',  score: form.score, listo: form.listo, tipoAlerta: form.tipoAlerta || null, feedback: form.feedback }
 
     setSaving(true)
-    await onSaveEval(c.id, stage, data)
+    const res = await fetch(`/api/candidatos/${c.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+    if (res.ok) {
+      const json = await res.json()
+      setC(json.data)
+    }
+    await onSaveEval(c.id, curStage, data)
     setSaving(false)
     setSubview('profile')
   }
 
   async function handleSaveAlert() {
-    const g = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)?.value
-    const desc = g('al-desc')?.trim()
-    if (!desc) { alert('Describí la alerta.'); return }
+    if (!alertForm.descripcion.trim()) { alert('Describí la alerta.'); return }
     setSaving(true)
-    await onSaveAlert(c.id, { etapa: g('al-etapa') as EtapaAlerta, tipo: g('al-tipo') as TipoAlerta, descripcion: desc })
+    await onSaveAlert(c.id, alertForm)
     setSaving(false)
     setSubview('profile')
   }
 
-  const stageMap: Record<string, string> = { admin: 'ops', operaciones: 'ops', rrhh: 'rrhh', capacitacion: 'cap' }
   const stageNames: Record<string, string> = { ops: 'Operaciones', rrhh: 'RRHH', cap: 'Capacitación' }
-  const curStage = stageMap[role]
-  const curEval = c[curStage === 'ops' ? 'evalOps' : curStage === 'rrhh' ? 'evalRRHH' : 'evalCap'] as Record<string, unknown> | null | undefined
+
+  const colorMap: Record<string, string> = {
+    blue: 'var(--accent)', green: 'var(--green)', red: 'var(--red)',
+    purple: '#a855f7', yellow: 'var(--yellow)', gray: 'var(--text3)',
+  }
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}
       onClick={onClose}
     >
       <div
-        style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 14, width: '100%', maxWidth: 680, maxHeight: '90vh', overflowY: 'auto' }}
+        style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 14, width: '100%', maxWidth: 700, maxHeight: '90vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}
       >
         {/* HEADER */}
-        <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 15, fontWeight: 600 }}>
-            {subview === 'profile' ? 'Perfil del Candidato' : subview === 'eval_form' ? `Evaluación — ${stageNames[curStage]}` : 'Nueva Alerta'}
+        <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 15, fontWeight: 700 }}>
+            {subview === 'profile' ? 'Ficha del Colaborador'
+              : subview === 'eval_form' ? `Feedback — ${stageNames[curStage]}`
+              : 'Registrar Alerta'}
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 20 }}>✕</button>
         </div>
 
-        {/* PROFILE VIEW */}
+        {/* ─── PROFILE VIEW ─── */}
         {subview === 'profile' && (
           <>
-            <div style={{ padding: '18px 20px' }}>
+            <div style={{ padding: '20px 22px' }}>
+
+              {/* Identity */}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 20 }}>
-                <Avatar nombre={c.nombre} size={52} />
-                <div>
-                  <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>{c.nombre}</h3>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-                    <span className="badge-gray">DNI: {c.dni}</span>
+                <Avatar nombre={c.nombre} size={54} />
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{c.nombre}</h3>
+                  <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 8 }}>
+                    <span className="badge-gray">DNI {c.dni}</span>
                     {c.puesto && <span className="badge-gray">{c.puesto}</span>}
                     <span className="badge-blue">{CAMPANA_LABELS[c.campana]}</span>
                     <EstadoBadge estado={c.estado} />
                     {c.riesgo !== 'BAJO' && <RiesgoBadge riesgo={c.riesgo} />}
                   </div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text3)' }}>Etapas:</span>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, color: 'var(--text3)' }}>Etapas completadas:</span>
                     <ProgressDots candidato={c} />
-                    <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 4 }}>📅 {c.fechaPostulacion.split('T')[0]}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 4 }}>
+                      📅 {c.fechaPostulacion.split('T')[0]}
+                    </span>
                   </div>
                 </div>
               </div>
 
+              {/* Banners */}
               {discrepancia && (
-                <div style={{ background: '#71350020', border: '1px solid #eab30830', borderRadius: 8, padding: '10px 12px', marginBottom: 12, fontSize: 12, color: 'var(--yellow)' }}>
-                  ⚡ <b>Discrepancia:</b> Ops ({c.evalOps!.score}/5) vs Capacitación ({c.evalCap!.herramientas}/5). Revisar trayectoria.
+                <div style={{ background: '#71350020', border: '1px solid #eab30830', borderRadius: 8, padding: '10px 14px', marginBottom: 14, fontSize: 12, color: 'var(--yellow)' }}>
+                  ⚡ <b>Discrepancia detectada:</b> Ops ({c.evalOps!.score}/5) vs Capacitación ({c.evalCap!.score}/5). Revisar historial.
                 </div>
               )}
               {c.riesgo === 'ALTO' && (
-                <div style={{ background: '#ef444415', border: '1px solid #ef444430', borderRadius: 8, padding: '10px 12px', marginBottom: 12, fontSize: 12, color: 'var(--red)' }}>
-                  🚨 <b>RIESGO ALTO:</b> Alertas en múltiples etapas del proceso.
+                <div style={{ background: '#ef444415', border: '1px solid #ef444430', borderRadius: 8, padding: '10px 14px', marginBottom: 14, fontSize: 12, color: 'var(--red)' }}>
+                  🚨 <b>RIESGO ALTO:</b> Alertas registradas en múltiples etapas del proceso.
                 </div>
               )}
 
               {/* Tabs */}
-              <div style={{ display: 'flex', gap: 4, marginBottom: 16, borderBottom: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', gap: 4, marginBottom: 18, borderBottom: '1px solid var(--border)' }}>
                 {(['eval', 'timeline'] as Tab[]).map((t, i) => (
                   <div
-                    key={t}
-                    onClick={() => setTab(t)}
+                    key={t} onClick={() => setTab(t)}
                     style={{
-                      padding: '8px 14px', fontSize: 12, cursor: 'pointer',
+                      padding: '8px 16px', fontSize: 12, cursor: 'pointer',
                       color: tab === t ? 'var(--accent)' : 'var(--text2)',
                       borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
-                      marginBottom: -1, borderRadius: '6px 6px 0 0', fontWeight: tab === t ? 500 : 400,
+                      marginBottom: -1, borderRadius: '6px 6px 0 0', fontWeight: tab === t ? 600 : 400,
                     }}
                   >
-                    {['Evaluaciones', `Historial (${c.alertas.length})`][i]}
+                    {['Feedback del Proceso', `Historial (${c.historial.length})`][i]}
                   </div>
                 ))}
               </div>
 
-              {/* Tab: evaluaciones */}
+              {/* ─── TAB: Feedback del proceso ─── */}
               {tab === 'eval' && (
                 <>
-                  {c.evalOps ? (
-                    <Section title="Operaciones" right={<span className={c.evalOps.recomendado ? 'badge-green' : 'badge-red'}>{c.evalOps.recomendado ? '✔ Recomendado' : '✗ No recomendado'}</span>}>
-                      {[{l:'Score General',v:c.evalOps.score},{l:'Eval. Técnica',v:c.evalOps.tecnica}].map(f => (
-                        <div key={f.l} style={{ display:'flex',alignItems:'center',gap:10,marginBottom:8 }}>
-                          <span style={{ fontSize:12,color:'var(--text2)',flex:1 }}>{f.l}</span>
-                          <Stars value={f.v} /><span style={{ fontSize:11,color:'var(--text3)',minWidth:20 }}>{f.v}/5</span>
-                        </div>
-                      ))}
-                      {c.evalOps.comentarios && <div style={{ background:'var(--bg)',borderRadius:6,padding:'8px 10px',fontSize:12,color:'var(--text2)',fontStyle:'italic',marginTop:8 }}>"{c.evalOps.comentarios}"</div>}
-                    </Section>
-                  ) : <Section title="Operaciones" right={<span className="badge-gray">Sin evaluar</span>}><div style={{ fontSize:12,color:'var(--text3)',fontStyle:'italic' }}>Pendiente.</div></Section>}
+                  <FeedbackSection
+                    title="RRHH — Entrevista"
+                    icon="👥"
+                    score={c.evalRRHH?.score}
+                    feedback={c.evalRRHH?.feedback}
+                    badge={c.evalRRHH ? (c.evalRRHH.aptoC ? '✔ Apto Cultural' : '✗ No Apto') : 'Sin evaluar'}
+                    badgeClass={c.evalRRHH ? (c.evalRRHH.aptoC ? 'badge-green' : 'badge-red') : 'badge-gray'}
+                    empty={!c.evalRRHH}
+                  />
+                  <FeedbackSection
+                    title="Operaciones — Entrevista"
+                    icon="⚙️"
+                    score={c.evalOps?.score}
+                    feedback={c.evalOps?.feedback}
+                    badge={c.evalOps ? (c.evalOps.recomendado ? '✔ Recomendado' : '✗ No recomendado') : 'Sin evaluar'}
+                    badgeClass={c.evalOps ? (c.evalOps.recomendado ? 'badge-green' : 'badge-red') : 'badge-gray'}
+                    empty={!c.evalOps}
+                  />
+                  <FeedbackSection
+                    title="Capacitación — Resultado final"
+                    icon="🎓"
+                    score={c.evalCap?.score}
+                    feedback={c.evalCap?.feedback}
+                    badge={c.evalCap ? (c.evalCap.listo ? '✔ Listo para piso' : '✗ No listo') : 'Sin evaluar'}
+                    badgeClass={c.evalCap ? (c.evalCap.listo ? 'badge-green' : 'badge-red') : 'badge-gray'}
+                    empty={!c.evalCap}
+                  />
 
-                  {c.evalRRHH ? (
-                    <Section title="Recursos Humanos" right={<span className={c.evalRRHH.aptoC ? 'badge-green' : 'badge-red'}>{c.evalRRHH.aptoC ? '✔ Apto Cultural' : '✗ No Apto'}</span>}>
-                      {[{l:'Habilidades Blandas',v:c.evalRRHH.blandas},{l:'Comunicación',v:c.evalRRHH.comunicacion},{l:'Adaptabilidad',v:c.evalRRHH.adaptabilidad}].map(f => (
-                        <div key={f.l} style={{ display:'flex',alignItems:'center',gap:10,marginBottom:8 }}>
-                          <span style={{ fontSize:12,color:'var(--text2)',flex:1 }}>{f.l}</span>
-                          <Stars value={f.v} /><span style={{ fontSize:11,color:'var(--text3)',minWidth:20 }}>{f.v}/5</span>
+                  {realAlerts.length > 0 && (
+                    <div style={{ marginTop: 4 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text3)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        Alertas ({realAlerts.length})
+                      </div>
+                      {realAlerts.map(a => (
+                        <div key={a.id} style={{ background: '#ef444410', border: '1px solid #ef444425', borderRadius: 8, padding: '8px 12px', marginBottom: 6, fontSize: 12 }}>
+                          <span style={{ color: 'var(--red)', fontWeight: 600 }}>{a.etapa} — {a.tipo}</span>
+                          <span style={{ color: 'var(--text3)', marginLeft: 8 }}>{a.descripcion}</span>
                         </div>
                       ))}
-                      {c.evalRRHH.comentarios && <div style={{ background:'var(--bg)',borderRadius:6,padding:'8px 10px',fontSize:12,color:'var(--text2)',fontStyle:'italic',marginTop:8 }}>"{c.evalRRHH.comentarios}"</div>}
-                    </Section>
-                  ) : <Section title="Recursos Humanos" right={<span className="badge-gray">Sin evaluar</span>}><div style={{ fontSize:12,color:'var(--text3)',fontStyle:'italic' }}>Pendiente.</div></Section>}
-
-                  {c.evalCap ? (
-                    <Section title="Capacitación" right={<div style={{ display:'flex',gap:6 }}>{c.evalCap.tieneAlerta && <span className="alert-chip">⚠ Alerta</span>}<span className={c.evalCap.listo ? 'badge-green' : 'badge-red'}>{c.evalCap.listo ? '✔ Listo' : '✗ No listo'}</span></div>}>
-                      {[{l:'Herramientas',v:c.evalCap.herramientas},{l:'Curva Aprendizaje',v:c.evalCap.curva},{l:'Cumplimiento',v:c.evalCap.cumplimiento}].map(f => (
-                        <div key={f.l} style={{ display:'flex',alignItems:'center',gap:10,marginBottom:8 }}>
-                          <span style={{ fontSize:12,color:'var(--text2)',flex:1 }}>{f.l}</span>
-                          <Stars value={f.v} /><span style={{ fontSize:11,color:'var(--text3)',minWidth:20 }}>{f.v}/5</span>
-                        </div>
-                      ))}
-                      {c.evalCap.comentarios && <div style={{ background:'var(--bg)',borderRadius:6,padding:'8px 10px',fontSize:12,color:'var(--text2)',fontStyle:'italic',marginTop:8 }}>"{c.evalCap.comentarios}"</div>}
-                    </Section>
-                  ) : <Section title="Capacitación" right={<span className="badge-gray">Sin evaluar</span>}><div style={{ fontSize:12,color:'var(--text3)',fontStyle:'italic' }}>Pendiente.</div></Section>}
+                    </div>
+                  )}
                 </>
               )}
 
-              {/* Tab: timeline */}
+              {/* ─── TAB: Historial ─── */}
               {tab === 'timeline' && (
-                <div style={{ position:'relative',paddingLeft:20 }}>
-                  <div style={{ position:'absolute',left:7,top:0,bottom:0,width:1,background:'var(--border)' }} />
-                  {c.alertas.length === 0
-                    ? <div style={{ fontSize:12,color:'var(--text3)',fontStyle:'italic' }}>Sin historial registrado.</div>
-                    : c.alertas.map(a => {
-                        const color = a.esDeEstado ? 'var(--blue)' : a.tipo === 'CONDUCTUAL' ? 'var(--red)' : 'var(--yellow)'
+                <div style={{ position: 'relative', paddingLeft: 22 }}>
+                  <div style={{ position: 'absolute', left: 8, top: 0, bottom: 0, width: 1, background: 'var(--border)' }} />
+                  {c.historial.length === 0
+                    ? <div style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>Sin historial registrado.</div>
+                    : [...c.historial].reverse().map(h => {
+                        const col = colorMap[h.color] ?? 'var(--text3)'
                         return (
-                          <div key={a.id} style={{ position:'relative',marginBottom:14 }}>
-                            <div style={{ position:'absolute',left:-17,top:4,width:10,height:10,borderRadius:'50%',background:color,border:'2px solid var(--bg2)' }} />
-                            <div style={{ background:'var(--card)',border:'1px solid var(--border)',borderRadius:8,padding:'10px 12px' }}>
-                              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:4 }}>
-                                <span style={{ fontSize:11,fontWeight:600,color }}>{a.etapa} — {a.tipo}</span>
-                                <span style={{ fontSize:10,color:'var(--text3)' }}>{a.createdAt?.split('T')[0]}</span>
+                          <div key={h.id} style={{ position: 'relative', marginBottom: 14 }}>
+                            <div style={{ position: 'absolute', left: -18, top: 5, width: 10, height: 10, borderRadius: '50%', background: col, border: '2px solid var(--bg2)' }} />
+                            <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: h.detalle ? 4 : 0 }}>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: col }}>{h.evento}</span>
+                                <span style={{ fontSize: 10, color: 'var(--text3)' }}>{h.createdAt?.split('T')[0]}</span>
                               </div>
-                              <div style={{ fontSize:12,color:'var(--text2)' }}>{a.descripcion}</div>
+                              {h.detalle && <div style={{ fontSize: 12, color: 'var(--text2)' }}>{h.detalle}</div>}
                             </div>
                           </div>
                         )
@@ -240,84 +338,162 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
             </div>
 
             {/* Footer */}
-            <div style={{ padding:'14px 20px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'space-between' }}>
-              <button className="btn-warning" onClick={() => setSubview('alert_form')}>⚠ Agregar Alerta</button>
-              <div style={{ display:'flex',gap:8 }}>
+            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button className="btn-warning" onClick={() => setSubview('alert_form')}>⚠ Registrar Alerta</button>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn-secondary" onClick={onClose}>Cerrar</button>
-                {canEdit.length > 0 && <button className="btn-primary" onClick={() => setSubview('eval_form')}>Editar Evaluación</button>}
+                {canEdit.length > 0 && (
+                  <button className="btn-primary" onClick={openEditForm}>
+                    {curEvalForForm ? 'Editar Feedback' : 'Registrar Feedback'}
+                  </button>
+                )}
               </div>
             </div>
           </>
         )}
 
-        {/* EVAL FORM */}
+        {/* ─── EVAL FORM ─── */}
         {subview === 'eval_form' && (
           <>
-            <div style={{ padding: '18px 20px' }}>
-              {curEval && Object.keys(curEval).length > 0 && (
-                <div style={{ background:'#71350020',border:'1px solid #eab30830',borderRadius:8,padding:'10px 12px',marginBottom:16,fontSize:12,color:'var(--yellow)' }}>
-                  ⚠ Ya existe una evaluación. Si guardás, se sobreescribe.
+            <div style={{ padding: '22px 22px 0' }}>
+
+              {curEvalForForm && (
+                <div style={{ background: '#71350020', border: '1px solid #eab30830', borderRadius: 8, padding: '10px 14px', marginBottom: 18, fontSize: 12, color: 'var(--yellow)' }}>
+                  ⚠ Ya hay un feedback registrado. Si guardás, se sobreescribe.
                 </div>
               )}
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
-                {curStage === 'ops' && <>
-                  <NumberInput id="ev-score" label="Score General (1-5)" value={c.evalOps?.score} />
-                  <NumberInput id="ev-tecnica" label="Eval. Técnica (1-5)" value={c.evalOps?.tecnica} />
-                  <SelectInput id="ev-rec" label="Recomendado" value={String(c.evalOps?.recomendado ?? true)} options={[{v:'true',l:'Sí'},{v:'false',l:'No'}]} />
-                  <div style={{ gridColumn:'1/-1',display:'flex',flexDirection:'column',gap:5 }}>
-                    <label style={{ fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:0.5 }}>Comentarios</label>
-                    <textarea id="ev-com" defaultValue={c.evalOps?.comentarios ?? ''} style={{ background:'var(--card)',border:'1px solid var(--border)',color:'var(--text)',padding:'8px 10px',borderRadius:7,fontSize:13,resize:'vertical',minHeight:70,fontFamily:'inherit' }} />
-                  </div>
-                </>}
-                {curStage === 'rrhh' && <>
-                  <NumberInput id="ev-blandas" label="Habilidades Blandas (1-5)" value={c.evalRRHH?.blandas} />
-                  <NumberInput id="ev-com2" label="Comunicación (1-5)" value={c.evalRRHH?.comunicacion} />
-                  <NumberInput id="ev-adapt" label="Adaptabilidad (1-5)" value={c.evalRRHH?.adaptabilidad} />
-                  <SelectInput id="ev-apto" label="Apto Cultural" value={String(c.evalRRHH?.aptoC ?? true)} options={[{v:'true',l:'Sí'},{v:'false',l:'No'}]} />
-                  <div style={{ gridColumn:'1/-1',display:'flex',flexDirection:'column',gap:5 }}>
-                    <label style={{ fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:0.5 }}>Comentarios</label>
-                    <textarea id="ev-com" defaultValue={c.evalRRHH?.comentarios ?? ''} style={{ background:'var(--card)',border:'1px solid var(--border)',color:'var(--text)',padding:'8px 10px',borderRadius:7,fontSize:13,resize:'vertical',minHeight:70,fontFamily:'inherit' }} />
-                  </div>
-                </>}
-                {curStage === 'cap' && <>
-                  <NumberInput id="ev-herr" label="Herramientas (1-5)" value={c.evalCap?.herramientas} />
-                  <NumberInput id="ev-curva" label="Curva Aprendizaje (1-5)" value={c.evalCap?.curva} />
-                  <NumberInput id="ev-cumpl" label="Cumplimiento (1-5)" value={c.evalCap?.cumplimiento} />
-                  <SelectInput id="ev-listo" label="Listo para piso" value={String(c.evalCap?.listo ?? false)} options={[{v:'true',l:'Sí'},{v:'false',l:'No'}]} />
-                  <SelectInput id="ev-alerta-tipo" label="Agregar Alerta" value="" options={[{v:'',l:'Sin alerta'}, ...Object.entries(ALERTA_TIPO_LABELS).map(([v,l])=>({v,l}))]} />
-                  <div style={{ gridColumn:'1/-1',display:'flex',flexDirection:'column',gap:5 }}>
-                    <label style={{ fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:0.5 }}>Comentarios</label>
-                    <textarea id="ev-com" defaultValue={c.evalCap?.comentarios ?? ''} style={{ background:'var(--card)',border:'1px solid var(--border)',color:'var(--text)',padding:'8px 10px',borderRadius:7,fontSize:13,resize:'vertical',minHeight:70,fontFamily:'inherit' }} />
-                  </div>
-                </>}
+
+              {/* Score */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, fontWeight: 600 }}>
+                  Puntaje general
+                </label>
+                <ClickableStars value={form.score} onChange={v => setForm(f => ({ ...f, score: v }))} />
+              </div>
+
+              {/* Boolean toggle */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, fontWeight: 600 }}>
+                  {curStage === 'ops' ? '¿Lo recomendás para esta campaña?' : curStage === 'rrhh' ? '¿Es apto cultural?' : '¿Está listo para piso?'}
+                </label>
+                {curStage === 'ops' && <BoolPill value={form.recomendado} onChange={v => setForm(f => ({ ...f, recomendado: v }))} yes="Sí, recomendado" no="No recomendado" />}
+                {curStage === 'rrhh' && <BoolPill value={form.aptoC} onChange={v => setForm(f => ({ ...f, aptoC: v }))} yes="Apto Cultural" no="No apto" />}
+                {curStage === 'cap' && <BoolPill value={form.listo} onChange={v => setForm(f => ({ ...f, listo: v }))} yes="Listo para piso" no="No listo" />}
+              </div>
+
+              {/* Alert type (cap only) */}
+              {curStage === 'cap' && (
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 600 }}>
+                    Tipo de alerta (opcional)
+                  </label>
+                  <select
+                    value={form.tipoAlerta}
+                    onChange={e => setForm(f => ({ ...f, tipoAlerta: e.target.value }))}
+                    style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 12px', borderRadius: 8, fontSize: 13, minWidth: 200 }}
+                  >
+                    <option value="">Sin alerta</option>
+                    {Object.entries(ALERTA_TIPO_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {/* Feedback textarea */}
+              <div style={{ marginBottom: 22 }}>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 600 }}>
+                  {curStage === 'rrhh'
+                    ? '¿Qué observaste en la entrevista? ¿Por qué fue seleccionado/a? *'
+                    : curStage === 'ops'
+                    ? '¿Qué observaste? ¿Por qué lo recomendás para esta campaña? *'
+                    : '¿Cómo le fue en la capacitación? ¿Qué destacás? *'}
+                </label>
+                <textarea
+                  value={form.feedback}
+                  onChange={e => setForm(f => ({ ...f, feedback: e.target.value }))}
+                  placeholder={
+                    curStage === 'rrhh'
+                      ? 'Ej: Excelente comunicación, manejo del estrés muy bueno, encaja con la cultura del equipo...'
+                      : curStage === 'ops'
+                      ? 'Ej: Buen conocimiento del producto, actitud proactiva, se adaptó rápido al perfil de la campaña...'
+                      : 'Ej: Rápida curva de aprendizaje, dominó las herramientas en la primera semana, cumplimiento del 95%...'
+                  }
+                  rows={5}
+                  style={{
+                    width: '100%', background: 'var(--card)', border: '1px solid var(--border)',
+                    color: 'var(--text)', padding: '12px 14px', borderRadius: 8, fontSize: 13,
+                    resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6,
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
             </div>
-            <div style={{ padding:'14px 20px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',gap:8 }}>
+
+            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
-              <button className="btn-primary" onClick={handleSaveEval} disabled={saving}>{saving ? 'Guardando...' : 'Confirmar y Guardar'}</button>
+              <button className="btn-primary" onClick={handleSaveEval} disabled={saving}>
+                {saving ? 'Guardando...' : 'Guardar Feedback'}
+              </button>
             </div>
           </>
         )}
 
-        {/* ALERT FORM */}
+        {/* ─── ALERT FORM ─── */}
         {subview === 'alert_form' && (
           <>
-            <div style={{ padding: '18px 20px' }}>
-              <div style={{ background:'#71350020',border:'1px solid #eab30830',borderRadius:8,padding:'10px 12px',marginBottom:16,fontSize:12,color:'var(--yellow)' }}>
-                Esta alerta quedará registrada en el historial permanentemente.
+            <div style={{ padding: '22px 22px 0' }}>
+              <div style={{ background: '#ef444410', border: '1px solid #ef444425', borderRadius: 8, padding: '10px 14px', marginBottom: 18, fontSize: 12, color: 'var(--red)' }}>
+                Esta alerta quedará registrada permanentemente en el historial del colaborador.
               </div>
-              <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:12 }}>
-                <SelectInput id="al-etapa" label="Etapa" options={[{v:'OPERACIONES',l:'Operaciones'},{v:'RRHH',l:'RRHH'},{v:'CAPACITACION',l:'Capacitación'},{v:'GENERAL',l:'General'}]} />
-                <SelectInput id="al-tipo" label="Tipo" options={Object.entries(ALERTA_TIPO_LABELS).map(([v,l])=>({v,l}))} />
-                <div style={{ gridColumn:'1/-1',display:'flex',flexDirection:'column',gap:5 }}>
-                  <label style={{ fontSize:11,color:'var(--text3)',textTransform:'uppercase',letterSpacing:0.5 }}>Descripción *</label>
-                  <textarea id="al-desc" placeholder="Describí la situación..." style={{ background:'var(--card)',border:'1px solid var(--border)',color:'var(--text)',padding:'8px 10px',borderRadius:7,fontSize:13,resize:'vertical',minHeight:80,fontFamily:'inherit' }} />
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 600 }}>Etapa</label>
+                  <select
+                    value={alertForm.etapa}
+                    onChange={e => setAlertForm(f => ({ ...f, etapa: e.target.value as EtapaAlerta }))}
+                    style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13 }}
+                  >
+                    {[['OPERACIONES','Operaciones'],['RRHH','RRHH'],['CAPACITACION','Capacitación'],['GENERAL','General']].map(([v,l]) => (
+                      <option key={v} value={v}>{l}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 600 }}>Tipo de alerta</label>
+                  <select
+                    value={alertForm.tipo}
+                    onChange={e => setAlertForm(f => ({ ...f, tipo: e.target.value as TipoAlerta }))}
+                    style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13 }}
+                  >
+                    {Object.entries(ALERTA_TIPO_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                  </select>
                 </div>
               </div>
+
+              <div style={{ marginBottom: 22 }}>
+                <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 600 }}>
+                  Descripción de la situación *
+                </label>
+                <textarea
+                  value={alertForm.descripcion}
+                  onChange={e => setAlertForm(f => ({ ...f, descripcion: e.target.value }))}
+                  placeholder="Describí qué pasó y por qué se registra esta alerta..."
+                  rows={4}
+                  style={{
+                    width: '100%', background: 'var(--card)', border: '1px solid var(--border)',
+                    color: 'var(--text)', padding: '12px 14px', borderRadius: 8, fontSize: 13,
+                    resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6,
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
             </div>
-            <div style={{ padding:'14px 20px',borderTop:'1px solid var(--border)',display:'flex',justifyContent:'flex-end',gap:8 }}>
+
+            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
-              <button className="btn-warning" onClick={handleSaveAlert} disabled={saving}>{saving ? 'Guardando...' : 'Guardar Alerta'}</button>
+              <button className="btn-warning" onClick={handleSaveAlert} disabled={saving}>
+                {saving ? 'Guardando...' : 'Registrar Alerta'}
+              </button>
             </div>
           </>
         )}

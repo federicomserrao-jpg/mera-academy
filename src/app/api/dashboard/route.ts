@@ -21,8 +21,8 @@ export async function GET() {
     const avg = (arr: number[]) => arr.length ? Math.round(arr.reduce((s, v) => s + v, 0) / arr.length * 10) / 10 : 0
 
     const avgScoreOps  = avg(conOps.map(c => c.evalOps!.score))
-    const avgScoreRRHH = avg(conRRHH.map(c => c.evalRRHH!.blandas))
-    const avgScoreCap  = avg(conCap.map(c => c.evalCap!.herramientas))
+    const avgScoreRRHH = avg(conRRHH.map(c => c.evalRRHH!.score))
+    const avgScoreCap  = avg(conCap.map(c => c.evalCap!.score))
 
     // Por campaña
     const campanaCounts = new Map<Campana, { total: number; conAlerta: number }>()

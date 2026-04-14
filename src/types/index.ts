@@ -14,32 +14,27 @@ export type EtapaAlerta = 'OPERACIONES' | 'RRHH' | 'CAPACITACION' | 'GENERAL'
 
 export interface EvalOps {
   id: string
-  score: number
-  tecnica: number
+  score: number        // 1-5
   recomendado: boolean
-  comentarios?: string | null
+  feedback: string
   updatedAt: string
 }
 
 export interface EvalRRHH {
   id: string
-  blandas: number
-  comunicacion: number
-  adaptabilidad: number
+  score: number        // 1-5
   aptoC: boolean
-  comentarios?: string | null
+  feedback: string
   updatedAt: string
 }
 
 export interface EvalCap {
   id: string
-  herramientas: number
-  curva: number
-  cumplimiento: number
+  score: number        // 1-5
   listo: boolean
   tieneAlerta: boolean
   tipoAlerta?: TipoAlerta | null
-  comentarios?: string | null
+  feedback: string
   updatedAt: string
 }
 

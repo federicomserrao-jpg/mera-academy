@@ -36,7 +36,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         where: { id },
         data: {
           estado: body.estado,
-          historial: { create: [{ evento: estadoLabel[body.estado] ?? body.estado, color: colorMap[body.estado] ?? 'blue', esDeEstado: true } as { evento: string; color: string }] },
+          historial: { create: [{ evento: estadoLabel[body.estado] ?? body.estado, color: colorMap[body.estado] ?? 'blue' }] },
         },
         include,
       })
@@ -44,16 +44,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     if (action === 'eval_ops') {
+      const feedback = (body.feedback ?? '').trim()
       const c = await prisma.candidato.update({
         where: { id },
         data: {
           evalOps: {
             upsert: {
-              create: { score: body.score, tecnica: body.tecnica, recomendado: body.recomendado, comentarios: body.comentarios },
-              update: { score: body.score, tecnica: body.tecnica, recomendado: body.recomendado, comentarios: body.comentarios },
+              create: { score: body.score, recomendado: body.recomendado, feedback },
+              update: { score: body.score, recomendado: body.recomendado, feedback },
             },
           },
-          historial: { create: [{ evento: 'Evaluación Operaciones actualizada', detalle: `Score ${body.score}/5 — ${body.recomendado ? 'Recomendado' : 'No recomendado'}`, color: 'blue' }] },
+          historial: { create: [{ evento: 'Feedback Operaciones registrado', detalle: `Score ${body.score}/5 — ${body.recomendado ? 'Recomendado' : 'No recomendado'}`, color: 'blue' }] },
         },
         include,
       })
@@ -61,16 +62,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     if (action === 'eval_rrhh') {
+      const feedback = (body.feedback ?? '').trim()
       const c = await prisma.candidato.update({
         where: { id },
         data: {
           evalRRHH: {
             upsert: {
-              create: { blandas: body.blandas, comunicacion: body.comunicacion, adaptabilidad: body.adaptabilidad, aptoC: body.aptoC, comentarios: body.comentarios },
-              update: { blandas: body.blandas, comunicacion: body.comunicacion, adaptabilidad: body.adaptabilidad, aptoC: body.aptoC, comentarios: body.comentarios },
+              create: { score: body.score, aptoC: body.aptoC, feedback },
+              update: { score: body.score, aptoC: body.aptoC, feedback },
             },
           },
-          historial: { create: [{ evento: 'Evaluación RRHH actualizada', detalle: `Blandas ${body.blandas}/5 — ${body.aptoC ? 'Apto Cultural' : 'No Apto'}`, color: 'purple' }] },
+          historial: { create: [{ evento: 'Feedback RRHH registrado', detalle: `Score ${body.score}/5 — ${body.aptoC ? 'Apto Cultural' : 'No Apto'}`, color: 'purple' }] },
         },
         include,
       })
@@ -78,21 +80,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     if (action === 'eval_cap') {
+      const feedback = (body.feedback ?? '').trim()
       const tieneAlerta = !!body.tipoAlerta
       let c = await prisma.candidato.update({
         where: { id },
         data: {
           evalCap: {
             upsert: {
-              create: { herramientas: body.herramientas, curva: body.curva, cumplimiento: body.cumplimiento, listo: body.listo, tieneAlerta, tipoAlerta: body.tipoAlerta ?? null, comentarios: body.comentarios },
-              update: { herramientas: body.herramientas, curva: body.curva, cumplimiento: body.cumplimiento, listo: body.listo, tieneAlerta, tipoAlerta: body.tipoAlerta ?? null, comentarios: body.comentarios },
+              create: { score: body.score, listo: body.listo, tieneAlerta, tipoAlerta: body.tipoAlerta ?? null, feedback },
+              update: { score: body.score, listo: body.listo, tieneAlerta, tipoAlerta: body.tipoAlerta ?? null, feedback },
             },
           },
-          historial: { create: [{ evento: 'Evaluación Capacitación actualizada', detalle: `Herramientas ${body.herramientas}/5 — ${body.listo ? 'Listo' : 'No listo'}`, color: body.listo ? 'green' : 'yellow' }] },
+          historial: { create: [{ evento: 'Feedback Capacitación registrado', detalle: `Score ${body.score}/5 — ${body.listo ? 'Listo para piso' : 'No listo'}`, color: body.listo ? 'green' : 'yellow' }] },
         },
         include,
       })
-      // Recalcular riesgo basado en alertas reales
       const riesgo = calcularRiesgo(c.alertas)
       if (riesgo !== c.riesgo) {
         c = await prisma.candidato.update({ where: { id }, data: { riesgo }, include })

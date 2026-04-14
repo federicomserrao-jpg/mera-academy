@@ -103,8 +103,8 @@ export default function CandidatoTable({ candidatos, onRowClick, onEstadoChange 
               </td>
 
               <td style={td}>{c.evalOps ? <ScoreBar value={c.evalOps.score} /> : <span style={{ color: 'var(--text3)' }}>—</span>}</td>
-              <td style={td}>{c.evalRRHH ? <ScoreBar value={c.evalRRHH.blandas} /> : <span style={{ color: 'var(--text3)' }}>—</span>}</td>
-              <td style={td}>{c.evalCap ? <ScoreBar value={c.evalCap.herramientas} /> : <span style={{ color: 'var(--text3)' }}>—</span>}</td>
+              <td style={td}>{c.evalRRHH ? <ScoreBar value={c.evalRRHH.score} /> : <span style={{ color: 'var(--text3)' }}>—</span>}</td>
+              <td style={td}>{c.evalCap ? <ScoreBar value={c.evalCap.score} /> : <span style={{ color: 'var(--text3)' }}>—</span>}</td>
 
               <td style={td}><AlertaChip count={realAlerts(c)} /></td>
             </tr>

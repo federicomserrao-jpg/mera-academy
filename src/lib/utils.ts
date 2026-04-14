@@ -4,12 +4,6 @@ import type { Candidato, NivelRiesgo, EtapaAlerta } from '@/types'
 
 // ─── RIESGO ──────────────────────────────────────────────
 
-/**
- * Recalcula el nivel de riesgo en base a las alertas reales (excluye las de estado).
- * ALTO  → alertas en 2+ etapas distintas
- * MEDIO → alerta en 1 etapa
- * BAJO  → sin alertas
- */
 export function calcularRiesgo(alertas: { etapa: EtapaAlerta; esDeEstado: boolean }[]): NivelRiesgo {
   const etapas = new Set(
     alertas.filter(a => !a.esDeEstado).map(a => a.etapa)
@@ -19,48 +13,42 @@ export function calcularRiesgo(alertas: { etapa: EtapaAlerta; esDeEstado: boolea
   return 'BAJO'
 }
 
-/**
- * Detecta discrepancia entre Ops y Capacitación (diferencia >= 2 puntos)
- */
 export function tieneDiscrepancia(c: Candidato): boolean {
   if (!c.evalOps || !c.evalCap) return false
-  return Math.abs(c.evalOps.score - c.evalCap.herramientas) >= 2
+  return Math.abs(c.evalOps.score - c.evalCap.score) >= 2
 }
 
 // ─── CSV EXPORT ──────────────────────────────────────────
 
 export function generarCSV(candidatos: Candidato[]): string {
   const headers = [
-    'Nombre', 'DNI', 'Puesto', 'Campaña', 'Estado', 'Fecha Postulación', 'Riesgo',
-    'Ops Score', 'Ops Técnica', 'Ops Recomendado',
-    'RRHH Blandas', 'RRHH Comunicación', 'RRHH Adaptabilidad', 'RRHH Apto Cultural',
-    'Cap Herramientas', 'Cap Curva', 'Cap Cumplimiento', 'Cap Listo',
-    'Cantidad Alertas', 'Comentarios Ops', 'Comentarios RRHH', 'Comentarios Cap',
+    'Nombre', 'DNI', 'Puesto', 'Campaña', 'Estado', 'Fecha Ingreso', 'Riesgo',
+    'Score RRHH', 'RRHH Apto Cultural', 'Feedback RRHH',
+    'Score Ops', 'Ops Recomendado', 'Feedback Ops',
+    'Score Cap', 'Cap Listo', 'Feedback Capacitación',
+    'Cantidad Alertas',
   ]
 
+  const esc = (s?: string | null) => `"${(s ?? '').replace(/"/g, '""')}"`
+
   const rows = candidatos.map(c => [
-    c.nombre,
+    esc(c.nombre),
     c.dni,
-    c.puesto ?? '',
-    c.campana.replace('_', ' '),
-    c.estado.replace('_', ' '),
+    esc(c.puesto),
+    c.campana.replace(/_/g, ' '),
+    c.estado.replace(/_/g, ' '),
     c.fechaPostulacion.split('T')[0],
     c.riesgo,
-    c.evalOps?.score ?? '',
-    c.evalOps?.tecnica ?? '',
-    c.evalOps?.recomendado !== undefined ? (c.evalOps.recomendado ? 'Sí' : 'No') : '',
-    c.evalRRHH?.blandas ?? '',
-    c.evalRRHH?.comunicacion ?? '',
-    c.evalRRHH?.adaptabilidad ?? '',
+    c.evalRRHH?.score ?? '',
     c.evalRRHH?.aptoC !== undefined ? (c.evalRRHH.aptoC ? 'Sí' : 'No') : '',
-    c.evalCap?.herramientas ?? '',
-    c.evalCap?.curva ?? '',
-    c.evalCap?.cumplimiento ?? '',
+    esc(c.evalRRHH?.feedback),
+    c.evalOps?.score ?? '',
+    c.evalOps?.recomendado !== undefined ? (c.evalOps.recomendado ? 'Sí' : 'No') : '',
+    esc(c.evalOps?.feedback),
+    c.evalCap?.score ?? '',
     c.evalCap?.listo !== undefined ? (c.evalCap.listo ? 'Sí' : 'No') : '',
+    esc(c.evalCap?.feedback),
     c.alertas.filter(a => !a.esDeEstado).length,
-    (c.evalOps?.comentarios ?? '').replace(/,/g, ';'),
-    (c.evalRRHH?.comentarios ?? '').replace(/,/g, ';'),
-    (c.evalCap?.comentarios ?? '').replace(/,/g, ';'),
   ])
 
   const csv = [headers, ...rows].map(row => row.join(',')).join('\n')
