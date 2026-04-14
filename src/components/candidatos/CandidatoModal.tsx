@@ -1,9 +1,9 @@
 'use client'
 // src/components/candidatos/CandidatoModal.tsx
 
-import { useState } from 'react'
-import type { Candidato, TipoAlerta, EtapaAlerta } from '@/types'
-import { CAMPANA_LABELS, ESTADO_LABELS, ALERTA_TIPO_LABELS } from '@/types'
+import { useState, useEffect } from 'react'
+import type { Candidato, TipoAlerta, EtapaAlerta, GrupoCapacitacion, Campana } from '@/types'
+import { CAMPANA_LABELS, ESTADO_LABELS, ALERTA_TIPO_LABELS, SITE_LABELS } from '@/types'
 import { Avatar, EstadoBadge, RiesgoBadge, ProgressDots } from '@/components/ui'
 
 // ─── Sub-components ───────────────────────────────────────
@@ -122,12 +122,21 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
   const [tab, setTab] = useState<Tab>('eval')
   const [subview, setSubview] = useState<SubView>('profile')
   const [saving, setSaving] = useState(false)
+  const [grupos, setGrupos] = useState<GrupoCapacitacion[]>([])
   const [infoForm, setInfoForm] = useState({
+    nombre: initial.nombre,
+    puesto: initial.puesto ?? '',
+    campana: initial.campana as Campana,
+    grupoCapId: initial.grupoCapId ?? '',
     telefono: initial.telefono ?? '',
     email: initial.email ?? '',
     legajo: initial.legajo ?? '',
     fechaIngresoPiso: initial.fechaIngresoPiso ? initial.fechaIngresoPiso.split('T')[0] : '',
   })
+
+  useEffect(() => {
+    fetch('/api/grupos').then(r => r.json()).then(d => { if (d.data) setGrupos(d.data) })
+  }, [])
 
   const stageMap: Record<string, string> = { admin: 'ops', operaciones: 'ops', rrhh: 'rrhh', capacitacion: 'cap' }
   const curStage = stageMap[role] ?? 'ops'
@@ -181,16 +190,21 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
   }
 
   async function handleSaveInfo() {
+    if (!infoForm.nombre.trim()) { alert('El nombre es obligatorio.'); return }
     setSaving(true)
     const res = await fetch(`/api/candidatos/${c.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'info',
-        telefono: infoForm.telefono || null,
-        email: infoForm.email || null,
-        legajo: infoForm.legajo || null,
-        fechaIngresoPiso: infoForm.fechaIngresoPiso || null,
+        nombre: infoForm.nombre.trim(),
+        puesto: infoForm.puesto || '',
+        campana: infoForm.campana,
+        grupoCapId: infoForm.grupoCapId || '',
+        telefono: infoForm.telefono || '',
+        email: infoForm.email || '',
+        legajo: infoForm.legajo || '',
+        fechaIngresoPiso: infoForm.fechaIngresoPiso || '',
       }),
     })
     if (res.ok) { const j = await res.json(); setC(j.data) }
@@ -227,7 +241,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
           <span style={{ fontSize: 15, fontWeight: 700 }}>
             {subview === 'profile'   ? 'Ficha del Colaborador'
               : subview === 'eval_form' ? `Feedback — ${stageNames[curStage]}`
-              : subview === 'info_form' ? 'Datos de Contacto'
+              : subview === 'info_form' ? 'Editar Perfil'
               : 'Registrar Alerta'}
           </span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 20 }}>✕</button>
@@ -379,8 +393,8 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
               <button className="btn-warning" onClick={() => setSubview('alert_form')}>⚠ Registrar Alerta</button>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn-secondary" onClick={onClose}>Cerrar</button>
-                {(role === 'admin' || role === 'rrhh') && (
-                  <button className="btn-secondary" onClick={() => setSubview('info_form')}>✏ Datos</button>
+                {role !== 'capacitacion' && (
+                  <button className="btn-secondary" onClick={() => setSubview('info_form')}>✏ Editar Perfil</button>
                 )}
                 {canEdit.length > 0 && (
                   <button className="btn-primary" onClick={openEditForm}>
@@ -481,12 +495,67 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
         {subview === 'info_form' && (
           <>
             <div style={{ padding: '22px 22px 0' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
+              {/* Sección: Datos básicos */}
+              <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, fontWeight: 700 }}>Datos del perfil</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>Nombre completo *</label>
+                  <input
+                    value={infoForm.nombre}
+                    onChange={e => setInfoForm(p => ({ ...p, nombre: e.target.value }))}
+                    style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13, boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>Puesto</label>
+                  <input
+                    value={infoForm.puesto}
+                    onChange={e => setInfoForm(p => ({ ...p, puesto: e.target.value }))}
+                    style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13, boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>Campaña *</label>
+                  <select
+                    value={infoForm.campana}
+                    onChange={e => setInfoForm(p => ({ ...p, campana: e.target.value as Campana, grupoCapId: '' }))}
+                    style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13 }}
+                  >
+                    {Object.entries(CAMPANA_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Sección: Grupo */}
+              <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, fontWeight: 700 }}>Grupo de capacitación</div>
+              <div style={{ marginBottom: 20 }}>
+                <select
+                  value={infoForm.grupoCapId}
+                  onChange={e => setInfoForm(p => ({ ...p, grupoCapId: e.target.value }))}
+                  style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13 }}
+                >
+                  <option value="">Sin asignar</option>
+                  {grupos.filter(g => g.campana === infoForm.campana && g.activo).map(g => (
+                    <option key={g.id} value={g.id}>
+                      {g.nombre}{g.site ? ` — ${SITE_LABELS[g.site as keyof typeof SITE_LABELS]}` : ''}
+                    </option>
+                  ))}
+                </select>
+                {grupos.filter(g => g.campana === infoForm.campana && g.activo).length === 0 && (
+                  <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>
+                    No hay grupos activos para {CAMPANA_LABELS[infoForm.campana]}. Creá uno en Campañas.
+                  </div>
+                )}
+              </div>
+
+              {/* Sección: Contacto */}
+              <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, fontWeight: 700 }}>Datos de contacto</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 22 }}>
                 {([
-                  { key: 'legajo',   label: 'Legajo interno',     type: 'text' },
-                  { key: 'telefono', label: 'Teléfono',           type: 'text' },
-                  { key: 'email',    label: 'Email',              type: 'email' },
-                  { key: 'fechaIngresoPiso', label: 'Fecha ingreso a piso', type: 'date' },
+                  { key: 'legajo',           label: 'Legajo interno',       type: 'text'  },
+                  { key: 'telefono',         label: 'Teléfono',             type: 'text'  },
+                  { key: 'email',            label: 'Email',                type: 'email' },
+                  { key: 'fechaIngresoPiso', label: 'Fecha ingreso a piso', type: 'date'  },
                 ] as const).map(f => (
                   <div key={f.key}>
                     <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>{f.label}</label>
@@ -503,7 +572,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
               <button className="btn-primary" onClick={handleSaveInfo} disabled={saving}>
-                {saving ? 'Guardando...' : 'Guardar Datos'}
+                {saving ? 'Guardando...' : 'Guardar Cambios'}
               </button>
             </div>
           </>

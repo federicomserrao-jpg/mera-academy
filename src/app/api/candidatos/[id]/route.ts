@@ -105,15 +105,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     if (action === 'info') {
+      const toNullable = (v: unknown) => v !== undefined ? (v || null) : undefined
       const c = await prisma.candidato.update({
         where: { id },
         data: {
-          telefono:         body.telefono ?? undefined,
-          email:            body.email ?? undefined,
-          legajo:           body.legajo ?? undefined,
-          fechaIngresoPiso: body.fechaIngresoPiso ? new Date(body.fechaIngresoPiso) : undefined,
+          nombre:           body.nombre       || undefined,
+          puesto:           toNullable(body.puesto),
+          campana:          body.campana      || undefined,
+          telefono:         toNullable(body.telefono),
+          email:            toNullable(body.email),
+          legajo:           toNullable(body.legajo),
+          fechaIngresoPiso: body.fechaIngresoPiso ? new Date(body.fechaIngresoPiso) : body.fechaIngresoPiso === '' ? null : undefined,
           reContratable:    body.reContratable ?? undefined,
-          grupoCapId:       body.grupoCapId ?? undefined,
+          grupoCapId:       toNullable(body.grupoCapId),
         },
         include,
       })
