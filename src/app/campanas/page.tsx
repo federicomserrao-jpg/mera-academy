@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react'
 import AppShell from '@/components/layout/AppShell'
 import { Spinner } from '@/components/ui'
-import type { GrupoCapacitacion, Campana, Candidato } from '@/types'
-import { CAMPANA_LABELS } from '@/types'
+import type { GrupoCapacitacion, Campana, Candidato, Site } from '@/types'
+import { CAMPANA_LABELS, SITE_LABELS } from '@/types'
 
 type GrupoConStats = GrupoCapacitacion & {
   candidatos: (Candidato & { evalOps: { score: number } | null; evalRRHH: { score: number } | null; evalCap: { score: number } | null })[]
@@ -31,7 +31,7 @@ export default function CampanasPage() {
   const [expanded, setExpanded] = useState<string | null>(null)
 
   // Form state
-  const [form, setForm] = useState({ nombre: '', campana: 'ADT' as Campana, fechaInicio: '', fechaFin: '' })
+  const [form, setForm] = useState({ nombre: '', campana: 'ADT' as Campana, site: '' as Site | '', fechaInicio: '', fechaFin: '' })
 
   async function fetchGrupos() {
     const r = await fetch('/api/grupos')
@@ -52,7 +52,7 @@ export default function CampanasPage() {
     })
     setSaving(false)
     setShowForm(false)
-    setForm({ nombre: '', campana: 'ADT', fechaInicio: '', fechaFin: '' })
+    setForm({ nombre: '', campana: 'ADT', site: '', fechaInicio: '', fechaFin: '' })
     fetchGrupos()
   }
 
@@ -133,7 +133,14 @@ export default function CampanasPage() {
                     <span style={{ fontSize: 16, marginRight: 2 }}>{isExpanded ? '▾' : '▸'}</span>
 
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 3 }}>{g.nombre}</div>
+                      <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {g.nombre}
+                        {g.site && (
+                          <span className="badge-gray" style={{ fontSize: 10 }}>
+                            📍 {SITE_LABELS[g.site as Site]}
+                          </span>
+                        )}
+                      </div>
                       <div style={{ fontSize: 11, color: 'var(--text3)' }}>
                         📅 {g.fechaInicio.split('T')[0]}
                         {g.fechaFin ? ` → ${g.fechaFin.split('T')[0]}` : ' → en curso'}
@@ -258,6 +265,17 @@ export default function CampanasPage() {
                     required style={inp}
                   >
                     {Object.entries(CAMPANA_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={lbl}>Site *</label>
+                  <select
+                    value={form.site}
+                    onChange={e => setForm(f => ({ ...f, site: e.target.value as Site | '' }))}
+                    required style={inp}
+                  >
+                    <option value="">Seleccioná un site</option>
+                    {Object.entries(SITE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>

@@ -23,7 +23,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const { nombre, campana, fechaInicio, fechaFin } = await req.json()
+    const { nombre, campana, site, fechaInicio, fechaFin } = await req.json()
     if (!nombre || !campana || !fechaInicio) {
       return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
     }
@@ -31,6 +31,7 @@ export async function POST(req: Request) {
       data: {
         nombre,
         campana,
+        site: site || null,
         fechaInicio: new Date(fechaInicio),
         fechaFin: fechaFin ? new Date(fechaFin) : null,
       },

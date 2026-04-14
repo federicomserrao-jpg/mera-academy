@@ -206,7 +206,7 @@ export default function CandidatosPage() {
                   >
                     <option value="">Sin asignar</option>
                     {grupos.filter(g => g.campana === newCampana && g.activo).map(g => (
-                      <option key={g.id} value={g.id}>{g.nombre}</option>
+                      <option key={g.id} value={g.id}>{g.nombre}{g.site ? ` — ${g.site === 'OLIVOS' ? 'Olivos' : 'Parque Patricios'}` : ''}</option>
                     ))}
                   </select>
                   {grupos.filter(g => g.campana === newCampana && g.activo).length === 0 && (

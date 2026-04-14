@@ -62,6 +62,7 @@ model GrupoCapacitacion {
   id          String    @id @default(cuid())
   nombre      String    // "ADT — Ene 2024 G1"
   campana     Campana
+  site        String?   // "OLIVOS" | "PARQUE_PATRICIOS"
   fechaInicio DateTime
   fechaFin    DateTime?
   activo      Boolean   @default(true)

@@ -12,10 +12,13 @@ export type NivelRiesgo = 'BAJO' | 'MEDIO' | 'ALTO'
 export type TipoAlerta = 'TECNICA' | 'CONDUCTUAL' | 'ASISTENCIA'
 export type EtapaAlerta = 'OPERACIONES' | 'RRHH' | 'CAPACITACION' | 'GENERAL'
 
+export type Site = 'OLIVOS' | 'PARQUE_PATRICIOS'
+
 export interface GrupoCapacitacion {
   id: string
   nombre: string
   campana: Campana
+  site?: Site | null
   fechaInicio: string
   fechaFin?: string | null
   activo: boolean
@@ -93,6 +96,11 @@ export interface Candidato {
 }
 
 // ─── LABELS ──────────────────────────────────────────────
+
+export const SITE_LABELS: Record<Site, string> = {
+  OLIVOS: 'Olivos',
+  PARQUE_PATRICIOS: 'Parque Patricios',
+}
 
 export const CAMPANA_LABELS: Record<Campana, string> = {
   CSV: 'CSV', TLMK: 'TLMK', EDESUR: 'EDESUR', AYSA: 'AYSA',
