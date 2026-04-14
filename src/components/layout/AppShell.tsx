@@ -7,7 +7,9 @@ import Sidebar from './Sidebar'
 
 const TITLES: Record<string, string> = {
   '/dashboard':  'Dashboard',
-  '/candidatos': 'Candidatos',
+  '/candidatos': 'Colaboradores',
+  '/campanas':   'Campañas y Grupos',
+  '/pool':       'Pool de Talentos',
   '/alertas':    'Centro de Alertas',
   '/reportes':   'Reportes',
 }
@@ -53,7 +55,7 @@ export default function AppShell({ children, alertCount = 0 }: AppShellProps) {
                 className="btn-primary"
                 onClick={() => window.dispatchEvent(new CustomEvent('mera_open_new_candidate'))}
               >
-                + Nuevo Candidato
+                + Nuevo Colaborador
               </button>
             )}
           </div>

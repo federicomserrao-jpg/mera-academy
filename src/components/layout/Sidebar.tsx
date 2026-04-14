@@ -6,9 +6,11 @@ import { usePathname } from 'next/navigation'
 
 const NAV_ITEMS = [
   { href: '/dashboard', icon: '📊', label: 'Dashboard' },
-  { href: '/candidatos', icon: '👥', label: 'Candidatos' },
-  { href: '/alertas',    icon: '🚨', label: 'Alertas' },
-  { href: '/reportes',   icon: '📈', label: 'Reportes' },
+  { href: '/candidatos', icon: '👥', label: 'Colaboradores' },
+  { href: '/campanas',  icon: '🎓', label: 'Campañas' },
+  { href: '/pool',      icon: '⭐', label: 'Pool de Talentos' },
+  { href: '/alertas',   icon: '🚨', label: 'Alertas' },
+  { href: '/reportes',  icon: '📈', label: 'Reportes' },
 ]
 
 interface SidebarProps {
@@ -25,7 +27,7 @@ export default function Sidebar({ alertCount = 0, role, onRoleChange }: SidebarP
       {/* Logo */}
       <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--border)' }}>
         <h1 style={{ fontSize: 18, fontWeight: 700, color: '#fff', letterSpacing: -0.5 }}>MERA Tracker</h1>
-        <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1 }}>Gestión de Candidatos</span>
+        <span style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1 }}>Gestión de Colaboradores</span>
       </div>
 
       {/* Nav */}

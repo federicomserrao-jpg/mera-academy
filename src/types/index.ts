@@ -12,9 +12,21 @@ export type NivelRiesgo = 'BAJO' | 'MEDIO' | 'ALTO'
 export type TipoAlerta = 'TECNICA' | 'CONDUCTUAL' | 'ASISTENCIA'
 export type EtapaAlerta = 'OPERACIONES' | 'RRHH' | 'CAPACITACION' | 'GENERAL'
 
+export interface GrupoCapacitacion {
+  id: string
+  nombre: string
+  campana: Campana
+  fechaInicio: string
+  fechaFin?: string | null
+  activo: boolean
+  createdAt: string
+  updatedAt: string
+  candidatos?: Candidato[]
+}
+
 export interface EvalOps {
   id: string
-  score: number        // 1-5
+  score: number
   recomendado: boolean
   feedback: string
   updatedAt: string
@@ -22,7 +34,7 @@ export interface EvalOps {
 
 export interface EvalRRHH {
   id: string
-  score: number        // 1-5
+  score: number
   aptoC: boolean
   feedback: string
   updatedAt: string
@@ -30,7 +42,7 @@ export interface EvalRRHH {
 
 export interface EvalCap {
   id: string
-  score: number        // 1-5
+  score: number
   listo: boolean
   tieneAlerta: boolean
   tipoAlerta?: TipoAlerta | null
@@ -63,7 +75,14 @@ export interface Candidato {
   campana: Campana
   estado: EstadoCandidato
   fechaPostulacion: string
+  fechaIngresoPiso?: string | null
   riesgo: NivelRiesgo
+  telefono?: string | null
+  email?: string | null
+  legajo?: string | null
+  reContratable?: boolean | null
+  grupoCapId?: string | null
+  grupoCap?: GrupoCapacitacion | null
   createdAt: string
   updatedAt: string
   evalOps?: EvalOps | null
@@ -73,7 +92,7 @@ export interface Candidato {
   historial: Historial[]
 }
 
-// ─── LABELS para mostrar en UI ───────────────────────────
+// ─── LABELS ──────────────────────────────────────────────
 
 export const CAMPANA_LABELS: Record<Campana, string> = {
   CSV: 'CSV', TLMK: 'TLMK', EDESUR: 'EDESUR', AYSA: 'AYSA',
@@ -112,6 +131,7 @@ export interface FiltrosCandidatos {
   search?: string
   desde?: string
   hasta?: string
+  grupoCapId?: string
 }
 
 // ─── API RESPONSES ───────────────────────────────────────

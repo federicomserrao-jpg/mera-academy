@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import type { Candidato, EstadoCandidato, FiltrosCandidatos } from '@/types'
+import type { Candidato, EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion, Campana } from '@/types'
 import { CAMPANA_LABELS } from '@/types'
 import AppShell from '@/components/layout/AppShell'
 import CandidatoTable from '@/components/candidatos/CandidatoTable'
@@ -17,6 +17,8 @@ export default function CandidatosPage() {
   const [showNew, setShowNew] = useState(false)
   const [filters, setFilters] = useState<FiltrosCandidatos>({})
   const [saving, setSaving] = useState(false)
+  const [grupos, setGrupos] = useState<GrupoCapacitacion[]>([])
+  const [newCampana, setNewCampana] = useState<Campana>('ADT')
 
   const fetchCandidatos = useCallback(async () => {
     const params = new URLSearchParams()
@@ -33,6 +35,10 @@ export default function CandidatosPage() {
   }, [filters])
 
   useEffect(() => { fetchCandidatos() }, [fetchCandidatos])
+
+  useEffect(() => {
+    fetch('/api/grupos').then(r => r.json()).then(d => { if (d.data) setGrupos(d.data) })
+  }, [])
 
   useEffect(() => {
     const saved = localStorage.getItem('mera_role')
@@ -134,34 +140,85 @@ export default function CandidatosPage() {
             onClick={e => e.stopPropagation()}
           >
             <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 15, fontWeight: 600 }}>Nuevo Candidato</span>
+              <span style={{ fontSize: 15, fontWeight: 600 }}>Nuevo Colaborador</span>
               <button onClick={() => setShowNew(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 18 }}>✕</button>
             </div>
             <form onSubmit={handleCreateCandidato}>
               <div style={{ padding: '18px 20px', display: 'grid', gap: 12 }}>
-                {[
-                  { id: 'nombre', label: 'Nombre completo *', type: 'text', required: true },
-                  { id: 'dni', label: 'DNI *', type: 'text', required: true },
-                  { id: 'puesto', label: 'Puesto', type: 'text', required: false },
-                ].map(f => (
-                  <div key={f.id} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <label style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{f.label}</label>
-                    <input
-                      name={f.id} type={f.type} required={f.required}
-                      style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13, fontFamily: 'inherit' }}
-                    />
-                  </div>
-                ))}
+                {/* Row: nombre + DNI */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {[
+                    { id: 'nombre', label: 'Nombre completo *', required: true },
+                    { id: 'dni',    label: 'DNI *',             required: true },
+                  ].map(f => (
+                    <div key={f.id} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{f.label}</label>
+                      <input name={f.id} required={f.required} style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13 }} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Row: puesto + legajo */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {[
+                    { id: 'puesto', label: 'Puesto' },
+                    { id: 'legajo', label: 'Legajo interno' },
+                  ].map(f => (
+                    <div key={f.id} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{f.label}</label>
+                      <input name={f.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13 }} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Row: telefono + email */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {[
+                    { id: 'telefono', label: 'Teléfono' },
+                    { id: 'email',    label: 'Email' },
+                  ].map(f => (
+                    <div key={f.id} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{f.label}</label>
+                      <input name={f.id} type={f.id === 'email' ? 'email' : 'text'} style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13 }} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Campaña */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   <label style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Campaña *</label>
-                  <select name="campana" required style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13, fontFamily: 'inherit' }}>
+                  <select
+                    name="campana" required
+                    value={newCampana}
+                    onChange={e => setNewCampana(e.target.value as Campana)}
+                    style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13 }}
+                  >
                     {Object.entries(CAMPANA_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                   </select>
+                </div>
+
+                {/* Grupo de capacitación */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <label style={{ fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Grupo de capacitación</label>
+                  <select
+                    name="grupoCapId"
+                    style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13 }}
+                  >
+                    <option value="">Sin asignar</option>
+                    {grupos.filter(g => g.campana === newCampana && g.activo).map(g => (
+                      <option key={g.id} value={g.id}>{g.nombre}</option>
+                    ))}
+                  </select>
+                  {grupos.filter(g => g.campana === newCampana && g.activo).length === 0 && (
+                    <span style={{ fontSize: 11, color: 'var(--text3)' }}>
+                      No hay grupos activos para {CAMPANA_LABELS[newCampana]}. Creá uno en Campañas.
+                    </span>
+                  )}
                 </div>
               </div>
               <div style={{ padding: '14px 20px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <button type="button" className="btn-secondary" onClick={() => setShowNew(false)}>Cancelar</button>
-                <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Creando...' : 'Crear Candidato'}</button>
+                <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Creando...' : 'Registrar Colaborador'}</button>
               </div>
             </form>
           </div>

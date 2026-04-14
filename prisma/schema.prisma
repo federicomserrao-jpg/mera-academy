@@ -56,6 +56,24 @@ enum EtapaAlerta {
   GENERAL
 }
 
+// ─── GRUPO DE CAPACITACIÓN (cohorte por campaña) ─────────
+
+model GrupoCapacitacion {
+  id          String    @id @default(cuid())
+  nombre      String    // "ADT — Ene 2024 G1"
+  campana     Campana
+  fechaInicio DateTime
+  fechaFin    DateTime?
+  activo      Boolean   @default(true)
+
+  candidatos  Candidato[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([campana])
+}
+
 // ─── COLABORADOR ─────────────────────────────────────────
 
 model Candidato {
@@ -66,7 +84,21 @@ model Candidato {
   campana          Campana
   estado           EstadoCandidato @default(EN_PROCESO)
   fechaPostulacion DateTime        @default(now())
+  fechaIngresoPiso DateTime?
   riesgo           NivelRiesgo     @default(BAJO)
+
+  // Datos de contacto
+  telefono         String?
+  email            String?
+  legajo           String?
+
+  // Pool de talentos
+  reContratable    Boolean?        // null = sin evaluar
+
+  // Grupo de capacitación
+  grupoCapId       String?
+  grupoCap         GrupoCapacitacion? @relation(fields: [grupoCapId], references: [id])
+
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -80,6 +112,7 @@ model Candidato {
   @@index([estado])
   @@index([riesgo])
   @@index([fechaPostulacion])
+  @@index([grupoCapId])
 }
 
 // ─── EVALUACIONES / FEEDBACK ─────────────────────────────
@@ -91,7 +124,7 @@ model EvalOperaciones {
 
   score       Int       // 1-5 puntaje general
   recomendado Boolean
-  feedback    String    @db.Text  // Por qué fue seleccionado / qué observó Operaciones
+  feedback    String    @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,7 +137,7 @@ model EvalRRHH {
 
   score       Int       // 1-5 puntaje general
   aptoC       Boolean
-  feedback    String    @db.Text  // Qué vio RRHH en la entrevista / por qué fue seleccionado
+  feedback    String    @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -119,7 +152,7 @@ model EvalCapacitacion {
   listo       Boolean
   tieneAlerta Boolean    @default(false)
   tipoAlerta  TipoAlerta?
-  feedback    String     @db.Text  // Cómo le fue en la capacitación
+  feedback    String     @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -140,8 +173,6 @@ model Alerta {
   createdAt DateTime @default(now())
 
   @@index([candidatoId])
-  @@index([etapa])
-  @@index([tipo])
 }
 
 // ─── HISTORIAL ───────────────────────────────────────────

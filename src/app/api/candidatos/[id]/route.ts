@@ -6,6 +6,7 @@ const include = {
   evalOps: true, evalRRHH: true, evalCap: true,
   alertas:   { orderBy: { createdAt: 'asc' as const } },
   historial: { orderBy: { createdAt: 'asc' as const } },
+  grupoCap:  true,
 }
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
@@ -99,6 +100,22 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       if (riesgo !== c.riesgo) {
         c = await prisma.candidato.update({ where: { id }, data: { riesgo }, include })
       }
+      return NextResponse.json({ data: c })
+    }
+
+    if (action === 'info') {
+      const c = await prisma.candidato.update({
+        where: { id },
+        data: {
+          telefono:         body.telefono ?? undefined,
+          email:            body.email ?? undefined,
+          legajo:           body.legajo ?? undefined,
+          fechaIngresoPiso: body.fechaIngresoPiso ? new Date(body.fechaIngresoPiso) : undefined,
+          reContratable:    body.reContratable ?? undefined,
+          grupoCapId:       body.grupoCapId ?? undefined,
+        },
+        include,
+      })
       return NextResponse.json({ data: c })
     }
 

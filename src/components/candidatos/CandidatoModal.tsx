@@ -115,13 +115,19 @@ interface Props {
 }
 
 type Tab = 'eval' | 'timeline'
-type SubView = 'profile' | 'eval_form' | 'alert_form'
+type SubView = 'profile' | 'eval_form' | 'alert_form' | 'info_form'
 
 export default function CandidatoModal({ candidato: initial, role, onClose, onSaveEval, onSaveAlert }: Props) {
   const [c, setC] = useState(initial)
   const [tab, setTab] = useState<Tab>('eval')
   const [subview, setSubview] = useState<SubView>('profile')
   const [saving, setSaving] = useState(false)
+  const [infoForm, setInfoForm] = useState({
+    telefono: initial.telefono ?? '',
+    email: initial.email ?? '',
+    legajo: initial.legajo ?? '',
+    fechaIngresoPiso: initial.fechaIngresoPiso ? initial.fechaIngresoPiso.split('T')[0] : '',
+  })
 
   const stageMap: Record<string, string> = { admin: 'ops', operaciones: 'ops', rrhh: 'rrhh', capacitacion: 'cap' }
   const curStage = stageMap[role] ?? 'ops'
@@ -174,6 +180,24 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
     setSubview('profile')
   }
 
+  async function handleSaveInfo() {
+    setSaving(true)
+    const res = await fetch(`/api/candidatos/${c.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'info',
+        telefono: infoForm.telefono || null,
+        email: infoForm.email || null,
+        legajo: infoForm.legajo || null,
+        fechaIngresoPiso: infoForm.fechaIngresoPiso || null,
+      }),
+    })
+    if (res.ok) { const j = await res.json(); setC(j.data) }
+    setSaving(false)
+    setSubview('profile')
+  }
+
   async function handleSaveAlert() {
     if (!alertForm.descripcion.trim()) { alert('Describí la alerta.'); return }
     setSaving(true)
@@ -201,8 +225,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
         {/* HEADER */}
         <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 15, fontWeight: 700 }}>
-            {subview === 'profile' ? 'Ficha del Colaborador'
+            {subview === 'profile'   ? 'Ficha del Colaborador'
               : subview === 'eval_form' ? `Feedback — ${stageNames[curStage]}`
+              : subview === 'info_form' ? 'Datos de Contacto'
               : 'Registrar Alerta'}
           </span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 20 }}>✕</button>
@@ -225,12 +250,24 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                     <EstadoBadge estado={c.estado} />
                     {c.riesgo !== 'BAJO' && <RiesgoBadge riesgo={c.riesgo} />}
                   </div>
-                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, color: 'var(--text3)' }}>Etapas completadas:</span>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text3)' }}>Etapas:</span>
                     <ProgressDots candidato={c} />
                     <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 4 }}>
                       📅 {c.fechaPostulacion.split('T')[0]}
                     </span>
+                    {c.fechaIngresoPiso && (
+                      <span style={{ fontSize: 11, color: 'var(--green)' }}>
+                        🏢 Piso {c.fechaIngresoPiso.split('T')[0]}
+                      </span>
+                    )}
+                  </div>
+                  {/* Contact + grupo */}
+                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                    {c.grupoCap && <span className="badge-gray" style={{ fontSize: 10 }}>🎓 {c.grupoCap.nombre}</span>}
+                    {c.legajo   && <span style={{ fontSize: 11, color: 'var(--text3)' }}>🪪 {c.legajo}</span>}
+                    {c.telefono && <span style={{ fontSize: 11, color: 'var(--text3)' }}>📱 {c.telefono}</span>}
+                    {c.email    && <span style={{ fontSize: 11, color: 'var(--text3)' }}>✉ {c.email}</span>}
                   </div>
                 </div>
               </div>
@@ -342,6 +379,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
               <button className="btn-warning" onClick={() => setSubview('alert_form')}>⚠ Registrar Alerta</button>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn-secondary" onClick={onClose}>Cerrar</button>
+                {(role === 'admin' || role === 'rrhh') && (
+                  <button className="btn-secondary" onClick={() => setSubview('info_form')}>✏ Datos</button>
+                )}
                 {canEdit.length > 0 && (
                   <button className="btn-primary" onClick={openEditForm}>
                     {curEvalForForm ? 'Editar Feedback' : 'Registrar Feedback'}
@@ -432,6 +472,38 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
               <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
               <button className="btn-primary" onClick={handleSaveEval} disabled={saving}>
                 {saving ? 'Guardando...' : 'Guardar Feedback'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ─── INFO FORM ─── */}
+        {subview === 'info_form' && (
+          <>
+            <div style={{ padding: '22px 22px 0' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
+                {([
+                  { key: 'legajo',   label: 'Legajo interno',     type: 'text' },
+                  { key: 'telefono', label: 'Teléfono',           type: 'text' },
+                  { key: 'email',    label: 'Email',              type: 'email' },
+                  { key: 'fechaIngresoPiso', label: 'Fecha ingreso a piso', type: 'date' },
+                ] as const).map(f => (
+                  <div key={f.key}>
+                    <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>{f.label}</label>
+                    <input
+                      type={f.type}
+                      value={infoForm[f.key]}
+                      onChange={e => setInfoForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                      style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13, boxSizing: 'border-box' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
+              <button className="btn-primary" onClick={handleSaveInfo} disabled={saving}>
+                {saving ? 'Guardando...' : 'Guardar Datos'}
               </button>
             </div>
           </>

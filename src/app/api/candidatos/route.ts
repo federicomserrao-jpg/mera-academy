@@ -6,17 +6,19 @@ const include = {
   evalOps: true, evalRRHH: true, evalCap: true,
   alertas: { orderBy: { createdAt: 'asc' as const } },
   historial: { orderBy: { createdAt: 'asc' as const } },
+  grupoCap: true,
 }
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
-    const campana  = searchParams.get('campana') as Campana | null
-    const estado   = searchParams.get('estado') as EstadoCandidato | null
-    const alerta   = searchParams.get('alerta')
-    const search   = searchParams.get('search')
-    const desde    = searchParams.get('desde')
-    const hasta    = searchParams.get('hasta')
+    const campana     = searchParams.get('campana') as Campana | null
+    const estado      = searchParams.get('estado') as EstadoCandidato | null
+    const alerta      = searchParams.get('alerta')
+    const search      = searchParams.get('search')
+    const desde       = searchParams.get('desde')
+    const hasta       = searchParams.get('hasta')
+    const grupoCapId  = searchParams.get('grupoCapId')
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {}
@@ -31,6 +33,7 @@ export async function GET(req: Request) {
       if (desde) where.fechaPostulacion.gte = new Date(desde)
       if (hasta) where.fechaPostulacion.lte = new Date(hasta + 'T23:59:59')
     }
+    if (grupoCapId) where.grupoCapId = grupoCapId
 
     const candidatos = await prisma.candidato.findMany({
       where,
@@ -54,7 +57,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { nombre, dni, puesto, campana } = body
+    const { nombre, dni, puesto, campana, telefono, email, legajo, grupoCapId } = body
 
     if (!nombre || !dni || !campana) {
       return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
@@ -66,8 +69,12 @@ export async function POST(req: Request) {
         dni,
         puesto: puesto || null,
         campana,
+        telefono: telefono || null,
+        email: email || null,
+        legajo: legajo || null,
+        grupoCapId: grupoCapId || null,
         historial: {
-          create: [{ evento: 'Candidato creado', detalle: `Postulación registrada para campaña ${campana}`, color: 'blue' }],
+          create: [{ evento: 'Colaborador registrado', detalle: `Registrado para campaña ${campana}`, color: 'blue' }],
         },
       },
       include,
