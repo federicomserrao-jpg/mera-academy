@@ -2,13 +2,14 @@
 // src/components/ui/FiltersBar.tsx
 
 import { CAMPANA_LABELS, ESTADO_LABELS } from '@/types'
-import type { Campana, EstadoCandidato, FiltrosCandidatos } from '@/types'
+import type { Campana, EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion } from '@/types'
 
 interface FiltersBarProps {
   filters: FiltrosCandidatos
   onChange: (f: Partial<FiltrosCandidatos>) => void
   showSearch?: boolean
   showDates?: boolean
+  grupos?: GrupoCapacitacion[]
 }
 
 const inputStyle = {
@@ -16,7 +17,12 @@ const inputStyle = {
   color: 'var(--text2)', padding: '7px 10px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
 }
 
-export default function FiltersBar({ filters, onChange, showSearch = true, showDates = true }: FiltersBarProps) {
+export default function FiltersBar({ filters, onChange, showSearch = true, showDates = true, grupos }: FiltersBarProps) {
+  // If a campaign is selected, only show groups for that campaign
+  const visibleGrupos = grupos
+    ? (filters.campana ? grupos.filter(g => g.campana === filters.campana && g.activo) : grupos.filter(g => g.activo))
+    : []
+
   return (
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16, alignItems: 'center' }}>
       {showSearch && (
@@ -28,7 +34,9 @@ export default function FiltersBar({ filters, onChange, showSearch = true, showD
         />
       )}
 
-      <select style={inputStyle} value={filters.campana ?? ''} onChange={e => onChange({ campana: (e.target.value as Campana) || undefined })}>
+      <select style={inputStyle} value={filters.campana ?? ''} onChange={e => {
+        onChange({ campana: (e.target.value as Campana) || undefined, grupoCapId: undefined })
+      }}>
         <option value="">Todas las campañas</option>
         {Object.entries(CAMPANA_LABELS).map(([k, v]) => (
           <option key={k} value={k}>{v}</option>
@@ -41,6 +49,15 @@ export default function FiltersBar({ filters, onChange, showSearch = true, showD
           <option key={k} value={k}>{v}</option>
         ))}
       </select>
+
+      {visibleGrupos.length > 0 && (
+        <select style={inputStyle} value={filters.grupoCapId ?? ''} onChange={e => onChange({ grupoCapId: e.target.value || undefined })}>
+          <option value="">Todos los grupos</option>
+          {visibleGrupos.map(g => (
+            <option key={g.id} value={g.id}>{g.nombre}</option>
+          ))}
+        </select>
+      )}
 
       <select style={inputStyle} value={filters.alerta ?? ''} onChange={e => onChange({ alerta: (e.target.value as 'con' | 'sin') || undefined })}>
         <option value="">Con y sin alertas</option>

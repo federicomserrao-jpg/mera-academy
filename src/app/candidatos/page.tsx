@@ -31,6 +31,7 @@ export default function CandidatosPage() {
     if (filters.search) params.set('search', filters.search)
     if (filters.desde) params.set('desde', filters.desde)
     if (filters.hasta) params.set('hasta', filters.hasta)
+    if (filters.grupoCapId) params.set('grupoCapId', filters.grupoCapId)
     const r = await fetch(`/api/candidatos?${params}`)
     const d = await r.json()
     if (d.data) setCandidatos(d.data)
@@ -129,7 +130,7 @@ export default function CandidatosPage() {
 
   return (
     <AppShell alertCount={alertCount}>
-      <FiltersBar filters={filters} onChange={f => setFilters(prev => ({ ...prev, ...f }))} />
+      <FiltersBar filters={filters} onChange={f => setFilters(prev => ({ ...prev, ...f }))} grupos={grupos} />
 
       {loading ? <Spinner /> : (
         <CandidatoTable
