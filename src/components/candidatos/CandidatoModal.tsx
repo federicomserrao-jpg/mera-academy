@@ -52,10 +52,11 @@ const BoolPill = ({ value, onChange, yes, no }: { value: boolean; onChange: (v: 
 )
 
 const FeedbackSection = ({
-  title, icon, score, feedback, badge, badgeClass, empty,
+  title, icon, score, feedback, badge, badgeClass, empty, updatedAt, onEdit, locked,
 }: {
   title: string; icon: string; score?: number | null; feedback?: string | null;
   badge: string; badgeClass: string; empty?: boolean;
+  updatedAt?: string | null; onEdit?: () => void; locked?: boolean;
 }) => (
   <div style={{
     background: 'var(--card)', border: '1px solid var(--border)',
@@ -65,7 +66,21 @@ const FeedbackSection = ({
       <span style={{ fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 7 }}>
         <span style={{ fontSize: 16 }}>{icon}</span>{title}
       </span>
-      <span className={badgeClass}>{badge}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {updatedAt && !empty && (
+          <span style={{ fontSize: 10, color: 'var(--text3)' }}>
+            {new Date(updatedAt).toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' })}
+          </span>
+        )}
+        <span className={badgeClass}>{badge}</span>
+        {onEdit && (
+          <button onClick={onEdit} style={{
+            fontSize: 11, padding: '3px 9px', borderRadius: 6, cursor: 'pointer',
+            background: 'transparent', border: '1px solid var(--border)',
+            color: 'var(--text2)', fontWeight: 500,
+          }}>✏ Editar</button>
+        )}
+      </div>
     </div>
     {empty ? (
       <div style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic', padding: '4px 0' }}>
@@ -86,6 +101,11 @@ const FeedbackSection = ({
         ) : (
           <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>
             Sin feedback escrito.
+          </div>
+        )}
+        {locked && (
+          <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>
+            🔒 Solo Admin puede modificar este feedback.
           </div>
         )}
       </>
@@ -115,7 +135,7 @@ interface Props {
 }
 
 type Tab = 'eval' | 'timeline'
-type SubView = 'profile' | 'eval_form' | 'alert_form' | 'info_form'
+type SubView = 'profile' | 'eval_form' | 'alert_form' | 'info_form' | 'nota_form'
 
 export default function CandidatoModal({ candidato: initial, role, onClose, onSaveEval, onSaveAlert }: Props) {
   const [c, setC] = useState(initial)
@@ -123,6 +143,8 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
   const [subview, setSubview] = useState<SubView>('profile')
   const [saving, setSaving] = useState(false)
   const [grupos, setGrupos] = useState<GrupoCapacitacion[]>([])
+  const [editingStage, setEditingStage] = useState<'ops' | 'rrhh' | 'cap'>('ops')
+  const [nota, setNota] = useState('')
   const [infoForm, setInfoForm] = useState({
     nombre: initial.nombre,
     puesto: initial.puesto ?? '',
@@ -138,29 +160,28 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
     fetch('/api/grupos').then(r => r.json()).then(d => { if (d.data) setGrupos(d.data) })
   }, [])
 
-  const stageMap: Record<string, string> = { admin: 'ops', operaciones: 'ops', rrhh: 'rrhh', capacitacion: 'cap' }
-  const curStage = stageMap[role] ?? 'ops'
-  const canEdit = { admin: ['ops','rrhh','cap'], operaciones: ['ops'], rrhh: ['rrhh'], capacitacion: ['cap'] }[role] ?? []
+  const canEdit: string[] = { admin: ['ops','rrhh','cap'], operaciones: ['ops'], rrhh: ['rrhh'], capacitacion: ['cap'] }[role] ?? []
 
-  const curEvalForForm = curStage === 'ops' ? c.evalOps : curStage === 'rrhh' ? c.evalRRHH : c.evalCap
+  // Admin puede editar siempre. Otros roles solo si el eval está vacío.
+  function canEditStage(stage: 'ops' | 'rrhh' | 'cap') {
+    if (!canEdit.includes(stage)) return false
+    if (role === 'admin') return true
+    const exists = stage === 'ops' ? !!c.evalOps : stage === 'rrhh' ? !!c.evalRRHH : !!c.evalCap
+    return !exists
+  }
 
   const [form, setForm] = useState<FormState>({
-    score: curEvalForForm?.score ?? 3,
-    recomendado: (curEvalForForm as typeof c.evalOps)?.recomendado ?? true,
-    aptoC: (curEvalForForm as typeof c.evalRRHH)?.aptoC ?? true,
-    listo: (curEvalForForm as typeof c.evalCap)?.listo ?? false,
-    tipoAlerta: (curEvalForForm as typeof c.evalCap)?.tipoAlerta ?? '',
-    feedback: curEvalForForm?.feedback ?? '',
+    score: 3, recomendado: true, aptoC: true, listo: false, tipoAlerta: '', feedback: '',
   })
 
-  // Alert form state
   const [alertForm, setAlertForm] = useState({ etapa: 'OPERACIONES' as EtapaAlerta, tipo: 'TECNICA' as TipoAlerta, descripcion: '' })
 
   const discrepancia = c.evalOps && c.evalCap && Math.abs(c.evalOps.score - c.evalCap.score) >= 2
   const realAlerts = c.alertas.filter(a => !a.esDeEstado)
 
-  function openEditForm() {
-    const ev = curStage === 'ops' ? c.evalOps : curStage === 'rrhh' ? c.evalRRHH : c.evalCap
+  function openEditForm(stage: 'ops' | 'rrhh' | 'cap') {
+    setEditingStage(stage)
+    const ev = stage === 'ops' ? c.evalOps : stage === 'rrhh' ? c.evalRRHH : c.evalCap
     setForm({
       score: ev?.score ?? 3,
       recomendado: (ev as typeof c.evalOps)?.recomendado ?? true,
@@ -172,11 +193,21 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
     setSubview('eval_form')
   }
 
+  function openInfoForm() {
+    setInfoForm({
+      nombre: c.nombre, puesto: c.puesto ?? '', campana: c.campana,
+      grupoCapId: c.grupoCapId ?? '', telefono: c.telefono ?? '',
+      email: c.email ?? '', legajo: c.legajo ?? '',
+      fechaIngresoPiso: c.fechaIngresoPiso ? c.fechaIngresoPiso.split('T')[0] : '',
+    })
+    setSubview('info_form')
+  }
+
   async function handleSaveEval() {
     let data: Record<string, unknown> = {}
-    if (curStage === 'ops')   data = { action: 'eval_ops',  score: form.score, recomendado: form.recomendado, feedback: form.feedback }
-    if (curStage === 'rrhh')  data = { action: 'eval_rrhh', score: form.score, aptoC: form.aptoC, feedback: form.feedback }
-    if (curStage === 'cap')   data = { action: 'eval_cap',  score: form.score, listo: form.listo, tipoAlerta: form.tipoAlerta || null, feedback: form.feedback }
+    if (editingStage === 'ops')  data = { action: 'eval_ops',  score: form.score, recomendado: form.recomendado, feedback: form.feedback }
+    if (editingStage === 'rrhh') data = { action: 'eval_rrhh', score: form.score, aptoC: form.aptoC, feedback: form.feedback }
+    if (editingStage === 'cap')  data = { action: 'eval_cap',  score: form.score, listo: form.listo, tipoAlerta: form.tipoAlerta || null, feedback: form.feedback }
 
     setSaving(true)
     const res = await fetch(`/api/candidatos/${c.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
@@ -216,8 +247,26 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
     if (!alertForm.descripcion.trim()) { alert('Describí la alerta.'); return }
     setSaving(true)
     await onSaveAlert(c.id, alertForm)
+    const r = await fetch(`/api/candidatos/${c.id}`)
+    const d = await r.json()
+    if (d.data) setC(d.data)
     setSaving(false)
     setSubview('profile')
+  }
+
+  async function handleSaveNota() {
+    if (!nota.trim()) return
+    setSaving(true)
+    const res = await fetch(`/api/candidatos/${c.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'nota', texto: nota.trim(), rol: role }),
+    })
+    if (res.ok) { const j = await res.json(); setC(j.data) }
+    setSaving(false)
+    setNota('')
+    setSubview('profile')
+    setTab('timeline')
   }
 
   const stageNames: Record<string, string> = { ops: 'Operaciones', rrhh: 'RRHH', cap: 'Capacitación' }
@@ -240,8 +289,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
         <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 15, fontWeight: 700 }}>
             {subview === 'profile'   ? 'Ficha del Colaborador'
-              : subview === 'eval_form' ? `Feedback — ${stageNames[curStage]}`
+              : subview === 'eval_form' ? `Feedback — ${stageNames[editingStage]}`
               : subview === 'info_form' ? 'Editar Perfil'
+              : subview === 'nota_form' ? '💬 Agregar Nota al Historial'
               : 'Registrar Alerta'}
           </span>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 20 }}>✕</button>
@@ -326,6 +376,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                     badge={c.evalRRHH ? (c.evalRRHH.aptoC ? '✔ Apto Cultural' : '✗ No Apto') : 'Sin evaluar'}
                     badgeClass={c.evalRRHH ? (c.evalRRHH.aptoC ? 'badge-green' : 'badge-red') : 'badge-gray'}
                     empty={!c.evalRRHH}
+                    updatedAt={c.evalRRHH?.updatedAt}
+                    onEdit={canEditStage('rrhh') ? () => openEditForm('rrhh') : undefined}
+                    locked={!!c.evalRRHH && !canEditStage('rrhh') && canEdit.includes('rrhh')}
                   />
                   <FeedbackSection
                     title="Operaciones — Entrevista"
@@ -335,6 +388,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                     badge={c.evalOps ? (c.evalOps.recomendado ? '✔ Recomendado' : '✗ No recomendado') : 'Sin evaluar'}
                     badgeClass={c.evalOps ? (c.evalOps.recomendado ? 'badge-green' : 'badge-red') : 'badge-gray'}
                     empty={!c.evalOps}
+                    updatedAt={c.evalOps?.updatedAt}
+                    onEdit={canEditStage('ops') ? () => openEditForm('ops') : undefined}
+                    locked={!!c.evalOps && !canEditStage('ops') && canEdit.includes('ops')}
                   />
                   <FeedbackSection
                     title="Capacitación — Resultado final"
@@ -344,6 +400,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                     badge={c.evalCap ? (c.evalCap.listo ? '✔ Listo para piso' : '✗ No listo') : 'Sin evaluar'}
                     badgeClass={c.evalCap ? (c.evalCap.listo ? 'badge-green' : 'badge-red') : 'badge-gray'}
                     empty={!c.evalCap}
+                    updatedAt={c.evalCap?.updatedAt}
+                    onEdit={canEditStage('cap') ? () => openEditForm('cap') : undefined}
+                    locked={!!c.evalCap && !canEditStage('cap') && canEdit.includes('cap')}
                   />
 
                   {realAlerts.length > 0 && (
@@ -390,16 +449,14 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
 
             {/* Footer */}
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <button className="btn-warning" onClick={() => setSubview('alert_form')}>⚠ Registrar Alerta</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn-warning" onClick={() => setSubview('alert_form')}>⚠ Alerta</button>
+                <button className="btn-secondary" onClick={() => setSubview('nota_form')}>💬 Nota</button>
+              </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn-secondary" onClick={onClose}>Cerrar</button>
                 {role !== 'capacitacion' && (
-                  <button className="btn-secondary" onClick={() => setSubview('info_form')}>✏ Editar Perfil</button>
-                )}
-                {canEdit.length > 0 && (
-                  <button className="btn-primary" onClick={openEditForm}>
-                    {curEvalForForm ? 'Editar Feedback' : 'Registrar Feedback'}
-                  </button>
+                  <button className="btn-secondary" onClick={openInfoForm}>✏ Editar Perfil</button>
                 )}
               </div>
             </div>
@@ -634,6 +691,38 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
               <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
               <button className="btn-warning" onClick={handleSaveAlert} disabled={saving}>
                 {saving ? 'Guardando...' : 'Registrar Alerta'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ─── NOTA FORM ─── */}
+        {subview === 'nota_form' && (
+          <>
+            <div style={{ padding: '22px 22px 0' }}>
+              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: 'var(--text3)' }}>
+                La nota quedará registrada en el historial con tu rol y la fecha de hoy. No se puede borrar.
+              </div>
+              <textarea
+                value={nota}
+                onChange={e => setNota(e.target.value)}
+                placeholder="Escribí tu observación, contexto adicional o comentario sobre este colaborador..."
+                rows={5}
+                style={{
+                  width: '100%', background: 'var(--card)', border: '1px solid var(--border)',
+                  color: 'var(--text)', padding: '12px 14px', borderRadius: 8, fontSize: 13,
+                  resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6,
+                  boxSizing: 'border-box', marginBottom: 4,
+                }}
+              />
+              <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 18 }}>
+                Se guardará como: <b>💬 Nota — {({ admin: 'Admin', operaciones: 'Operaciones', rrhh: 'RRHH', capacitacion: 'Capacitación' } as Record<string,string>)[role] ?? role}</b>
+              </div>
+            </div>
+            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
+              <button className="btn-primary" onClick={handleSaveNota} disabled={saving || !nota.trim()}>
+                {saving ? 'Guardando...' : 'Guardar Nota'}
               </button>
             </div>
           </>
