@@ -130,6 +130,7 @@ interface Props {
   candidato: Candidato
   role: string
   onClose: () => void
+  onDelete: (id: string) => Promise<void>
   onSaveEval: (id: string, stage: string, data: Record<string, unknown>) => Promise<void>
   onSaveAlert: (id: string, data: { etapa: EtapaAlerta; tipo: TipoAlerta; descripcion: string }) => Promise<void>
 }
@@ -137,7 +138,7 @@ interface Props {
 type Tab = 'eval' | 'timeline'
 type SubView = 'profile' | 'eval_form' | 'alert_form' | 'info_form' | 'nota_form'
 
-export default function CandidatoModal({ candidato: initial, role, onClose, onSaveEval, onSaveAlert }: Props) {
+export default function CandidatoModal({ candidato: initial, role, onClose, onDelete, onSaveEval, onSaveAlert }: Props) {
   const [c, setC] = useState(initial)
   const [tab, setTab] = useState<Tab>('eval')
   const [subview, setSubview] = useState<SubView>('profile')
@@ -204,6 +205,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
   }
 
   async function handleSaveEval() {
+    if (!form.feedback.trim()) { alert('El feedback escrito es obligatorio. Explicá tu evaluación.'); return }
     let data: Record<string, unknown> = {}
     if (editingStage === 'ops')  data = { action: 'eval_ops',  score: form.score, recomendado: form.recomendado, feedback: form.feedback }
     if (editingStage === 'rrhh') data = { action: 'eval_rrhh', score: form.score, aptoC: form.aptoC, feedback: form.feedback }
@@ -266,6 +268,14 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
     setNota('')
     setSubview('profile')
     setTab('timeline')
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(`¿Eliminar a ${c.nombre}? Esta acción no se puede deshacer.`)) return
+    setSaving(true)
+    await onDelete(c.id)
+    setSaving(false)
+    onClose()
   }
 
   async function handleEstadoChange(estado: string) {
@@ -495,10 +505,22 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
             {/* Footer */}
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn-warning" onClick={() => setSubview('alert_form')}>⚠ Alerta</button>
+                {role !== 'capacitacion' && (
+                  <button className="btn-warning" onClick={() => setSubview('alert_form')}>⚠ Alerta</button>
+                )}
                 <button className="btn-secondary" onClick={() => setSubview('nota_form')}>💬 Nota</button>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
+                {role === 'admin' && (
+                  <button
+                    className="btn-secondary"
+                    style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                    onClick={handleDelete}
+                    disabled={saving}
+                  >
+                    🗑 Eliminar
+                  </button>
+                )}
                 <button className="btn-secondary" onClick={onClose}>Cerrar</button>
                 {role !== 'capacitacion' && (
                   <button className="btn-secondary" onClick={openInfoForm}>✏ Editar Perfil</button>

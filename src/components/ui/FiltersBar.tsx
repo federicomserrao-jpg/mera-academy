@@ -2,7 +2,7 @@
 // src/components/ui/FiltersBar.tsx
 
 import { CAMPANA_LABELS, ESTADO_LABELS } from '@/types'
-import type { Campana, EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion } from '@/types'
+import type { Campana, EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion, NivelRiesgo } from '@/types'
 
 interface FiltersBarProps {
   filters: FiltrosCandidatos
@@ -58,6 +58,13 @@ export default function FiltersBar({ filters, onChange, showSearch = true, showD
           ))}
         </select>
       )}
+
+      <select style={inputStyle} value={filters.riesgo ?? ''} onChange={e => onChange({ riesgo: (e.target.value as NivelRiesgo) || undefined })}>
+        <option value="">Todos los riesgos</option>
+        <option value="ALTO">🔴 Riesgo Alto</option>
+        <option value="MEDIO">🟡 Riesgo Medio</option>
+        <option value="BAJO">🟢 Riesgo Bajo</option>
+      </select>
 
       <select style={inputStyle} value={filters.alerta ?? ''} onChange={e => onChange({ alerta: (e.target.value as 'con' | 'sin') || undefined })}>
         <option value="">Con y sin alertas</option>

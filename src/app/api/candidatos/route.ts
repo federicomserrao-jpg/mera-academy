@@ -16,6 +16,7 @@ export async function GET(req: Request) {
     const campana     = searchParams.get('campana') as Campana | null
     const estado      = searchParams.get('estado') as EstadoCandidato | null
     const alerta      = searchParams.get('alerta')
+    const riesgo      = searchParams.get('riesgo')
     const search      = searchParams.get('search')
     const desde       = searchParams.get('desde')
     const hasta       = searchParams.get('hasta')
@@ -35,6 +36,7 @@ export async function GET(req: Request) {
       if (hasta) where.fechaPostulacion.lte = new Date(hasta + 'T23:59:59')
     }
     if (grupoCapId) where.grupoCapId = grupoCapId
+    if (riesgo)     where.riesgo     = riesgo
 
     const candidatos = await prisma.candidato.findMany({
       where,

@@ -136,6 +136,7 @@ export interface FiltrosCandidatos {
   campana?: Campana
   estado?: EstadoCandidato
   alerta?: 'con' | 'sin'
+  riesgo?: NivelRiesgo
   search?: string
   desde?: string
   hasta?: string

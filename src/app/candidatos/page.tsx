@@ -33,6 +33,7 @@ export default function CandidatosPage() {
     if (filters.desde) params.set('desde', filters.desde)
     if (filters.hasta) params.set('hasta', filters.hasta)
     if (filters.grupoCapId) params.set('grupoCapId', filters.grupoCapId)
+    if (filters.riesgo)     params.set('riesgo', filters.riesgo)
     const r = await fetch(`/api/candidatos?${params}`)
     const d = await r.json()
     if (d.data) setCandidatos(d.data)
@@ -87,6 +88,12 @@ export default function CandidatosPage() {
       const d = await r.json()
       if (d.data) setSelected(d.data)
     }
+  }
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/candidatos/${id}`, { method: 'DELETE' })
+    setSelected(null)
+    fetchCandidatos()
   }
 
   const handleSaveEval = async (id: string, _stage: string, data: Record<string, unknown>) => {
@@ -147,6 +154,7 @@ export default function CandidatosPage() {
           candidato={selected}
           role={role}
           onClose={() => setSelected(null)}
+          onDelete={handleDelete}
           onSaveEval={handleSaveEval}
           onSaveAlert={handleSaveAlert}
         />
