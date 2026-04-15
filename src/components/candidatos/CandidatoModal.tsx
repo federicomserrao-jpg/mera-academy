@@ -215,7 +215,6 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
       const json = await res.json()
       setC(json.data)
     }
-    await onSaveEval(c.id, curStage, data)
     setSaving(false)
     setSubview('profile')
   }
@@ -269,6 +268,22 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
     setTab('timeline')
   }
 
+  async function handleEstadoChange(estado: string) {
+    const terminal = estado === 'INGRESADO' || estado === 'RECHAZADO'
+    if (terminal) {
+      const label = estado === 'INGRESADO' ? 'INGRESADO' : 'RECHAZADO'
+      if (!window.confirm(`¿Confirmás cambiar el estado a ${label}? Esta acción queda registrada en el historial.`)) return
+    }
+    setSaving(true)
+    const res = await fetch(`/api/candidatos/${c.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'estado', estado }),
+    })
+    if (res.ok) { const j = await res.json(); setC(j.data) }
+    setSaving(false)
+  }
+
   const stageNames: Record<string, string> = { ops: 'Operaciones', rrhh: 'RRHH', cap: 'Capacitación' }
 
   const colorMap: Record<string, string> = {
@@ -314,6 +329,35 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                     <EstadoBadge estado={c.estado} />
                     {c.riesgo !== 'BAJO' && <RiesgoBadge riesgo={c.riesgo} />}
                   </div>
+                  {/* Estado quick-change — visible para admin y operaciones */}
+                  {(role === 'admin' || role === 'operaciones') && (
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text3)', alignSelf: 'center' }}>Cambiar estado:</span>
+                      {(['EN_PROCESO', 'EN_CAPACITACION', 'INGRESADO', 'RECHAZADO'] as const).map(e => {
+                        const cls: Record<string, string> = {
+                          EN_PROCESO: 'badge-gray', EN_CAPACITACION: 'badge-blue',
+                          INGRESADO: 'badge-green', RECHAZADO: 'badge-red',
+                        }
+                        const active = c.estado === e
+                        return (
+                          <button
+                            key={e}
+                            disabled={active || saving}
+                            onClick={() => handleEstadoChange(e)}
+                            style={{
+                              fontSize: 11, padding: '3px 10px', borderRadius: 20, cursor: active ? 'default' : 'pointer',
+                              border: active ? '2px solid currentColor' : '1px solid var(--border)',
+                              fontWeight: active ? 700 : 400, opacity: saving ? 0.5 : 1,
+                              background: active ? undefined : 'transparent',
+                            }}
+                            className={active ? cls[e] : ''}
+                          >
+                            {ESTADO_LABELS[e]}{active ? ' ✓' : ''}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 6 }}>
                     <span style={{ fontSize: 11, color: 'var(--text3)' }}>Etapas:</span>
                     <ProgressDots candidato={c} />
