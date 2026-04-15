@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import { Spinner, EmptyState } from '@/components/ui'
-import { ETAPA_LABELS, ALERTA_TIPO_LABELS, CAMPANA_LABELS } from '@/types'
-import type { EtapaAlerta, TipoAlerta, Campana } from '@/types'
+import { ETAPA_LABELS, ALERTA_TIPO_LABELS } from '@/types'
+import type { EtapaAlerta, TipoAlerta } from '@/types'
+import { useCampanas } from '@/context/CampanasContext'
 
 interface AlertaConCandidato {
   id: string
@@ -13,7 +14,7 @@ interface AlertaConCandidato {
   tipo: TipoAlerta
   descripcion: string
   createdAt: string
-  candidato: { id: string; nombre: string; campana: Campana; estado: string }
+  candidato: { id: string; nombre: string; campana: string; estado: string }
 }
 
 const TIPO_COLOR: Record<TipoAlerta, string> = {
@@ -24,6 +25,7 @@ const TIPO_COLOR: Record<TipoAlerta, string> = {
 
 export default function AlertasPage() {
   const router = useRouter()
+  const { labelOf } = useCampanas()
   const [alertas, setAlertas] = useState<AlertaConCandidato[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -58,7 +60,7 @@ export default function AlertasPage() {
                   <span style={{ fontSize: 11, fontWeight: 600, color: TIPO_COLOR[a.tipo] }}>
                     {ETAPA_LABELS[a.etapa]} — {ALERTA_TIPO_LABELS[a.tipo]}
                   </span>
-                  <span className="badge-gray">{CAMPANA_LABELS[a.candidato.campana]}</span>
+                  <span className="badge-gray">{labelOf(a.candidato.campana)}</span>
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>{a.candidato.nombre}</div>
                 <div style={{ fontSize: 12, color: 'var(--text2)' }}>{a.descripcion}</div>

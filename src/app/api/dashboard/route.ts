@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import type { Campana, EstadoCandidato } from '@/types'
+import type { EstadoCandidato } from '@/types'
 
 export async function GET() {
   try {
@@ -26,7 +26,7 @@ export async function GET() {
     const avgScoreCap  = avg(conCap.map(c => c.evalCap!.score))
 
     // Por campaña
-    const campanaCounts = new Map<Campana, { total: number; conAlerta: number }>()
+    const campanaCounts = new Map<string, { total: number; conAlerta: number }>()
     candidatos.forEach(c => {
       if (!campanaCounts.has(c.campana)) campanaCounts.set(c.campana, { total: 0, conAlerta: 0 })
       const entry = campanaCounts.get(c.campana)!

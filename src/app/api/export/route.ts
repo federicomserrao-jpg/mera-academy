@@ -2,12 +2,12 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generarCSV } from '@/lib/utils'
-import type { Campana, EstadoCandidato } from '@/types'
+import type { EstadoCandidato } from '@/types'
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
-    const campana = searchParams.get('campana') as Campana | null
+    const campana = searchParams.get('campana')
     const estado  = searchParams.get('estado')  as EstadoCandidato | null
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

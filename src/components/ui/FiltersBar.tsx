@@ -1,8 +1,9 @@
 'use client'
 // src/components/ui/FiltersBar.tsx
 
-import { CAMPANA_LABELS, ESTADO_LABELS } from '@/types'
-import type { Campana, EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion, NivelRiesgo } from '@/types'
+import { ESTADO_LABELS } from '@/types'
+import type { EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion, NivelRiesgo } from '@/types'
+import { useCampanas } from '@/context/CampanasContext'
 
 interface FiltersBarProps {
   filters: FiltrosCandidatos
@@ -18,7 +19,8 @@ const inputStyle = {
 }
 
 export default function FiltersBar({ filters, onChange, showSearch = true, showDates = true, grupos }: FiltersBarProps) {
-  // If a campaign is selected, only show groups for that campaign
+  const { campanas } = useCampanas()
+
   const visibleGrupos = grupos
     ? (filters.campana ? grupos.filter(g => g.campana === filters.campana && g.activo) : grupos.filter(g => g.activo))
     : []
@@ -35,11 +37,11 @@ export default function FiltersBar({ filters, onChange, showSearch = true, showD
       )}
 
       <select style={inputStyle} value={filters.campana ?? ''} onChange={e => {
-        onChange({ campana: (e.target.value as Campana) || undefined, grupoCapId: undefined })
+        onChange({ campana: e.target.value || undefined, grupoCapId: undefined })
       }}>
         <option value="">Todas las campañas</option>
-        {Object.entries(CAMPANA_LABELS).map(([k, v]) => (
-          <option key={k} value={k}>{v}</option>
+        {campanas.filter(c => c.activo).map(c => (
+          <option key={c.codigo} value={c.codigo}>{c.nombre}</option>
         ))}
       </select>
 

@@ -2,8 +2,9 @@
 // src/components/candidatos/CandidatoModal.tsx
 
 import { useState, useEffect } from 'react'
-import type { Candidato, TipoAlerta, EtapaAlerta, GrupoCapacitacion, Campana } from '@/types'
-import { CAMPANA_LABELS, ESTADO_LABELS, ALERTA_TIPO_LABELS, ETAPA_LABELS, SITE_LABELS } from '@/types'
+import type { Candidato, TipoAlerta, EtapaAlerta, GrupoCapacitacion } from '@/types'
+import { ESTADO_LABELS, ALERTA_TIPO_LABELS, ETAPA_LABELS, SITE_LABELS } from '@/types'
+import { useCampanas } from '@/context/CampanasContext'
 import { Avatar, EstadoBadge, RiesgoBadge, ProgressDots } from '@/components/ui'
 
 // ─── Sub-components ───────────────────────────────────────
@@ -149,7 +150,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
   const [infoForm, setInfoForm] = useState({
     nombre: initial.nombre,
     puesto: initial.puesto ?? '',
-    campana: initial.campana as Campana,
+    campana: initial.campana,
     grupoCapId: initial.grupoCapId ?? '',
     telefono: initial.telefono ?? '',
     email: initial.email ?? '',
@@ -177,6 +178,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
 
   const [alertForm, setAlertForm] = useState({ etapa: 'OPERACIONES' as EtapaAlerta, tipo: 'TECNICA' as TipoAlerta, descripcion: '' })
 
+  const { campanas, labelOf } = useCampanas()
   const discrepancia = c.evalOps && c.evalCap && Math.abs(c.evalOps.score - c.evalCap.score) >= 2
   const realAlerts = c.alertas.filter(a => !a.esDeEstado)
 
@@ -357,7 +359,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
                   <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 8 }}>
                     <span className="badge-gray">DNI {c.dni}</span>
                     {c.puesto && <span className="badge-gray">{c.puesto}</span>}
-                    <span className="badge-blue">{CAMPANA_LABELS[c.campana]}</span>
+                    <span className="badge-blue">{labelOf(c.campana)}</span>
                     <EstadoBadge estado={c.estado} />
                     {c.riesgo !== 'BAJO' && <RiesgoBadge riesgo={c.riesgo} />}
                   </div>
@@ -663,10 +665,10 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
                   <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>Campaña *</label>
                   <select
                     value={infoForm.campana}
-                    onChange={e => setInfoForm(p => ({ ...p, campana: e.target.value as Campana, grupoCapId: '' }))}
+                    onChange={e => setInfoForm(p => ({ ...p, campana: e.target.value, grupoCapId: '' }))}
                     style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13 }}
                   >
-                    {Object.entries(CAMPANA_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    {campanas.filter(c => c.activo).map(c => <option key={c.codigo} value={c.codigo}>{c.nombre}</option>)}
                   </select>
                 </div>
               </div>
@@ -688,7 +690,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
                 </select>
                 {grupos.filter(g => g.campana === infoForm.campana && g.activo).length === 0 && (
                   <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>
-                    No hay grupos activos para {CAMPANA_LABELS[infoForm.campana]}. Creá uno en Campañas.
+                    No hay grupos activos para {labelOf(infoForm.campana)}. Creá uno en Campañas.
                   </div>
                 )}
               </div>

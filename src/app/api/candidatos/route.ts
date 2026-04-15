@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import type { Campana, EstadoCandidato } from '@/types'
+import type { EstadoCandidato } from '@/types'
 
 const include = {
   evalOps: true, evalRRHH: true, evalCap: true,
@@ -13,7 +13,7 @@ const include = {
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
-    const campana     = searchParams.get('campana') as Campana | null
+    const campana     = searchParams.get('campana')
     const estado      = searchParams.get('estado') as EstadoCandidato | null
     const alerta      = searchParams.get('alerta')
     const riesgo      = searchParams.get('riesgo')

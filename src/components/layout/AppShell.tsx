@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
+import { CampanasProvider } from '@/context/CampanasContext'
 
 const TITLES: Record<string, string> = {
   '/dashboard':  'Dashboard',
@@ -38,6 +39,7 @@ export default function AppShell({ children, alertCount = 0 }: AppShellProps) {
   const showNewBtn = path.startsWith('/candidatos')
 
   return (
+    <CampanasProvider>
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
       <Sidebar alertCount={alertCount} role={role} onRoleChange={handleRoleChange} />
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -67,5 +69,6 @@ export default function AppShell({ children, alertCount = 0 }: AppShellProps) {
         </div>
       </div>
     </div>
+    </CampanasProvider>
   )
 }

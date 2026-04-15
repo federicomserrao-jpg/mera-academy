@@ -13,23 +13,6 @@ datasource db {
 
 // ─── ENUMS ───────────────────────────────────────────────
 
-enum Campana {
-  CSV
-  TLMK
-  EDESUR
-  AYSA
-  ADT
-  CAR_ONE
-  EDENRED
-  FARMACITY
-  LEBEN_SALUD
-  STRIX
-  MATER_DEI
-  MIRGOR
-  RIO_GAS
-  DENTAL_TOTAL
-}
-
 enum EstadoCandidato {
   EN_PROCESO
   EN_CAPACITACION
@@ -56,12 +39,23 @@ enum EtapaAlerta {
   GENERAL
 }
 
+// ─── CAMPAÑA (configurable) ──────────────────────────────
+
+model Campana {
+  id        String   @id @default(cuid())
+  codigo    String   @unique   // clave interna, ej: "ADT"
+  nombre    String             // nombre para mostrar, ej: "ADT"
+  activo    Boolean  @default(true)
+  orden     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
 // ─── GRUPO DE CAPACITACIÓN (cohorte por campaña) ─────────
 
 model GrupoCapacitacion {
   id          String    @id @default(cuid())
   nombre      String    // "ADT — Ene 2024 G1"
-  campana     Campana
+  campana     String    // codigo de Campana
   site        String?   // "OLIVOS" | "PARQUE_PATRICIOS"
   fechaInicio DateTime
   fechaFin    DateTime?
@@ -82,7 +76,7 @@ model Candidato {
   nombre           String
   dni              String          @unique
   puesto           String?
-  campana          Campana
+  campana          String          // codigo de Campana
   estado           EstadoCandidato @default(EN_PROCESO)
   fechaPostulacion DateTime        @default(now())
   fechaIngresoPiso DateTime?

@@ -3,7 +3,8 @@
 
 import { useState } from 'react'
 import type { Candidato, EstadoCandidato } from '@/types'
-import { CAMPANA_LABELS, ESTADO_LABELS } from '@/types'
+import { ESTADO_LABELS } from '@/types'
+import { useCampanas } from '@/context/CampanasContext'
 import { EstadoBadge, RiesgoBadge, ScoreBar, ProgressDots, AlertaChip, EmptyState } from '@/components/ui'
 
 interface Props {
@@ -30,6 +31,7 @@ const ESTADO_CLS: Record<EstadoCandidato, string> = {
 
 export default function CandidatoTable({ candidatos, onRowClick, onEstadoChange }: Props) {
   const [openMenu, setOpenMenu] = useState<string | null>(null)
+  const { labelOf } = useCampanas()
 
   const realAlerts = (c: Candidato) => c.alertas.filter(a => !a.esDeEstado).length
 
@@ -60,7 +62,7 @@ export default function CandidatoTable({ candidatos, onRowClick, onEstadoChange 
               </td>
 
               <td style={td}>
-                <span className="badge-gray">{CAMPANA_LABELS[c.campana]}</span>
+                <span className="badge-gray">{labelOf(c.campana)}</span>
               </td>
 
               {/* Estado con dropdown */}

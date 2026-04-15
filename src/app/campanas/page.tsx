@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import { Spinner } from '@/components/ui'
-import type { GrupoCapacitacion, Campana, Candidato, Site } from '@/types'
-import { CAMPANA_LABELS, ESTADO_LABELS, SITE_LABELS } from '@/types'
+import type { GrupoCapacitacion, Candidato, Site } from '@/types'
+import { ESTADO_LABELS, SITE_LABELS } from '@/types'
+import { useCampanas } from '@/context/CampanasContext'
 
 type GrupoConStats = GrupoCapacitacion & {
   candidatos: (Candidato & { evalOps: { score: number } | null; evalRRHH: { score: number } | null; evalCap: { score: number } | null })[]
@@ -26,14 +27,55 @@ const Stars = ({ value }: { value: number | null }) =>
 
 export default function CampanasPage() {
   const router = useRouter()
+  const { campanas, labelOf, reload: reloadCampanas } = useCampanas()
   const [grupos, setGrupos] = useState<GrupoConStats[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
 
-  // Form state
-  const [form, setForm] = useState({ nombre: '', campana: 'ADT' as Campana, site: '' as Site | '', fechaInicio: '', fechaFin: '' })
+  // Form state — grupo
+  const [form, setForm] = useState({ nombre: '', campana: 'ADT', site: '' as Site | '', fechaInicio: '', fechaFin: '' })
+
+  // Gestión de campañas
+  const [showCampanas, setShowCampanas] = useState(false)
+  const [newCampana, setNewCampana] = useState({ nombre: '', codigo: '' })
+  const [campanaError, setCampanaError] = useState<string | null>(null)
+  const [role, setRole] = useState('admin')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('mera_role')
+    if (saved) setRole(saved)
+    const h = (e: Event) => setRole((e as CustomEvent).detail)
+    window.addEventListener('mera_role_change', h)
+    return () => window.removeEventListener('mera_role_change', h)
+  }, [])
+
+  async function handleToggleCampana(id: string, activo: boolean) {
+    await fetch(`/api/campanas/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activo }),
+    })
+    reloadCampanas()
+  }
+
+  async function handleAddCampana(e: React.FormEvent) {
+    e.preventDefault()
+    setCampanaError(null)
+    const res = await fetch('/api/campanas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCampana),
+    })
+    if (res.ok) {
+      setNewCampana({ nombre: '', codigo: '' })
+      reloadCampanas()
+    } else {
+      const d = await res.json()
+      setCampanaError(d.error ?? 'Error al crear campaña')
+    }
+  }
 
   async function fetchGrupos() {
     const r = await fetch('/api/grupos')
@@ -54,7 +96,8 @@ export default function CampanasPage() {
     })
     setSaving(false)
     setShowForm(false)
-    setForm({ nombre: '', campana: 'ADT', site: '', fechaInicio: '', fechaFin: '' })
+    const firstCampana = campanas.find(c => c.activo)?.codigo ?? 'ADT'
+    setForm({ nombre: '', campana: firstCampana, site: '', fechaInicio: '', fechaFin: '' })
     fetchGrupos()
   }
 
@@ -94,8 +137,65 @@ export default function CampanasPage() {
             Cohortes por campaña · {grupos.length} grupos en total
           </span>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>+ Nuevo Grupo</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {role === 'admin' && (
+            <button className="btn-secondary" onClick={() => setShowCampanas(v => !v)}>
+              ⚙ Campañas
+            </button>
+          )}
+          <button className="btn-primary" onClick={() => setShowForm(true)}>+ Nuevo Grupo</button>
+        </div>
       </div>
+
+      {/* Panel de gestión de campañas */}
+      {showCampanas && role === 'admin' && (
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 18, marginBottom: 20 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', marginBottom: 14, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            ⚙ Gestión de Campañas
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+            {campanas.map(c => (
+              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 10px' }}>
+                <span style={{ fontSize: 12, fontWeight: 500, color: c.activo ? 'var(--text)' : 'var(--text3)', textDecoration: c.activo ? 'none' : 'line-through' }}>
+                  {c.nombre}
+                </span>
+                <button
+                  onClick={() => handleToggleCampana(c.id, !c.activo)}
+                  style={{ fontSize: 10, padding: '2px 7px', borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'transparent', color: c.activo ? 'var(--red)' : 'var(--green)', fontWeight: 600 }}
+                >
+                  {c.activo ? 'Desactivar' : 'Activar'}
+                </button>
+              </div>
+            ))}
+          </div>
+          <form onSubmit={handleAddCampana} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Nombre para mostrar *</label>
+              <input
+                value={newCampana.nombre}
+                onChange={e => setNewCampana(p => ({ ...p, nombre: e.target.value }))}
+                placeholder="Ej: Claro"
+                required
+                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text)', padding: '7px 10px', borderRadius: 7, fontSize: 13, width: 160 }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Código interno *</label>
+              <input
+                value={newCampana.codigo}
+                onChange={e => setNewCampana(p => ({ ...p, codigo: e.target.value }))}
+                placeholder="Ej: CLARO"
+                required
+                style={{ background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text)', padding: '7px 10px', borderRadius: 7, fontSize: 13, width: 130 }}
+              />
+            </div>
+            <button type="submit" className="btn-primary" style={{ alignSelf: 'flex-end' }}>+ Agregar</button>
+          </form>
+          {campanaError && (
+            <div style={{ marginTop: 10, fontSize: 12, color: 'var(--red)' }}>⚠ {campanaError}</div>
+          )}
+        </div>
+      )}
 
       {loading ? <Spinner /> : Object.keys(porCampana).length === 0 ? (
         <div style={{ textAlign: 'center', padding: 60, color: 'var(--text3)', fontSize: 14 }}>
@@ -108,7 +208,7 @@ export default function CampanasPage() {
             {/* Campaign header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <span className="badge-blue" style={{ fontSize: 13, padding: '4px 12px' }}>
-                {CAMPANA_LABELS[campana as Campana]}
+                {labelOf(campana)}
               </span>
               <span style={{ fontSize: 12, color: 'var(--text3)' }}>{gs.length} grupo{gs.length > 1 ? 's' : ''}</span>
             </div>
@@ -269,10 +369,10 @@ export default function CampanasPage() {
                   <label style={lbl}>Campaña *</label>
                   <select
                     value={form.campana}
-                    onChange={e => setForm(f => ({ ...f, campana: e.target.value as Campana }))}
+                    onChange={e => setForm(f => ({ ...f, campana: e.target.value }))}
                     required style={inp}
                   >
-                    {Object.entries(CAMPANA_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    {campanas.filter(c => c.activo).map(c => <option key={c.codigo} value={c.codigo}>{c.nombre}</option>)}
                   </select>
                 </div>
                 <div>

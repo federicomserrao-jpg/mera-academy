@@ -1,9 +1,15 @@
 // src/types/index.ts
 
-export type Campana =
-  | 'CSV' | 'TLMK' | 'EDESUR' | 'AYSA' | 'ADT' | 'CAR_ONE'
-  | 'EDENRED' | 'FARMACITY' | 'LEBEN_SALUD' | 'STRIX'
-  | 'MATER_DEI' | 'MIRGOR' | 'RIO_GAS' | 'DENTAL_TOTAL'
+export type Campana = string // codigo de campaña configurable (ej: "ADT", "CLARO")
+
+export interface CampanaConfig {
+  id: string
+  codigo: string
+  nombre: string
+  activo: boolean
+  orden: number
+  createdAt: string
+}
 
 export type EstadoCandidato =
   | 'EN_PROCESO' | 'EN_CAPACITACION' | 'INGRESADO' | 'RECHAZADO'
@@ -102,7 +108,8 @@ export const SITE_LABELS: Record<Site, string> = {
   PARQUE_PATRICIOS: 'Parque Patricios',
 }
 
-export const CAMPANA_LABELS: Record<Campana, string> = {
+// Fallback estático — reemplazado en runtime por CampanasContext
+export const CAMPANA_LABELS: Record<string, string> = {
   CSV: 'CSV', TLMK: 'TLMK', EDESUR: 'EDESUR', AYSA: 'AYSA',
   ADT: 'ADT', CAR_ONE: 'CAR ONE', EDENRED: 'EDENRED',
   FARMACITY: 'FARMACITY', LEBEN_SALUD: 'LEBEN SALUD', STRIX: 'STRIX',
@@ -164,6 +171,6 @@ export interface DashboardStats {
   completitudOps: number
   completitudRRHH: number
   completitudCap: number
-  porCampana: { campana: Campana; total: number; conAlerta: number }[]
+  porCampana: { campana: string; total: number; conAlerta: number }[]
   porEstado: { estado: EstadoCandidato; total: number }[]
 }

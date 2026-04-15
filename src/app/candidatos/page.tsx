@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import type { Candidato, EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion, Campana } from '@/types'
-import { CAMPANA_LABELS } from '@/types'
+import type { Candidato, EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion } from '@/types'
+import { useCampanas } from '@/context/CampanasContext'
 import AppShell from '@/components/layout/AppShell'
 import CandidatoTable from '@/components/candidatos/CandidatoTable'
 import CandidatoModal from '@/components/candidatos/CandidatoModal'
@@ -22,7 +22,8 @@ export default function CandidatosPage() {
   const [saving, setSaving] = useState(false)
   const [newError, setNewError] = useState<string | null>(null)
   const [grupos, setGrupos] = useState<GrupoCapacitacion[]>([])
-  const [newCampana, setNewCampana] = useState<Campana>('ADT')
+  const { campanas, labelOf } = useCampanas()
+  const [newCampana, setNewCampana] = useState('ADT')
 
   const fetchCandidatos = useCallback(async () => {
     const params = new URLSearchParams()
@@ -226,10 +227,10 @@ export default function CandidatosPage() {
                   <select
                     name="campana" required
                     value={newCampana}
-                    onChange={e => setNewCampana(e.target.value as Campana)}
+                    onChange={e => setNewCampana(e.target.value)}
                     style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13 }}
                   >
-                    {Object.entries(CAMPANA_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    {campanas.filter(c => c.activo).map(c => <option key={c.codigo} value={c.codigo}>{c.nombre}</option>)}
                   </select>
                 </div>
 
@@ -247,7 +248,7 @@ export default function CandidatosPage() {
                   </select>
                   {grupos.filter(g => g.campana === newCampana && g.activo).length === 0 && (
                     <span style={{ fontSize: 11, color: 'var(--text3)' }}>
-                      No hay grupos activos para {CAMPANA_LABELS[newCampana]}. Creá uno en Campañas.
+                      No hay grupos activos para {labelOf(newCampana)}. Creá uno en Campañas.
                     </span>
                   )}
                 </div>

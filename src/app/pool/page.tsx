@@ -3,8 +3,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import AppShell from '@/components/layout/AppShell'
 import { Spinner, Avatar } from '@/components/ui'
-import type { Candidato, Campana } from '@/types'
-import { CAMPANA_LABELS } from '@/types'
+import type { Candidato } from '@/types'
+import { useCampanas } from '@/context/CampanasContext'
 
 const Stars = ({ value }: { value: number }) => (
   <span style={{ color: 'var(--yellow)', fontSize: 14 }}>
@@ -20,9 +20,10 @@ function avgScore(c: Candidato) {
 }
 
 export default function PoolPage() {
+  const { campanas, labelOf } = useCampanas()
   const [colaboradores, setColaboradores] = useState<Candidato[]>([])
   const [loading, setLoading] = useState(true)
-  const [campanaFilter, setCampanaFilter] = useState<Campana | ''>('')
+  const [campanaFilter, setCampanaFilter] = useState('')
   const [reFilter, setReFilter] = useState<'todos' | 'si' | 'no' | 'sin_evaluar'>('todos')
   const [updating, setUpdating] = useState<string | null>(null)
 
@@ -69,11 +70,10 @@ export default function PoolPage() {
         </span>
       </div>
 
-      {/* Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
-        <select value={campanaFilter} onChange={e => setCampanaFilter(e.target.value as Campana | '')} style={inp}>
+        <select value={campanaFilter} onChange={e => setCampanaFilter(e.target.value)} style={inp}>
           <option value="">Todas las campañas</option>
-          {Object.entries(CAMPANA_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          {campanas.filter(c => c.activo).map(c => <option key={c.codigo} value={c.codigo}>{c.nombre}</option>)}
         </select>
         <select value={reFilter} onChange={e => setReFilter(e.target.value as typeof reFilter)} style={inp}>
           <option value="todos">Todos</option>
@@ -102,20 +102,17 @@ export default function PoolPage() {
                 borderRadius: 10, padding: '16px 20px',
                 display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 16, alignItems: 'center',
               }}>
-                {/* Avatar */}
                 <Avatar nombre={c.nombre} size={44} />
 
-                {/* Info */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
                     <span style={{ fontWeight: 700, fontSize: 14 }}>{c.nombre}</span>
-                    <span className="badge-blue" style={{ fontSize: 10 }}>{CAMPANA_LABELS[c.campana]}</span>
+                    <span className="badge-blue" style={{ fontSize: 10 }}>{labelOf(c.campana)}</span>
                     {c.grupoCap && (
                       <span className="badge-gray" style={{ fontSize: 10 }}>📚 {c.grupoCap.nombre}</span>
                     )}
                   </div>
 
-                  {/* Scores */}
                   <div style={{ display: 'flex', gap: 16, marginBottom: 6, flexWrap: 'wrap' }}>
                     {c.evalRRHH  && <span style={{ fontSize: 12 }}><span style={{ color: 'var(--text3)' }}>RRHH </span><Stars value={c.evalRRHH.score} /></span>}
                     {c.evalOps   && <span style={{ fontSize: 12 }}><span style={{ color: 'var(--text3)' }}>Ops </span><Stars value={c.evalOps.score} /></span>}
@@ -125,7 +122,6 @@ export default function PoolPage() {
                     </span>
                   </div>
 
-                  {/* Contact */}
                   <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                     {c.legajo   && <span style={{ fontSize: 11, color: 'var(--text3)' }}>🪪 Leg. {c.legajo}</span>}
                     {c.telefono && <span style={{ fontSize: 11, color: 'var(--text3)' }}>📱 {c.telefono}</span>}
@@ -137,7 +133,6 @@ export default function PoolPage() {
                   </div>
                 </div>
 
-                {/* Re-contratable toggle */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                   <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>¿Re-contratable?</div>
                   <div style={{ display: 'flex', gap: 6 }}>
