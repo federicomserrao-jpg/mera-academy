@@ -157,6 +157,14 @@ export interface ApiResponse<T> {
   error?: string
 }
 
+interface PendienteItem {
+  id: string; nombre: string; campana: string; dias: number
+}
+interface AlertaReciente {
+  id: string; tipo: string; etapa: string; descripcion: string; createdAt: string
+  candidato: { id: string; nombre: string; campana: string }
+}
+
 export interface DashboardStats {
   total: number
   ingresados: number
@@ -173,4 +181,9 @@ export interface DashboardStats {
   completitudCap: number
   porCampana: { campana: string; total: number; conAlerta: number }[]
   porEstado: { estado: EstadoCandidato; total: number }[]
+  pendientesOps: PendienteItem[]
+  pendientesRRHH: PendienteItem[]
+  pendientesCap: PendienteItem[]
+  ultimosIngresados: { id: string; nombre: string; campana: string; fechaIngresoPiso: string | null; createdAt: string }[]
+  alertasRecientes: AlertaReciente[]
 }
