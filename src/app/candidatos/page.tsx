@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import type { Candidato, EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion, Campana } from '@/types'
 import { CAMPANA_LABELS } from '@/types'
 import AppShell from '@/components/layout/AppShell'
@@ -10,6 +11,8 @@ import FiltersBar from '@/components/ui/FiltersBar'
 import { Spinner } from '@/components/ui'
 
 export default function CandidatosPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [candidatos, setCandidatos] = useState<Candidato[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Candidato | null>(null)
@@ -35,6 +38,23 @@ export default function CandidatosPage() {
   }, [filters])
 
   useEffect(() => { fetchCandidatos() }, [fetchCandidatos])
+
+  // Auto-open modal when navigated from alertas page (?open=<id>)
+  useEffect(() => {
+    const openId = searchParams.get('open')
+    if (!openId || loading) return
+    const match = candidatos.find(c => c.id === openId)
+    if (match) {
+      setSelected(match)
+      router.replace('/candidatos') // clean the URL
+    } else {
+      // candidato not in current filter — fetch directly
+      fetch(`/api/candidatos/${openId}`)
+        .then(r => r.json())
+        .then(d => { if (d.data) setSelected(d.data) })
+      router.replace('/candidatos')
+    }
+  }, [searchParams, loading, candidatos, router])
 
   useEffect(() => {
     fetch('/api/grupos').then(r => r.json()).then(d => { if (d.data) setGrupos(d.data) })
