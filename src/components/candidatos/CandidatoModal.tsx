@@ -362,7 +362,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px' }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: h.detalle ? 4 : 0 }}>
                                 <span style={{ fontSize: 12, fontWeight: 600, color: col }}>{h.evento}</span>
-                                <span style={{ fontSize: 10, color: 'var(--text3)' }}>{h.createdAt?.split('T')[0]}</span>
+                                <span style={{ fontSize: 10, color: 'var(--text3)' }}>
+                                  {h.createdAt ? new Date(h.createdAt).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                                </span>
                               </div>
                               {h.detalle && <div style={{ fontSize: 12, color: 'var(--text2)' }}>{h.detalle}</div>}
                             </div>

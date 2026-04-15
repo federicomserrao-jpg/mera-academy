@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { calcularRiesgo } from '@/lib/utils'
@@ -7,6 +8,10 @@ const include = {
   alertas:   { orderBy: { createdAt: 'asc' as const } },
   historial: { orderBy: { createdAt: 'asc' as const } },
   grupoCap:  true,
+}
+
+const ROL_LABEL: Record<string, string> = {
+  admin: 'Admin', operaciones: 'Operaciones', rrhh: 'RRHH', capacitacion: 'Capacitación',
 }
 
 export async function GET(_: Request, { params }: { params: { id: string } }) {
@@ -104,15 +109,33 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     }
 
     if (action === 'info') {
+      const toNullable = (v: unknown) => v !== undefined ? (v || null) : undefined
       const c = await prisma.candidato.update({
         where: { id },
         data: {
-          telefono:         body.telefono ?? undefined,
-          email:            body.email ?? undefined,
-          legajo:           body.legajo ?? undefined,
-          fechaIngresoPiso: body.fechaIngresoPiso ? new Date(body.fechaIngresoPiso) : undefined,
-          reContratable:    body.reContratable ?? undefined,
-          grupoCapId:       body.grupoCapId ?? undefined,
+          nombre:           body.nombre       || undefined,
+          puesto:           toNullable(body.puesto),
+          campana:          body.campana      || undefined,
+          telefono:         toNullable(body.telefono),
+          email:            toNullable(body.email),
+          legajo:           toNullable(body.legajo),
+          fechaIngresoPiso: body.fechaIngresoPiso ? new Date(body.fechaIngresoPiso) : body.fechaIngresoPiso === '' ? null : undefined,
+          reContratable:    'reContratable' in body ? body.reContratable : undefined,
+          grupoCapId:       toNullable(body.grupoCapId),
+          historial: { create: [{ evento: 'Perfil actualizado', detalle: `Por ${ROL_LABEL[body.rol] ?? 'Admin'}`, color: 'gray' }] },
+        },
+        include,
+      })
+      return NextResponse.json({ data: c })
+    }
+
+    if (action === 'nota') {
+      const texto = (body.texto ?? '').trim()
+      if (!texto) return NextResponse.json({ error: 'Texto vacío' }, { status: 400 })
+      const c = await prisma.candidato.update({
+        where: { id },
+        data: {
+          historial: { create: [{ evento: `💬 Nota — ${ROL_LABEL[body.rol] ?? body.rol}`, detalle: texto, color: 'gray' }] },
         },
         include,
       })
