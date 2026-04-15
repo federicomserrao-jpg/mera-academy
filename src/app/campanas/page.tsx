@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import { Spinner } from '@/components/ui'
 import type { GrupoCapacitacion, Campana, Candidato, Site } from '@/types'
@@ -24,6 +25,7 @@ const Stars = ({ value }: { value: number | null }) =>
   )
 
 export default function CampanasPage() {
+  const router = useRouter()
   const [grupos, setGrupos] = useState<GrupoConStats[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -203,8 +205,14 @@ export default function CampanasPage() {
                           </thead>
                           <tbody>
                             {g.candidatos.map((c: Candidato & { evalOps: { score: number } | null; evalRRHH: { score: number } | null; evalCap: { score: number } | null }) => (
-                              <tr key={c.id}>
-                                <td style={{ padding: '8px 10px', fontWeight: 500 }}>{c.nombre}</td>
+                              <tr
+                                key={c.id}
+                                onClick={() => router.push(`/candidatos?open=${c.id}`)}
+                                style={{ cursor: 'pointer' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg2)')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                              >
+                                <td style={{ padding: '8px 10px', fontWeight: 500, color: 'var(--accent)' }}>{c.nombre}</td>
                                 <td style={{ padding: '8px 10px', color: 'var(--text3)' }}>{c.dni}</td>
                                 <td style={{ padding: '8px 10px' }}>
                                   <span className={
