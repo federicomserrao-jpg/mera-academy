@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import type { Candidato, TipoAlerta, EtapaAlerta, GrupoCapacitacion, Campana } from '@/types'
-import { CAMPANA_LABELS, ESTADO_LABELS, ALERTA_TIPO_LABELS, SITE_LABELS } from '@/types'
+import { CAMPANA_LABELS, ESTADO_LABELS, ALERTA_TIPO_LABELS, ETAPA_LABELS, SITE_LABELS } from '@/types'
 import { Avatar, EstadoBadge, RiesgoBadge, ProgressDots } from '@/components/ui'
 
 // ─── Sub-components ───────────────────────────────────────
@@ -285,6 +285,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
   }
 
   const stageNames: Record<string, string> = { ops: 'Operaciones', rrhh: 'RRHH', cap: 'Capacitación' }
+  const curEvalForForm = editingStage === 'ops' ? c.evalOps : editingStage === 'rrhh' ? c.evalRRHH : c.evalCap
 
   const colorMap: Record<string, string> = {
     blue: 'var(--accent)', green: 'var(--green)', red: 'var(--red)',
@@ -456,7 +457,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                       </div>
                       {realAlerts.map(a => (
                         <div key={a.id} style={{ background: '#ef444410', border: '1px solid #ef444425', borderRadius: 8, padding: '8px 12px', marginBottom: 6, fontSize: 12 }}>
-                          <span style={{ color: 'var(--red)', fontWeight: 600 }}>{a.etapa} — {a.tipo}</span>
+                          <span style={{ color: 'var(--red)', fontWeight: 600 }}>{ETAPA_LABELS[a.etapa]} — {ALERTA_TIPO_LABELS[a.tipo]}</span>
                           <span style={{ color: 'var(--text3)', marginLeft: 8 }}>{a.descripcion}</span>
                         </div>
                       ))}
@@ -529,15 +530,15 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
               {/* Boolean toggle */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, fontWeight: 600 }}>
-                  {curStage === 'ops' ? '¿Lo recomendás para esta campaña?' : curStage === 'rrhh' ? '¿Es apto cultural?' : '¿Está listo para piso?'}
+                  {editingStage === 'ops' ? '¿Lo recomendás para esta campaña?' : editingStage === 'rrhh' ? '¿Es apto cultural?' : '¿Está listo para piso?'}
                 </label>
-                {curStage === 'ops' && <BoolPill value={form.recomendado} onChange={v => setForm(f => ({ ...f, recomendado: v }))} yes="Sí, recomendado" no="No recomendado" />}
-                {curStage === 'rrhh' && <BoolPill value={form.aptoC} onChange={v => setForm(f => ({ ...f, aptoC: v }))} yes="Apto Cultural" no="No apto" />}
-                {curStage === 'cap' && <BoolPill value={form.listo} onChange={v => setForm(f => ({ ...f, listo: v }))} yes="Listo para piso" no="No listo" />}
+                {editingStage === 'ops' && <BoolPill value={form.recomendado} onChange={v => setForm(f => ({ ...f, recomendado: v }))} yes="Sí, recomendado" no="No recomendado" />}
+                {editingStage === 'rrhh' && <BoolPill value={form.aptoC} onChange={v => setForm(f => ({ ...f, aptoC: v }))} yes="Apto Cultural" no="No apto" />}
+                {editingStage === 'cap' && <BoolPill value={form.listo} onChange={v => setForm(f => ({ ...f, listo: v }))} yes="Listo para piso" no="No listo" />}
               </div>
 
               {/* Alert type (cap only) */}
-              {curStage === 'cap' && (
+              {editingStage === 'cap' && (
                 <div style={{ marginBottom: 20 }}>
                   <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 600 }}>
                     Tipo de alerta (opcional)
@@ -556,9 +557,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
               {/* Feedback textarea */}
               <div style={{ marginBottom: 22 }}>
                 <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 600 }}>
-                  {curStage === 'rrhh'
+                  {editingStage === 'rrhh'
                     ? '¿Qué observaste en la entrevista? ¿Por qué fue seleccionado/a? *'
-                    : curStage === 'ops'
+                    : editingStage === 'ops'
                     ? '¿Qué observaste? ¿Por qué lo recomendás para esta campaña? *'
                     : '¿Cómo le fue en la capacitación? ¿Qué destacás? *'}
                 </label>
@@ -566,9 +567,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                   value={form.feedback}
                   onChange={e => setForm(f => ({ ...f, feedback: e.target.value }))}
                   placeholder={
-                    curStage === 'rrhh'
+                    editingStage === 'rrhh'
                       ? 'Ej: Excelente comunicación, manejo del estrés muy bueno, encaja con la cultura del equipo...'
-                      : curStage === 'ops'
+                      : editingStage === 'ops'
                       ? 'Ej: Buen conocimiento del producto, actitud proactiva, se adaptó rápido al perfil de la campaña...'
                       : 'Ej: Rápida curva de aprendizaje, dominó las herramientas en la primera semana, cumplimiento del 95%...'
                   }

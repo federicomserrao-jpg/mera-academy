@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import AppShell from '@/components/layout/AppShell'
 import { Spinner } from '@/components/ui'
 import type { GrupoCapacitacion, Campana, Candidato, Site } from '@/types'
-import { CAMPANA_LABELS, SITE_LABELS } from '@/types'
+import { CAMPANA_LABELS, ESTADO_LABELS, SITE_LABELS } from '@/types'
 
 type GrupoConStats = GrupoCapacitacion & {
   candidatos: (Candidato & { evalOps: { score: number } | null; evalRRHH: { score: number } | null; evalCap: { score: number } | null })[]
@@ -220,7 +220,7 @@ export default function CampanasPage() {
                                     c.estado === 'EN_CAPACITACION' ? 'badge-blue' :
                                     c.estado === 'RECHAZADO' ? 'badge-red' : 'badge-gray'
                                   } style={{ fontSize: 10 }}>
-                                    {c.estado.replace(/_/g, ' ')}
+                                    {ESTADO_LABELS[c.estado as keyof typeof ESTADO_LABELS]}
                                   </span>
                                 </td>
                                 <td style={{ padding: '8px 10px' }}><Stars value={c.evalOps?.score ?? null} /></td>
