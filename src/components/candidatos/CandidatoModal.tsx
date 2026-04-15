@@ -180,6 +180,27 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
   const discrepancia = c.evalOps && c.evalCap && Math.abs(c.evalOps.score - c.evalCap.score) >= 2
   const realAlerts = c.alertas.filter(a => !a.esDeEstado)
 
+  function isDirty(): boolean {
+    if (subview === 'nota_form') return nota.trim().length > 0
+    if (subview === 'eval_form') return form.feedback.trim().length > 0
+    if (subview === 'info_form') {
+      return infoForm.nombre !== c.nombre ||
+        (infoForm.puesto ?? '') !== (c.puesto ?? '') ||
+        infoForm.campana !== c.campana
+    }
+    return false
+  }
+
+  function safeBack() {
+    if (isDirty() && !window.confirm('¿Descartás los cambios?')) return
+    setSubview('profile')
+  }
+
+  function safeClose() {
+    if (subview !== 'profile' && isDirty() && !window.confirm('¿Descartás los cambios?')) return
+    onClose()
+  }
+
   function openEditForm(stage: 'ops' | 'rrhh' | 'cap') {
     setEditingStage(stage)
     const ev = stage === 'ops' ? c.evalOps : stage === 'rrhh' ? c.evalRRHH : c.evalCap
@@ -305,7 +326,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
   return (
     <div
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}
-      onClick={onClose}
+      onClick={safeClose}
     >
       <div
         style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 14, width: '100%', maxWidth: 700, maxHeight: '90vh', overflowY: 'auto' }}
@@ -320,7 +341,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
               : subview === 'nota_form' ? '💬 Agregar Nota al Historial'
               : 'Registrar Alerta'}
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 20 }}>✕</button>
+          <button onClick={safeClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 20 }}>✕</button>
         </div>
 
         {/* ─── PROFILE VIEW ─── */}
@@ -521,7 +542,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
                     🗑 Eliminar
                   </button>
                 )}
-                <button className="btn-secondary" onClick={onClose}>Cerrar</button>
+                <button className="btn-secondary" onClick={safeClose}>Cerrar</button>
                 {role !== 'capacitacion' && (
                   <button className="btn-secondary" onClick={openInfoForm}>✏ Editar Perfil</button>
                 )}
@@ -607,7 +628,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
             </div>
 
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
+              <button className="btn-secondary" onClick={safeBack}>Cancelar</button>
               <button className="btn-primary" onClick={handleSaveEval} disabled={saving}>
                 {saving ? 'Guardando...' : 'Guardar Feedback'}
               </button>
@@ -694,7 +715,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
               </div>
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
+              <button className="btn-secondary" onClick={safeBack}>Cancelar</button>
               <button className="btn-primary" onClick={handleSaveInfo} disabled={saving}>
                 {saving ? 'Guardando...' : 'Guardar Cambios'}
               </button>
@@ -755,7 +776,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
             </div>
 
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
+              <button className="btn-secondary" onClick={safeBack}>Cancelar</button>
               <button className="btn-warning" onClick={handleSaveAlert} disabled={saving}>
                 {saving ? 'Guardando...' : 'Registrar Alerta'}
               </button>
@@ -787,7 +808,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onDe
               </div>
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
+              <button className="btn-secondary" onClick={safeBack}>Cancelar</button>
               <button className="btn-primary" onClick={handleSaveNota} disabled={saving || !nota.trim()}>
                 {saving ? 'Guardando...' : 'Guardar Nota'}
               </button>
