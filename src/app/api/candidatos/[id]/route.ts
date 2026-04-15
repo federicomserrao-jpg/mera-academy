@@ -10,6 +10,10 @@ const include = {
   grupoCap:  true,
 }
 
+const ROL_LABEL: Record<string, string> = {
+  admin: 'Admin', operaciones: 'Operaciones', rrhh: 'RRHH', capacitacion: 'Capacitación',
+}
+
 export async function GET(_: Request, { params }: { params: { id: string } }) {
   try {
     const c = await prisma.candidato.findUnique({ where: { id: params.id }, include })
@@ -118,6 +122,20 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
           fechaIngresoPiso: body.fechaIngresoPiso ? new Date(body.fechaIngresoPiso) : body.fechaIngresoPiso === '' ? null : undefined,
           reContratable:    body.reContratable ?? undefined,
           grupoCapId:       toNullable(body.grupoCapId),
+          historial: { create: [{ evento: 'Perfil actualizado', detalle: `Por ${ROL_LABEL[body.rol] ?? 'Admin'}`, color: 'gray' }] },
+        },
+        include,
+      })
+      return NextResponse.json({ data: c })
+    }
+
+    if (action === 'nota') {
+      const texto = (body.texto ?? '').trim()
+      if (!texto) return NextResponse.json({ error: 'Texto vacío' }, { status: 400 })
+      const c = await prisma.candidato.update({
+        where: { id },
+        data: {
+          historial: { create: [{ evento: `💬 Nota — ${ROL_LABEL[body.rol] ?? body.rol}`, detalle: texto, color: 'gray' }] },
         },
         include,
       })
