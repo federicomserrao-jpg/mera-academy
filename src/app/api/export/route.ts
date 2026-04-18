@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic'
+import { unstable_noStore as noStore } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generarCSV } from '@/lib/utils'

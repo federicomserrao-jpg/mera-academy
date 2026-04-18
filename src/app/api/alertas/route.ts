@@ -1,10 +1,11 @@
 export const dynamic = 'force-dynamic'
+import { unstable_noStore as noStore } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { calcularRiesgo } from '@/lib/utils'
 
 export async function GET() {
-  try {
+  noStore()  try {
     const alertas = await prisma.alerta.findMany({
       where: { esDeEstado: false },
       include: { candidato: true },
@@ -17,7 +18,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  try {
+  noStore()  try {
     const { candidatoId, etapa, tipo, descripcion } = await req.json()
 
     if (!candidatoId || !etapa || !tipo || !descripcion) {

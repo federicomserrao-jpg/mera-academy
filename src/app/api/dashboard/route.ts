@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic'
+import { unstable_noStore as noStore } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { EstadoCandidato } from '@/types'
@@ -8,6 +9,7 @@ function diasDesde(fecha: Date) {
 }
 
 export async function GET() {
+  noStore()
   try {
     const candidatos = await prisma.candidato.findMany({
       include: { evalOps: true, evalRRHH: true, evalCap: true, alertas: true },

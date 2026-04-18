@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic'
+import { unstable_noStore as noStore } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
@@ -9,7 +10,7 @@ const include = {
 }
 
 export async function GET() {
-  try {
+  noStore()  try {
     const grupos = await prisma.grupoCapacitacion.findMany({
       include,
       orderBy: { fechaInicio: 'desc' },
@@ -22,7 +23,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  try {
+  noStore()  try {
     const { nombre, campana, site, fechaInicio, fechaFin } = await req.json()
     if (!nombre || !campana || !fechaInicio) {
       return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })

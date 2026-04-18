@@ -1,9 +1,10 @@
 export const dynamic = 'force-dynamic'
+import { unstable_noStore as noStore } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
-  try {
+  noStore()  try {
     const campanas = await prisma.campana.findMany({ orderBy: [{ orden: 'asc' }, { nombre: 'asc' }] })
     return NextResponse.json({ data: campanas })
   } catch {
@@ -12,7 +13,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  try {
+  noStore()  try {
     const { nombre, codigo } = await req.json()
     if (!nombre?.trim() || !codigo?.trim()) {
       return NextResponse.json({ error: 'Nombre y código son requeridos' }, { status: 400 })

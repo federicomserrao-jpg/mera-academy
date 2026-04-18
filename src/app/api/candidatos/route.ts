@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic'
+import { unstable_noStore as noStore } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import type { EstadoCandidato } from '@/types'
@@ -11,7 +12,7 @@ const include = {
 }
 
 export async function GET(req: Request) {
-  try {
+  noStore()  try {
     const { searchParams } = new URL(req.url)
     const campana     = searchParams.get('campana')
     const estado      = searchParams.get('estado') as EstadoCandidato | null
@@ -58,7 +59,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  try {
+  noStore()  try {
     const body = await req.json()
     const { nombre, dni, puesto, campana, telefono, email, legajo, grupoCapId } = body
 
