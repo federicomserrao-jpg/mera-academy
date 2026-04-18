@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import type { Candidato, EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion, Campana } from '@/types'
-import { CAMPANA_LABELS } from '@/types'
+import { useSearchParams, useRouter } from 'next/navigation'
+import type { Candidato, EstadoCandidato, FiltrosCandidatos, GrupoCapacitacion } from '@/types'
+import { useCampanas } from '@/context/CampanasContext'
 import AppShell from '@/components/layout/AppShell'
 import CandidatoTable from '@/components/candidatos/CandidatoTable'
 import CandidatoModal from '@/components/candidatos/CandidatoModal'
@@ -10,6 +11,8 @@ import FiltersBar from '@/components/ui/FiltersBar'
 import { Spinner } from '@/components/ui'
 
 export default function CandidatosPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [candidatos, setCandidatos] = useState<Candidato[]>([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<Candidato | null>(null)
@@ -17,8 +20,10 @@ export default function CandidatosPage() {
   const [showNew, setShowNew] = useState(false)
   const [filters, setFilters] = useState<FiltrosCandidatos>({})
   const [saving, setSaving] = useState(false)
+  const [newError, setNewError] = useState<string | null>(null)
   const [grupos, setGrupos] = useState<GrupoCapacitacion[]>([])
-  const [newCampana, setNewCampana] = useState<Campana>('ADT')
+  const { campanas, labelOf } = useCampanas()
+  const [newCampana, setNewCampana] = useState('ADT')
 
   const fetchCandidatos = useCallback(async () => {
     const params = new URLSearchParams()
@@ -28,6 +33,8 @@ export default function CandidatosPage() {
     if (filters.search) params.set('search', filters.search)
     if (filters.desde) params.set('desde', filters.desde)
     if (filters.hasta) params.set('hasta', filters.hasta)
+    if (filters.grupoCapId) params.set('grupoCapId', filters.grupoCapId)
+    if (filters.riesgo)     params.set('riesgo', filters.riesgo)
     const r = await fetch(`/api/candidatos?${params}`)
     const d = await r.json()
     if (d.data) setCandidatos(d.data)
@@ -35,6 +42,23 @@ export default function CandidatosPage() {
   }, [filters])
 
   useEffect(() => { fetchCandidatos() }, [fetchCandidatos])
+
+  // Auto-open modal when navigated from alertas page (?open=<id>)
+  useEffect(() => {
+    const openId = searchParams.get('open')
+    if (!openId || loading) return
+    const match = candidatos.find(c => c.id === openId)
+    if (match) {
+      setSelected(match)
+      router.replace('/candidatos') // clean the URL
+    } else {
+      // candidato not in current filter — fetch directly
+      fetch(`/api/candidatos/${openId}`)
+        .then(r => r.json())
+        .then(d => { if (d.data) setSelected(d.data) })
+      router.replace('/candidatos')
+    }
+  }, [searchParams, loading, candidatos, router])
 
   useEffect(() => {
     fetch('/api/grupos').then(r => r.json()).then(d => { if (d.data) setGrupos(d.data) })
@@ -67,6 +91,12 @@ export default function CandidatosPage() {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/candidatos/${id}`, { method: 'DELETE' })
+    setSelected(null)
+    fetchCandidatos()
+  }
+
   const handleSaveEval = async (id: string, _stage: string, data: Record<string, unknown>) => {
     await fetch(`/api/candidatos/${id}`, {
       method: 'PATCH',
@@ -93,6 +123,7 @@ export default function CandidatosPage() {
 
   const handleCreateCandidato = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setNewError(null)
     const data = Object.fromEntries(new FormData(e.currentTarget))
     setSaving(true)
     const r = await fetch('/api/candidatos', {
@@ -101,15 +132,15 @@ export default function CandidatosPage() {
       body: JSON.stringify(data),
     })
     setSaving(false)
-    if (r.ok) { setShowNew(false); fetchCandidatos() }
-    else { const d = await r.json(); alert(d.error) }
+    if (r.ok) { setShowNew(false); setNewError(null); fetchCandidatos() }
+    else { const d = await r.json(); setNewError(d.error ?? 'Error al crear el colaborador.') }
   }
 
   const alertCount = candidatos.filter(c => c.alertas?.some(a => !a.esDeEstado)).length
 
   return (
     <AppShell alertCount={alertCount}>
-      <FiltersBar filters={filters} onChange={f => setFilters(prev => ({ ...prev, ...f }))} />
+      <FiltersBar filters={filters} onChange={f => setFilters(prev => ({ ...prev, ...f }))} grupos={grupos} />
 
       {loading ? <Spinner /> : (
         <CandidatoTable
@@ -124,6 +155,7 @@ export default function CandidatosPage() {
           candidato={selected}
           role={role}
           onClose={() => setSelected(null)}
+          onDelete={handleDelete}
           onSaveEval={handleSaveEval}
           onSaveAlert={handleSaveAlert}
         />
@@ -133,7 +165,7 @@ export default function CandidatosPage() {
       {showNew && (
         <div
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}
-          onClick={() => setShowNew(false)}
+          onClick={() => { setShowNew(false); setNewError(null) }}
         >
           <div
             style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 14, width: '100%', maxWidth: 480 }}
@@ -141,8 +173,13 @@ export default function CandidatosPage() {
           >
             <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ fontSize: 15, fontWeight: 600 }}>Nuevo Colaborador</span>
-              <button onClick={() => setShowNew(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 18 }}>✕</button>
+              <button onClick={() => { setShowNew(false); setNewError(null) }} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 18 }}>✕</button>
             </div>
+            {newError && (
+              <div style={{ margin: '12px 20px 0', padding: '10px 14px', background: '#ef444415', border: '1px solid #ef444430', borderRadius: 8, fontSize: 12, color: 'var(--red)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                ⚠ {newError}
+              </div>
+            )}
             <form onSubmit={handleCreateCandidato}>
               <div style={{ padding: '18px 20px', display: 'grid', gap: 12 }}>
                 {/* Row: nombre + DNI */}
@@ -190,10 +227,10 @@ export default function CandidatosPage() {
                   <select
                     name="campana" required
                     value={newCampana}
-                    onChange={e => setNewCampana(e.target.value as Campana)}
+                    onChange={e => setNewCampana(e.target.value)}
                     style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '8px 10px', borderRadius: 7, fontSize: 13 }}
                   >
-                    {Object.entries(CAMPANA_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    {campanas.filter(c => c.activo).map(c => <option key={c.codigo} value={c.codigo}>{c.nombre}</option>)}
                   </select>
                 </div>
 
@@ -206,12 +243,12 @@ export default function CandidatosPage() {
                   >
                     <option value="">Sin asignar</option>
                     {grupos.filter(g => g.campana === newCampana && g.activo).map(g => (
-                      <option key={g.id} value={g.id}>{g.nombre}</option>
+                      <option key={g.id} value={g.id}>{g.nombre}{g.site ? ` — ${g.site === 'OLIVOS' ? 'Olivos' : 'Parque Patricios'}` : ''}</option>
                     ))}
                   </select>
                   {grupos.filter(g => g.campana === newCampana && g.activo).length === 0 && (
                     <span style={{ fontSize: 11, color: 'var(--text3)' }}>
-                      No hay grupos activos para {CAMPANA_LABELS[newCampana]}. Creá uno en Campañas.
+                      No hay grupos activos para {labelOf(newCampana)}. Creá uno en Campañas.
                     </span>
                   )}
                 </div>

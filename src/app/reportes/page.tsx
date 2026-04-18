@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react'
 import AppShell from '@/components/layout/AppShell'
 import { StatCard, HBarChart, Spinner } from '@/components/ui'
 import type { DashboardStats } from '@/types'
-import { CAMPANA_LABELS, ESTADO_LABELS } from '@/types'
+import { ESTADO_LABELS } from '@/types'
+import { useCampanas } from '@/context/CampanasContext'
 
 export default function ReportesPage() {
+  const { labelOf } = useCampanas()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -39,7 +41,7 @@ export default function ReportesPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
               <h4 style={{ fontSize: 12, fontWeight: 600, marginBottom: 14, color: 'var(--text2)' }}>Candidatos por Campaña</h4>
-              <HBarChart items={stats.porCampana.map(c => ({ label: CAMPANA_LABELS[c.campana], value: c.total }))} color="var(--accent)" />
+              <HBarChart items={stats.porCampana.map(c => ({ label: labelOf(c.campana), value: c.total }))} color="var(--accent)" />
             </div>
             <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
               <h4 style={{ fontSize: 12, fontWeight: 600, marginBottom: 14, color: 'var(--text2)' }}>Candidatos por Estado</h4>

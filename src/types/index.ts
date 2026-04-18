@@ -1,9 +1,15 @@
 // src/types/index.ts
 
-export type Campana =
-  | 'CSV' | 'TLMK' | 'EDESUR' | 'AYSA' | 'ADT' | 'CAR_ONE'
-  | 'EDENRED' | 'FARMACITY' | 'LEBEN_SALUD' | 'STRIX'
-  | 'MATER_DEI' | 'MIRGOR' | 'RIO_GAS' | 'DENTAL_TOTAL'
+export type Campana = string // codigo de campaña configurable (ej: "ADT", "CLARO")
+
+export interface CampanaConfig {
+  id: string
+  codigo: string
+  nombre: string
+  activo: boolean
+  orden: number
+  createdAt: string
+}
 
 export type EstadoCandidato =
   | 'EN_PROCESO' | 'EN_CAPACITACION' | 'INGRESADO' | 'RECHAZADO'
@@ -12,10 +18,13 @@ export type NivelRiesgo = 'BAJO' | 'MEDIO' | 'ALTO'
 export type TipoAlerta = 'TECNICA' | 'CONDUCTUAL' | 'ASISTENCIA'
 export type EtapaAlerta = 'OPERACIONES' | 'RRHH' | 'CAPACITACION' | 'GENERAL'
 
+export type Site = 'OLIVOS' | 'PARQUE_PATRICIOS'
+
 export interface GrupoCapacitacion {
   id: string
   nombre: string
   campana: Campana
+  site?: Site | null
   fechaInicio: string
   fechaFin?: string | null
   activo: boolean
@@ -94,7 +103,13 @@ export interface Candidato {
 
 // ─── LABELS ──────────────────────────────────────────────
 
-export const CAMPANA_LABELS: Record<Campana, string> = {
+export const SITE_LABELS: Record<Site, string> = {
+  OLIVOS: 'Olivos',
+  PARQUE_PATRICIOS: 'Parque Patricios',
+}
+
+// Fallback estático — reemplazado en runtime por CampanasContext
+export const CAMPANA_LABELS: Record<string, string> = {
   CSV: 'CSV', TLMK: 'TLMK', EDESUR: 'EDESUR', AYSA: 'AYSA',
   ADT: 'ADT', CAR_ONE: 'CAR ONE', EDENRED: 'EDENRED',
   FARMACITY: 'FARMACITY', LEBEN_SALUD: 'LEBEN SALUD', STRIX: 'STRIX',
@@ -128,6 +143,7 @@ export interface FiltrosCandidatos {
   campana?: Campana
   estado?: EstadoCandidato
   alerta?: 'con' | 'sin'
+  riesgo?: NivelRiesgo
   search?: string
   desde?: string
   hasta?: string
@@ -139,6 +155,14 @@ export interface FiltrosCandidatos {
 export interface ApiResponse<T> {
   data?: T
   error?: string
+}
+
+interface PendienteItem {
+  id: string; nombre: string; campana: string; dias: number
+}
+interface AlertaReciente {
+  id: string; tipo: string; etapa: string; descripcion: string; createdAt: string
+  candidato: { id: string; nombre: string; campana: string }
 }
 
 export interface DashboardStats {
@@ -155,6 +179,11 @@ export interface DashboardStats {
   completitudOps: number
   completitudRRHH: number
   completitudCap: number
-  porCampana: { campana: Campana; total: number; conAlerta: number }[]
+  porCampana: { campana: string; total: number; conAlerta: number }[]
   porEstado: { estado: EstadoCandidato; total: number }[]
+  pendientesOps: PendienteItem[]
+  pendientesRRHH: PendienteItem[]
+  pendientesCap: PendienteItem[]
+  ultimosIngresados: { id: string; nombre: string; campana: string; fechaIngresoPiso: string | null; createdAt: string }[]
+  alertasRecientes: AlertaReciente[]
 }

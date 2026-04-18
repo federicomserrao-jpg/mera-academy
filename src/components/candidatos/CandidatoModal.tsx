@@ -1,9 +1,10 @@
 'use client'
 // src/components/candidatos/CandidatoModal.tsx
 
-import { useState } from 'react'
-import type { Candidato, TipoAlerta, EtapaAlerta } from '@/types'
-import { CAMPANA_LABELS, ESTADO_LABELS, ALERTA_TIPO_LABELS } from '@/types'
+import { useState, useEffect } from 'react'
+import type { Candidato, TipoAlerta, EtapaAlerta, GrupoCapacitacion } from '@/types'
+import { ESTADO_LABELS, ALERTA_TIPO_LABELS, ETAPA_LABELS, SITE_LABELS } from '@/types'
+import { useCampanas } from '@/context/CampanasContext'
 import { Avatar, EstadoBadge, RiesgoBadge, ProgressDots } from '@/components/ui'
 
 // ─── Sub-components ───────────────────────────────────────
@@ -52,10 +53,11 @@ const BoolPill = ({ value, onChange, yes, no }: { value: boolean; onChange: (v: 
 )
 
 const FeedbackSection = ({
-  title, icon, score, feedback, badge, badgeClass, empty,
+  title, icon, score, feedback, badge, badgeClass, empty, updatedAt, onEdit, locked,
 }: {
   title: string; icon: string; score?: number | null; feedback?: string | null;
   badge: string; badgeClass: string; empty?: boolean;
+  updatedAt?: string | null; onEdit?: () => void; locked?: boolean;
 }) => (
   <div style={{
     background: 'var(--card)', border: '1px solid var(--border)',
@@ -65,7 +67,21 @@ const FeedbackSection = ({
       <span style={{ fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 7 }}>
         <span style={{ fontSize: 16 }}>{icon}</span>{title}
       </span>
-      <span className={badgeClass}>{badge}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {updatedAt && !empty && (
+          <span style={{ fontSize: 10, color: 'var(--text3)' }}>
+            {new Date(updatedAt).toLocaleDateString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric' })}
+          </span>
+        )}
+        <span className={badgeClass}>{badge}</span>
+        {onEdit && (
+          <button onClick={onEdit} style={{
+            fontSize: 11, padding: '3px 9px', borderRadius: 6, cursor: 'pointer',
+            background: 'transparent', border: '1px solid var(--border)',
+            color: 'var(--text2)', fontWeight: 500,
+          }}>✏ Editar</button>
+        )}
+      </div>
     </div>
     {empty ? (
       <div style={{ fontSize: 12, color: 'var(--text3)', fontStyle: 'italic', padding: '4px 0' }}>
@@ -86,6 +102,11 @@ const FeedbackSection = ({
         ) : (
           <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text3)', fontStyle: 'italic' }}>
             Sin feedback escrito.
+          </div>
+        )}
+        {locked && (
+          <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text3)', fontStyle: 'italic' }}>
+            🔒 Solo Admin puede modificar este feedback.
           </div>
         )}
       </>
@@ -110,48 +131,81 @@ interface Props {
   candidato: Candidato
   role: string
   onClose: () => void
+  onDelete: (id: string) => Promise<void>
   onSaveEval: (id: string, stage: string, data: Record<string, unknown>) => Promise<void>
   onSaveAlert: (id: string, data: { etapa: EtapaAlerta; tipo: TipoAlerta; descripcion: string }) => Promise<void>
 }
 
 type Tab = 'eval' | 'timeline'
-type SubView = 'profile' | 'eval_form' | 'alert_form' | 'info_form'
+type SubView = 'profile' | 'eval_form' | 'alert_form' | 'info_form' | 'nota_form'
 
-export default function CandidatoModal({ candidato: initial, role, onClose, onSaveEval, onSaveAlert }: Props) {
+export default function CandidatoModal({ candidato: initial, role, onClose, onDelete, onSaveEval, onSaveAlert }: Props) {
   const [c, setC] = useState(initial)
   const [tab, setTab] = useState<Tab>('eval')
   const [subview, setSubview] = useState<SubView>('profile')
   const [saving, setSaving] = useState(false)
+  const [grupos, setGrupos] = useState<GrupoCapacitacion[]>([])
+  const [editingStage, setEditingStage] = useState<'ops' | 'rrhh' | 'cap'>('ops')
+  const [nota, setNota] = useState('')
   const [infoForm, setInfoForm] = useState({
+    nombre: initial.nombre,
+    puesto: initial.puesto ?? '',
+    campana: initial.campana,
+    grupoCapId: initial.grupoCapId ?? '',
     telefono: initial.telefono ?? '',
     email: initial.email ?? '',
     legajo: initial.legajo ?? '',
     fechaIngresoPiso: initial.fechaIngresoPiso ? initial.fechaIngresoPiso.split('T')[0] : '',
   })
 
-  const stageMap: Record<string, string> = { admin: 'ops', operaciones: 'ops', rrhh: 'rrhh', capacitacion: 'cap' }
-  const curStage = stageMap[role] ?? 'ops'
-  const canEdit = { admin: ['ops','rrhh','cap'], operaciones: ['ops'], rrhh: ['rrhh'], capacitacion: ['cap'] }[role] ?? []
+  useEffect(() => {
+    fetch('/api/grupos').then(r => r.json()).then(d => { if (d.data) setGrupos(d.data) })
+  }, [])
 
-  const curEvalForForm = curStage === 'ops' ? c.evalOps : curStage === 'rrhh' ? c.evalRRHH : c.evalCap
+  const canEdit: string[] = { admin: ['ops','rrhh','cap'], operaciones: ['ops'], rrhh: ['rrhh'], capacitacion: ['cap'] }[role] ?? []
+
+  // Admin puede editar siempre. Otros roles solo si el eval está vacío.
+  function canEditStage(stage: 'ops' | 'rrhh' | 'cap') {
+    if (!canEdit.includes(stage)) return false
+    if (role === 'admin') return true
+    const exists = stage === 'ops' ? !!c.evalOps : stage === 'rrhh' ? !!c.evalRRHH : !!c.evalCap
+    return !exists
+  }
 
   const [form, setForm] = useState<FormState>({
-    score: curEvalForForm?.score ?? 3,
-    recomendado: (curEvalForForm as typeof c.evalOps)?.recomendado ?? true,
-    aptoC: (curEvalForForm as typeof c.evalRRHH)?.aptoC ?? true,
-    listo: (curEvalForForm as typeof c.evalCap)?.listo ?? false,
-    tipoAlerta: (curEvalForForm as typeof c.evalCap)?.tipoAlerta ?? '',
-    feedback: curEvalForForm?.feedback ?? '',
+    score: 3, recomendado: true, aptoC: true, listo: false, tipoAlerta: '', feedback: '',
   })
 
-  // Alert form state
   const [alertForm, setAlertForm] = useState({ etapa: 'OPERACIONES' as EtapaAlerta, tipo: 'TECNICA' as TipoAlerta, descripcion: '' })
 
+  const { campanas, labelOf } = useCampanas()
   const discrepancia = c.evalOps && c.evalCap && Math.abs(c.evalOps.score - c.evalCap.score) >= 2
   const realAlerts = c.alertas.filter(a => !a.esDeEstado)
 
-  function openEditForm() {
-    const ev = curStage === 'ops' ? c.evalOps : curStage === 'rrhh' ? c.evalRRHH : c.evalCap
+  function isDirty(): boolean {
+    if (subview === 'nota_form') return nota.trim().length > 0
+    if (subview === 'eval_form') return form.feedback.trim().length > 0
+    if (subview === 'info_form') {
+      return infoForm.nombre !== c.nombre ||
+        (infoForm.puesto ?? '') !== (c.puesto ?? '') ||
+        infoForm.campana !== c.campana
+    }
+    return false
+  }
+
+  function safeBack() {
+    if (isDirty() && !window.confirm('¿Descartás los cambios?')) return
+    setSubview('profile')
+  }
+
+  function safeClose() {
+    if (subview !== 'profile' && isDirty() && !window.confirm('¿Descartás los cambios?')) return
+    onClose()
+  }
+
+  function openEditForm(stage: 'ops' | 'rrhh' | 'cap') {
+    setEditingStage(stage)
+    const ev = stage === 'ops' ? c.evalOps : stage === 'rrhh' ? c.evalRRHH : c.evalCap
     setForm({
       score: ev?.score ?? 3,
       recomendado: (ev as typeof c.evalOps)?.recomendado ?? true,
@@ -163,11 +217,22 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
     setSubview('eval_form')
   }
 
+  function openInfoForm() {
+    setInfoForm({
+      nombre: c.nombre, puesto: c.puesto ?? '', campana: c.campana,
+      grupoCapId: c.grupoCapId ?? '', telefono: c.telefono ?? '',
+      email: c.email ?? '', legajo: c.legajo ?? '',
+      fechaIngresoPiso: c.fechaIngresoPiso ? c.fechaIngresoPiso.split('T')[0] : '',
+    })
+    setSubview('info_form')
+  }
+
   async function handleSaveEval() {
+    if (!form.feedback.trim()) { alert('El feedback escrito es obligatorio. Explicá tu evaluación.'); return }
     let data: Record<string, unknown> = {}
-    if (curStage === 'ops')   data = { action: 'eval_ops',  score: form.score, recomendado: form.recomendado, feedback: form.feedback }
-    if (curStage === 'rrhh')  data = { action: 'eval_rrhh', score: form.score, aptoC: form.aptoC, feedback: form.feedback }
-    if (curStage === 'cap')   data = { action: 'eval_cap',  score: form.score, listo: form.listo, tipoAlerta: form.tipoAlerta || null, feedback: form.feedback }
+    if (editingStage === 'ops')  data = { action: 'eval_ops',  score: form.score, recomendado: form.recomendado, feedback: form.feedback }
+    if (editingStage === 'rrhh') data = { action: 'eval_rrhh', score: form.score, aptoC: form.aptoC, feedback: form.feedback }
+    if (editingStage === 'cap')  data = { action: 'eval_cap',  score: form.score, listo: form.listo, tipoAlerta: form.tipoAlerta || null, feedback: form.feedback }
 
     setSaving(true)
     const res = await fetch(`/api/candidatos/${c.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
@@ -175,22 +240,26 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
       const json = await res.json()
       setC(json.data)
     }
-    await onSaveEval(c.id, curStage, data)
     setSaving(false)
     setSubview('profile')
   }
 
   async function handleSaveInfo() {
+    if (!infoForm.nombre.trim()) { alert('El nombre es obligatorio.'); return }
     setSaving(true)
     const res = await fetch(`/api/candidatos/${c.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'info',
-        telefono: infoForm.telefono || null,
-        email: infoForm.email || null,
-        legajo: infoForm.legajo || null,
-        fechaIngresoPiso: infoForm.fechaIngresoPiso || null,
+        nombre: infoForm.nombre.trim(),
+        puesto: infoForm.puesto || '',
+        campana: infoForm.campana,
+        grupoCapId: infoForm.grupoCapId || '',
+        telefono: infoForm.telefono || '',
+        email: infoForm.email || '',
+        legajo: infoForm.legajo || '',
+        fechaIngresoPiso: infoForm.fechaIngresoPiso || '',
       }),
     })
     if (res.ok) { const j = await res.json(); setC(j.data) }
@@ -202,11 +271,54 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
     if (!alertForm.descripcion.trim()) { alert('Describí la alerta.'); return }
     setSaving(true)
     await onSaveAlert(c.id, alertForm)
+    const r = await fetch(`/api/candidatos/${c.id}`)
+    const d = await r.json()
+    if (d.data) setC(d.data)
     setSaving(false)
     setSubview('profile')
   }
 
+  async function handleSaveNota() {
+    if (!nota.trim()) return
+    setSaving(true)
+    const res = await fetch(`/api/candidatos/${c.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'nota', texto: nota.trim(), rol: role }),
+    })
+    if (res.ok) { const j = await res.json(); setC(j.data) }
+    setSaving(false)
+    setNota('')
+    setSubview('profile')
+    setTab('timeline')
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(`¿Eliminar a ${c.nombre}? Esta acción no se puede deshacer.`)) return
+    setSaving(true)
+    await onDelete(c.id)
+    setSaving(false)
+    onClose()
+  }
+
+  async function handleEstadoChange(estado: string) {
+    const terminal = estado === 'INGRESADO' || estado === 'RECHAZADO'
+    if (terminal) {
+      const label = estado === 'INGRESADO' ? 'INGRESADO' : 'RECHAZADO'
+      if (!window.confirm(`¿Confirmás cambiar el estado a ${label}? Esta acción queda registrada en el historial.`)) return
+    }
+    setSaving(true)
+    const res = await fetch(`/api/candidatos/${c.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'estado', estado }),
+    })
+    if (res.ok) { const j = await res.json(); setC(j.data) }
+    setSaving(false)
+  }
+
   const stageNames: Record<string, string> = { ops: 'Operaciones', rrhh: 'RRHH', cap: 'Capacitación' }
+  const curEvalForForm = editingStage === 'ops' ? c.evalOps : editingStage === 'rrhh' ? c.evalRRHH : c.evalCap
 
   const colorMap: Record<string, string> = {
     blue: 'var(--accent)', green: 'var(--green)', red: 'var(--red)',
@@ -216,7 +328,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
   return (
     <div
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20 }}
-      onClick={onClose}
+      onClick={safeClose}
     >
       <div
         style={{ background: 'var(--bg2)', border: '1px solid var(--border2)', borderRadius: 14, width: '100%', maxWidth: 700, maxHeight: '90vh', overflowY: 'auto' }}
@@ -226,11 +338,12 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
         <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 15, fontWeight: 700 }}>
             {subview === 'profile'   ? 'Ficha del Colaborador'
-              : subview === 'eval_form' ? `Feedback — ${stageNames[curStage]}`
-              : subview === 'info_form' ? 'Datos de Contacto'
+              : subview === 'eval_form' ? `Feedback — ${stageNames[editingStage]}`
+              : subview === 'info_form' ? 'Editar Perfil'
+              : subview === 'nota_form' ? '💬 Agregar Nota al Historial'
               : 'Registrar Alerta'}
           </span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 20 }}>✕</button>
+          <button onClick={safeClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', cursor: 'pointer', fontSize: 20 }}>✕</button>
         </div>
 
         {/* ─── PROFILE VIEW ─── */}
@@ -246,10 +359,39 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                   <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 8 }}>
                     <span className="badge-gray">DNI {c.dni}</span>
                     {c.puesto && <span className="badge-gray">{c.puesto}</span>}
-                    <span className="badge-blue">{CAMPANA_LABELS[c.campana]}</span>
+                    <span className="badge-blue">{labelOf(c.campana)}</span>
                     <EstadoBadge estado={c.estado} />
                     {c.riesgo !== 'BAJO' && <RiesgoBadge riesgo={c.riesgo} />}
                   </div>
+                  {/* Estado quick-change — visible para admin y operaciones */}
+                  {(role === 'admin' || role === 'operaciones') && (
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                      <span style={{ fontSize: 11, color: 'var(--text3)', alignSelf: 'center' }}>Cambiar estado:</span>
+                      {(['EN_PROCESO', 'EN_CAPACITACION', 'INGRESADO', 'RECHAZADO'] as const).map(e => {
+                        const cls: Record<string, string> = {
+                          EN_PROCESO: 'badge-gray', EN_CAPACITACION: 'badge-blue',
+                          INGRESADO: 'badge-green', RECHAZADO: 'badge-red',
+                        }
+                        const active = c.estado === e
+                        return (
+                          <button
+                            key={e}
+                            disabled={active || saving}
+                            onClick={() => handleEstadoChange(e)}
+                            style={{
+                              fontSize: 11, padding: '3px 10px', borderRadius: 20, cursor: active ? 'default' : 'pointer',
+                              border: active ? '2px solid currentColor' : '1px solid var(--border)',
+                              fontWeight: active ? 700 : 400, opacity: saving ? 0.5 : 1,
+                              background: active ? undefined : 'transparent',
+                            }}
+                            className={active ? cls[e] : ''}
+                          >
+                            {ESTADO_LABELS[e]}{active ? ' ✓' : ''}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 6 }}>
                     <span style={{ fontSize: 11, color: 'var(--text3)' }}>Etapas:</span>
                     <ProgressDots candidato={c} />
@@ -312,6 +454,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                     badge={c.evalRRHH ? (c.evalRRHH.aptoC ? '✔ Apto Cultural' : '✗ No Apto') : 'Sin evaluar'}
                     badgeClass={c.evalRRHH ? (c.evalRRHH.aptoC ? 'badge-green' : 'badge-red') : 'badge-gray'}
                     empty={!c.evalRRHH}
+                    updatedAt={c.evalRRHH?.updatedAt}
+                    onEdit={canEditStage('rrhh') ? () => openEditForm('rrhh') : undefined}
+                    locked={!!c.evalRRHH && !canEditStage('rrhh') && canEdit.includes('rrhh')}
                   />
                   <FeedbackSection
                     title="Operaciones — Entrevista"
@@ -321,6 +466,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                     badge={c.evalOps ? (c.evalOps.recomendado ? '✔ Recomendado' : '✗ No recomendado') : 'Sin evaluar'}
                     badgeClass={c.evalOps ? (c.evalOps.recomendado ? 'badge-green' : 'badge-red') : 'badge-gray'}
                     empty={!c.evalOps}
+                    updatedAt={c.evalOps?.updatedAt}
+                    onEdit={canEditStage('ops') ? () => openEditForm('ops') : undefined}
+                    locked={!!c.evalOps && !canEditStage('ops') && canEdit.includes('ops')}
                   />
                   <FeedbackSection
                     title="Capacitación — Resultado final"
@@ -330,6 +478,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                     badge={c.evalCap ? (c.evalCap.listo ? '✔ Listo para piso' : '✗ No listo') : 'Sin evaluar'}
                     badgeClass={c.evalCap ? (c.evalCap.listo ? 'badge-green' : 'badge-red') : 'badge-gray'}
                     empty={!c.evalCap}
+                    updatedAt={c.evalCap?.updatedAt}
+                    onEdit={canEditStage('cap') ? () => openEditForm('cap') : undefined}
+                    locked={!!c.evalCap && !canEditStage('cap') && canEdit.includes('cap')}
                   />
 
                   {realAlerts.length > 0 && (
@@ -339,7 +490,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                       </div>
                       {realAlerts.map(a => (
                         <div key={a.id} style={{ background: '#ef444410', border: '1px solid #ef444425', borderRadius: 8, padding: '8px 12px', marginBottom: 6, fontSize: 12 }}>
-                          <span style={{ color: 'var(--red)', fontWeight: 600 }}>{a.etapa} — {a.tipo}</span>
+                          <span style={{ color: 'var(--red)', fontWeight: 600 }}>{ETAPA_LABELS[a.etapa]} — {ALERTA_TIPO_LABELS[a.tipo]}</span>
                           <span style={{ color: 'var(--text3)', marginLeft: 8 }}>{a.descripcion}</span>
                         </div>
                       ))}
@@ -378,16 +529,26 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
 
             {/* Footer */}
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <button className="btn-warning" onClick={() => setSubview('alert_form')}>⚠ Registrar Alerta</button>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button className="btn-secondary" onClick={onClose}>Cerrar</button>
-                {(role === 'admin' || role === 'rrhh') && (
-                  <button className="btn-secondary" onClick={() => setSubview('info_form')}>✏ Datos</button>
+                {role !== 'capacitacion' && (
+                  <button className="btn-warning" onClick={() => setSubview('alert_form')}>⚠ Alerta</button>
                 )}
-                {canEdit.length > 0 && (
-                  <button className="btn-primary" onClick={openEditForm}>
-                    {curEvalForForm ? 'Editar Feedback' : 'Registrar Feedback'}
+                <button className="btn-secondary" onClick={() => setSubview('nota_form')}>💬 Nota</button>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {role === 'admin' && (
+                  <button
+                    className="btn-secondary"
+                    style={{ color: 'var(--red)', borderColor: 'var(--red)' }}
+                    onClick={handleDelete}
+                    disabled={saving}
+                  >
+                    🗑 Eliminar
                   </button>
+                )}
+                <button className="btn-secondary" onClick={safeClose}>Cerrar</button>
+                {role !== 'capacitacion' && (
+                  <button className="btn-secondary" onClick={openInfoForm}>✏ Editar Perfil</button>
                 )}
               </div>
             </div>
@@ -416,15 +577,15 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
               {/* Boolean toggle */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10, fontWeight: 600 }}>
-                  {curStage === 'ops' ? '¿Lo recomendás para esta campaña?' : curStage === 'rrhh' ? '¿Es apto cultural?' : '¿Está listo para piso?'}
+                  {editingStage === 'ops' ? '¿Lo recomendás para esta campaña?' : editingStage === 'rrhh' ? '¿Es apto cultural?' : '¿Está listo para piso?'}
                 </label>
-                {curStage === 'ops' && <BoolPill value={form.recomendado} onChange={v => setForm(f => ({ ...f, recomendado: v }))} yes="Sí, recomendado" no="No recomendado" />}
-                {curStage === 'rrhh' && <BoolPill value={form.aptoC} onChange={v => setForm(f => ({ ...f, aptoC: v }))} yes="Apto Cultural" no="No apto" />}
-                {curStage === 'cap' && <BoolPill value={form.listo} onChange={v => setForm(f => ({ ...f, listo: v }))} yes="Listo para piso" no="No listo" />}
+                {editingStage === 'ops' && <BoolPill value={form.recomendado} onChange={v => setForm(f => ({ ...f, recomendado: v }))} yes="Sí, recomendado" no="No recomendado" />}
+                {editingStage === 'rrhh' && <BoolPill value={form.aptoC} onChange={v => setForm(f => ({ ...f, aptoC: v }))} yes="Apto Cultural" no="No apto" />}
+                {editingStage === 'cap' && <BoolPill value={form.listo} onChange={v => setForm(f => ({ ...f, listo: v }))} yes="Listo para piso" no="No listo" />}
               </div>
 
               {/* Alert type (cap only) */}
-              {curStage === 'cap' && (
+              {editingStage === 'cap' && (
                 <div style={{ marginBottom: 20 }}>
                   <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 600 }}>
                     Tipo de alerta (opcional)
@@ -443,9 +604,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
               {/* Feedback textarea */}
               <div style={{ marginBottom: 22 }}>
                 <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, fontWeight: 600 }}>
-                  {curStage === 'rrhh'
+                  {editingStage === 'rrhh'
                     ? '¿Qué observaste en la entrevista? ¿Por qué fue seleccionado/a? *'
-                    : curStage === 'ops'
+                    : editingStage === 'ops'
                     ? '¿Qué observaste? ¿Por qué lo recomendás para esta campaña? *'
                     : '¿Cómo le fue en la capacitación? ¿Qué destacás? *'}
                 </label>
@@ -453,9 +614,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
                   value={form.feedback}
                   onChange={e => setForm(f => ({ ...f, feedback: e.target.value }))}
                   placeholder={
-                    curStage === 'rrhh'
+                    editingStage === 'rrhh'
                       ? 'Ej: Excelente comunicación, manejo del estrés muy bueno, encaja con la cultura del equipo...'
-                      : curStage === 'ops'
+                      : editingStage === 'ops'
                       ? 'Ej: Buen conocimiento del producto, actitud proactiva, se adaptó rápido al perfil de la campaña...'
                       : 'Ej: Rápida curva de aprendizaje, dominó las herramientas en la primera semana, cumplimiento del 95%...'
                   }
@@ -471,7 +632,7 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
             </div>
 
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
+              <button className="btn-secondary" onClick={safeBack}>Cancelar</button>
               <button className="btn-primary" onClick={handleSaveEval} disabled={saving}>
                 {saving ? 'Guardando...' : 'Guardar Feedback'}
               </button>
@@ -483,12 +644,67 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
         {subview === 'info_form' && (
           <>
             <div style={{ padding: '22px 22px 0' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18 }}>
+              {/* Sección: Datos básicos */}
+              <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, fontWeight: 700 }}>Datos del perfil</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>Nombre completo *</label>
+                  <input
+                    value={infoForm.nombre}
+                    onChange={e => setInfoForm(p => ({ ...p, nombre: e.target.value }))}
+                    style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13, boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>Puesto</label>
+                  <input
+                    value={infoForm.puesto}
+                    onChange={e => setInfoForm(p => ({ ...p, puesto: e.target.value }))}
+                    style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13, boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>Campaña *</label>
+                  <select
+                    value={infoForm.campana}
+                    onChange={e => setInfoForm(p => ({ ...p, campana: e.target.value, grupoCapId: '' }))}
+                    style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13 }}
+                  >
+                    {campanas.filter(c => c.activo).map(c => <option key={c.codigo} value={c.codigo}>{c.nombre}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Sección: Grupo */}
+              <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, fontWeight: 700 }}>Grupo de capacitación</div>
+              <div style={{ marginBottom: 20 }}>
+                <select
+                  value={infoForm.grupoCapId}
+                  onChange={e => setInfoForm(p => ({ ...p, grupoCapId: e.target.value }))}
+                  style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', padding: '9px 12px', borderRadius: 8, fontSize: 13 }}
+                >
+                  <option value="">Sin asignar</option>
+                  {grupos.filter(g => g.campana === infoForm.campana && g.activo).map(g => (
+                    <option key={g.id} value={g.id}>
+                      {g.nombre}{g.site ? ` — ${SITE_LABELS[g.site as keyof typeof SITE_LABELS]}` : ''}
+                    </option>
+                  ))}
+                </select>
+                {grupos.filter(g => g.campana === infoForm.campana && g.activo).length === 0 && (
+                  <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>
+                    No hay grupos activos para {labelOf(infoForm.campana)}. Creá uno en Campañas.
+                  </div>
+                )}
+              </div>
+
+              {/* Sección: Contacto */}
+              <div style={{ fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, fontWeight: 700 }}>Datos de contacto</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 22 }}>
                 {([
-                  { key: 'legajo',   label: 'Legajo interno',     type: 'text' },
-                  { key: 'telefono', label: 'Teléfono',           type: 'text' },
-                  { key: 'email',    label: 'Email',              type: 'email' },
-                  { key: 'fechaIngresoPiso', label: 'Fecha ingreso a piso', type: 'date' },
+                  { key: 'legajo',           label: 'Legajo interno',       type: 'text'  },
+                  { key: 'telefono',         label: 'Teléfono',             type: 'text'  },
+                  { key: 'email',            label: 'Email',                type: 'email' },
+                  { key: 'fechaIngresoPiso', label: 'Fecha ingreso a piso', type: 'date'  },
                 ] as const).map(f => (
                   <div key={f.key}>
                     <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, fontWeight: 600 }}>{f.label}</label>
@@ -503,9 +719,9 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
               </div>
             </div>
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
+              <button className="btn-secondary" onClick={safeBack}>Cancelar</button>
               <button className="btn-primary" onClick={handleSaveInfo} disabled={saving}>
-                {saving ? 'Guardando...' : 'Guardar Datos'}
+                {saving ? 'Guardando...' : 'Guardar Cambios'}
               </button>
             </div>
           </>
@@ -564,9 +780,41 @@ export default function CandidatoModal({ candidato: initial, role, onClose, onSa
             </div>
 
             <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button className="btn-secondary" onClick={() => setSubview('profile')}>Cancelar</button>
+              <button className="btn-secondary" onClick={safeBack}>Cancelar</button>
               <button className="btn-warning" onClick={handleSaveAlert} disabled={saving}>
                 {saving ? 'Guardando...' : 'Registrar Alerta'}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ─── NOTA FORM ─── */}
+        {subview === 'nota_form' && (
+          <>
+            <div style={{ padding: '22px 22px 0' }}>
+              <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', marginBottom: 16, fontSize: 12, color: 'var(--text3)' }}>
+                La nota quedará registrada en el historial con tu rol y la fecha de hoy. No se puede borrar.
+              </div>
+              <textarea
+                value={nota}
+                onChange={e => setNota(e.target.value)}
+                placeholder="Escribí tu observación, contexto adicional o comentario sobre este colaborador..."
+                rows={5}
+                style={{
+                  width: '100%', background: 'var(--card)', border: '1px solid var(--border)',
+                  color: 'var(--text)', padding: '12px 14px', borderRadius: 8, fontSize: 13,
+                  resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6,
+                  boxSizing: 'border-box', marginBottom: 4,
+                }}
+              />
+              <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 18 }}>
+                Se guardará como: <b>💬 Nota — {({ admin: 'Admin', operaciones: 'Operaciones', rrhh: 'RRHH', capacitacion: 'Capacitación' } as Record<string,string>)[role] ?? role}</b>
+              </div>
+            </div>
+            <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button className="btn-secondary" onClick={safeBack}>Cancelar</button>
+              <button className="btn-primary" onClick={handleSaveNota} disabled={saving || !nota.trim()}>
+                {saving ? 'Guardando...' : 'Guardar Nota'}
               </button>
             </div>
           </>
