@@ -9,23 +9,25 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root {
-  --bg: #F4F5F7;
-  --sidebar: #1A1D23;
-  --sidebar-hover: #252932;
-  --sidebar-active: #FF6B35;
+  --bg: #F0F6FA;
+  --sidebar: #0a0a0a;
+  --sidebar-hover: #1a1a1a;
+  --sidebar-active: #00b1ff;
   --white: #FFFFFF;
-  --text: #1A1D23;
-  --text-muted: #6B7280;
+  --text: #0a0a0a;
+  --text-muted: #5A6472;
   --text-light: #9CA3AF;
-  --accent: #FF6B35;
-  --accent-light: #FFF0EB;
+  --accent: #00b1ff;
+  --accent-light: #E6F7FF;
+  --accent2: #ff0f10;
+  --accent2-light: #FFF0F0;
   --success: #10B981;
   --success-light: #ECFDF5;
   --warning: #F59E0B;
   --warning-light: #FFFBEB;
-  --danger: #EF4444;
-  --danger-light: #FEF2F2;
-  --border: #E5E7EB;
+  --danger: #ff0f10;
+  --danger-light: #FFF0F0;
+  --border: #E2EAF0;
   --card: #FFFFFF;
   --radius: 12px;
   --radius-sm: 8px;
@@ -50,7 +52,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1A1D23 0%, #252932 50%, #1A1D23 100%);
+  background: linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%);
   position: relative;
   overflow: hidden;
 }
@@ -58,7 +60,7 @@ body {
   content: '';
   position: absolute;
   width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(255,107,53,0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0,177,255,0.15) 0%, transparent 70%);
   top: -200px; right: -200px;
   border-radius: 50%;
 }
@@ -66,7 +68,7 @@ body {
   content: '';
   position: absolute;
   width: 400px; height: 400px;
-  background: radial-gradient(circle, rgba(255,107,53,0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,15,16,0.08) 0%, transparent 70%);
   bottom: -100px; left: -100px;
   border-radius: 50%;
 }
@@ -164,7 +166,7 @@ body {
   transition: all 0.2s;
   letter-spacing: 0.3px;
 }
-.login-btn:hover { background: #e55a25; transform: translateY(-1px); }
+.login-btn:hover { background: #0099dd; transform: translateY(-1px); }
 .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .login-error {
   background: rgba(239,68,68,0.15);
@@ -265,7 +267,7 @@ body {
   border-left: 3px solid transparent;
 }
 .nav-item:hover { background: var(--sidebar-hover); color: rgba(255,255,255,0.85); }
-.nav-item.active { background: rgba(255,107,53,0.12); color: white; border-left-color: var(--accent); }
+.nav-item.active { background: rgba(0,177,255,0.12); color: white; border-left-color: var(--accent); }
 .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
 .sidebar-footer {
   padding: 16px 20px;
@@ -388,7 +390,7 @@ body {
   white-space: nowrap;
 }
 .btn-primary { background: var(--accent); color: white; }
-.btn-primary:hover { background: #e55a25; }
+.btn-primary:hover { background: #0099dd; }
 .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
 .btn-secondary:hover { background: var(--border); }
 .btn-success { background: var(--success); color: white; }
@@ -434,7 +436,7 @@ tbody tr:hover { background: #FAFAFA; }
 .badge-green { background: var(--success-light); color: #065f46; }
 .badge-red { background: var(--danger-light); color: #991b1b; }
 .badge-yellow { background: var(--warning-light); color: #92400e; }
-.badge-orange { background: var(--accent-light); color: #9a3412; }
+.badge-orange { background: var(--accent-light); color: #0077aa; }
 .badge-gray { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
 .badge-blue { background: #EFF6FF; color: #1e40af; }
 
@@ -534,7 +536,7 @@ tbody tr:hover { background: #FAFAFA; }
   position: relative;
   overflow: hidden;
 }
-.module-card:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(255,107,53,0.1); transform: translateY(-2px); }
+.module-card:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(0,177,255,0.12); transform: translateY(-2px); }
 .module-card.locked { opacity: 0.6; cursor: not-allowed; }
 .module-card.locked:hover { transform: none; border-color: var(--border); }
 .module-card.completed::after {
@@ -575,7 +577,7 @@ tbody tr:hover { background: #FAFAFA; }
   margin-bottom: 16px;
   box-shadow: var(--shadow);
 }
-.eval-q-num { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.eval-q-num { font-size: 11px; font-weight: 700;  }
 .eval-q-text { font-size: 16px; font-weight: 600; margin-bottom: 20px; line-height: 1.5; }
 .eval-options { display: flex; flex-direction: column; gap: 10px; }
 .eval-option {
