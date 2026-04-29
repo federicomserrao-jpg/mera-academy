@@ -36,6 +36,38 @@
   --shadow-lg: 0 10px 25px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.06);
 }
 
+/* ── DARK MODE ── */
+body.dark {
+  --bg: #0f1117;
+  --white: #1a1d24;
+  --text: #e8eaf0;
+  --text-muted: #8b92a5;
+  --text-light: #555e72;
+  --border: #2a2f3d;
+  --card: #1a1d24;
+  --sidebar: #0a0a0a;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.25);
+  --accent-light: rgba(0,177,255,0.12);
+  --success-light: rgba(16,185,129,0.12);
+  --warning-light: rgba(245,158,11,0.12);
+  --danger-light: rgba(255,15,16,0.12);
+}
+body.dark .topbar { background: #1a1d24; border-color: #2a2f3d; }
+body.dark .search-bar { background: #0f1117; border-color: #2a2f3d; }
+body.dark .search-bar input { color: var(--text); }
+body.dark .modal { background: #1a1d24; }
+body.dark .form-control { background: #0f1117; border-color: #2a2f3d; color: var(--text); }
+body.dark .form-control:focus { border-color: var(--accent); }
+body.dark thead th { background: #0f1117; }
+body.dark tbody tr:hover { background: #1f2330; }
+body.dark .eval-option { border-color: #2a2f3d; }
+body.dark .eval-option:hover { background: rgba(0,177,255,0.1); }
+body.dark .eval-option.selected { background: rgba(0,177,255,0.15); }
+body.dark .module-card { background: #1a1d24; border-color: #2a2f3d; }
+body.dark .module-card:hover { border-color: var(--accent); }
+body.dark select.form-control option { background: #1a1d24; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -791,6 +823,9 @@ tbody tr:hover { background: #FAFAFA; }
       </div>
       <nav class="sidebar-nav" id="sidebarNav"></nav>
       <div class="sidebar-footer">
+        <button class="logout-btn" id="darkToggleBtn" onclick="window.toggleDark()" style="margin-bottom:12px;width:100%">
+          <span id="darkIcon">🌙</span> <span id="darkLabel">Modo oscuro</span>
+        </button>
         <button class="logout-btn" onclick="window.doLogout()">
           <span>⎋</span> Cerrar sesión
         </button>
@@ -801,8 +836,15 @@ tbody tr:hover { background: #FAFAFA; }
     <main class="main">
       <div class="topbar">
         <div class="topbar-title" id="topbarTitle">Dashboard</div>
-        <div class="topbar-actions" id="topbarActions"></div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="search-bar" id="globalSearchBar" style="display:none">
+            <span style="color:var(--text-muted)">🔍</span>
+            <input type="text" placeholder="Buscar colaborador o módulo..." id="globalSearchInput" oninput="window.globalSearch(this.value)" autocomplete="off">
+          </div>
+          <div class="topbar-actions" id="topbarActions"></div>
+        </div>
       </div>
+      <div id="globalSearchResults" style="position:fixed;top:60px;right:32px;width:360px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:200;display:none;max-height:400px;overflow-y:auto"></div>
       <div class="content" id="mainContent">
         <div class="loading"><div class="spinner"></div></div>
       </div>
@@ -821,6 +863,62 @@ const sb = createClient(SUPA_URL, SUPA_KEY);
 window.S = { role: 'col', user: null };
 
 const CAMPAIGNS = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR'];
+
+// ── DARK MODE ──
+window.toggleDark = function() {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  localStorage.setItem('mera_dark', isDark ? '1' : '0');
+  document.getElementById('darkIcon').textContent = isDark ? '☀️' : '🌙';
+  document.getElementById('darkLabel').textContent = isDark ? 'Modo claro' : 'Modo oscuro';
+};
+// Restore dark mode on load
+if (localStorage.getItem('mera_dark') === '1') {
+  document.body.classList.add('dark');
+}
+
+// ── GLOBAL SEARCH ──
+let _searchTimeout = null;
+window.globalSearch = async function(q) {
+  const resultsEl = document.getElementById('globalSearchResults');
+  if (!q.trim()) { resultsEl.style.display = 'none'; return; }
+  clearTimeout(_searchTimeout);
+  _searchTimeout = setTimeout(async () => {
+    const [{ data: users }, { data: mods }] = await Promise.all([
+      sb.from('users').select('id,full_name,username,campaign').neq('role','adm').ilike('full_name', `%${q}%`).limit(5),
+      sb.from('modules').select('id,title,campaign').ilike('title', `%${q}%`).limit(5)
+    ]);
+    const html = [];
+    if ((users||[]).length) {
+      html.push(`<div style="padding:10px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)">Colaboradores</div>`);
+      (users||[]).forEach(u => html.push(`<div onclick="closeSearch();viewUserProfile('${u.id}')" style="padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+        <div style="width:32px;height:32px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:13px;flex-shrink:0">${u.full_name.charAt(0)}</div>
+        <div><div style="font-size:13px;font-weight:600">${u.full_name}</div><div style="font-size:11px;color:var(--text-muted)">${u.username} · ${u.campaign}</div></div>
+      </div>`));
+    }
+    if ((mods||[]).length) {
+      html.push(`<div style="padding:10px 16px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)">Módulos</div>`);
+      (mods||[]).forEach(m => html.push(`<div style="padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)">
+        <span style="font-size:20px">📚</span>
+        <div><div style="font-size:13px;font-weight:600">${m.title}</div><div style="font-size:11px;color:var(--text-muted)">${m.campaign}</div></div>
+      </div>`));
+    }
+    if (!html.length) html.push(`<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px">Sin resultados para "${q}"</div>`);
+    resultsEl.innerHTML = html.join('');
+    resultsEl.style.display = 'block';
+  }, 300);
+};
+
+window.closeSearch = function() {
+  document.getElementById('globalSearchResults').style.display = 'none';
+  document.getElementById('globalSearchInput').value = '';
+};
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#globalSearchBar') && !e.target.closest('#globalSearchResults')) {
+    document.getElementById('globalSearchResults')?.style && (document.getElementById('globalSearchResults').style.display = 'none');
+  }
+});
 
 // ── LOGIN ──
 window.setRole = function(r) {
@@ -871,6 +969,14 @@ function showApp() {
   document.getElementById('sidebarName').textContent = u.full_name;
   document.getElementById('sidebarRole').textContent = u.role === 'adm' ? 'Administrador' : 'Colaborador';
   buildNav();
+  if (window.S.role === 'adm') {
+    document.getElementById('globalSearchBar').style.display = 'flex';
+  }
+  // Restore dark mode icon
+  if (document.body.classList.contains('dark')) {
+    document.getElementById('darkIcon').textContent = '☀️';
+    document.getElementById('darkLabel').textContent = 'Modo claro';
+  }
   navigate('dashboard');
 }
 
@@ -1358,26 +1464,42 @@ async function renderResults() {
   ]);
   const uMap = Object.fromEntries((users||[]).map(u => [u.id, u]));
   const mMap = Object.fromEntries((mods||[]).map(m => [m.id, m]));
+
+  // Group by user to show attempt history
+  const byUser = {};
+  (comps||[]).forEach(c => {
+    if (!byUser[c.user_id]) byUser[c.user_id] = [];
+    byUser[c.user_id].push(c);
+  });
+
   setContent(`
     <div class="card">
       <div class="card-header">
-        <div class="card-title">Resultados (${(comps||[]).length})</div>
+        <div class="card-title">Historial de Evaluaciones (${(comps||[]).length} intentos)</div>
         <input class="form-control" style="width:220px" placeholder="Buscar..." oninput="filterTable(this,'resultsTable')">
       </div>
       <div class="table-wrap">
         <table id="resultsTable">
-          <thead><tr><th>Colaborador</th><th>Campaña</th><th>Módulo</th><th>Puntaje</th><th>Estado</th><th>Intento</th><th>Fecha</th></tr></thead>
+          <thead><tr><th>Colaborador</th><th>Campaña</th><th>Módulo</th><th>Puntaje</th><th>Estado</th><th>Intento N°</th><th>Fecha</th></tr></thead>
           <tbody>
             ${(comps||[]).map(c => {
               const u2 = uMap[c.user_id], m2 = mMap[c.module_id];
+              const scoreColor = c.score >= 80 ? 'var(--success)' : c.score >= 60 ? 'var(--warning)' : 'var(--danger)';
+              const userAttempts = byUser[c.user_id] || [];
+              const attemptNum = userAttempts.filter(a => a.module_id === c.module_id && new Date(a.completed_at) <= new Date(c.completed_at)).length;
               return `<tr>
-                <td>${u2?.full_name||'-'}</td>
+                <td>
+                  <div onclick="viewUserProfile('${c.user_id}')" style="cursor:pointer;display:flex;align-items:center;gap:8px" title="Ver perfil">
+                    <div style="width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:700;flex-shrink:0">${(u2?.full_name||'?').charAt(0)}</div>
+                    <span style="font-weight:600;color:var(--accent);text-decoration:underline dotted">${u2?.full_name||'-'}</span>
+                  </div>
+                </td>
                 <td><span class="badge badge-orange">${u2?.campaign||'-'}</span></td>
                 <td>${m2?.title||'-'}</td>
-                <td><strong>${c.score}%</strong></td>
-                <td><span class="badge ${c.passed?'badge-green':'badge-red'}">${c.passed?'Aprobado':'Reprobado'}</span></td>
-                <td>${c.attempt}</td>
-                <td class="text-sm text-muted">${new Date(c.completed_at).toLocaleDateString('es-AR')}</td>
+                <td><strong style="color:${scoreColor}">${c.score}%</strong></td>
+                <td><span class="badge ${c.passed?'badge-green':'badge-red'}">${c.passed?'✓ Aprobado':'✗ Reprobado'}</span></td>
+                <td style="text-align:center">${attemptNum}°</td>
+                <td class="text-sm text-muted">${new Date(c.completed_at).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}</td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -1839,10 +1961,9 @@ async function submitEval() {
   if (submitBtn) submitBtn.remove();
 
   const uid = window.S.user.id;
-  // Upsert: si ya existe el registro lo actualiza, si no lo crea
-  const { error: saveError } = await sb.from('completions').upsert(
-    { user_id: uid, module_id: mod.id, score, passed, attempt, completed_at: new Date().toISOString() },
-    { onConflict: 'user_id,module_id' }
+  // Siempre insertar nuevo intento (historial completo)
+  const { error: saveError } = await sb.from('completions').insert(
+    { user_id: uid, module_id: mod.id, score, passed, attempt, completed_at: new Date().toISOString() }
   );
   if (saveError) console.error('Error guardando resultado:', saveError);
 
@@ -1918,6 +2039,13 @@ async function renderMyResults() {
   const avg = (comps||[]).length ? Math.round((comps||[]).reduce((a,c) => a+c.score,0)/(comps||[]).length) : 0;
   const best = (comps||[]).length ? Math.max(...(comps||[]).map(c => c.score)) : 0;
 
+  // Group by module to show evolution
+  const byModule = {};
+  (comps||[]).forEach(c => {
+    if (!byModule[c.module_id]) byModule[c.module_id] = [];
+    byModule[c.module_id].push(c);
+  });
+
   setContent(`
     <div class="stats-grid" style="margin-bottom:24px">
       <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-value">${passed}</div><div class="stat-label">Aprobados</div></div></div>
@@ -1925,37 +2053,44 @@ async function renderMyResults() {
       <div class="stat-card"><div class="stat-icon orange">📊</div><div><div class="stat-value">${avg}%</div><div class="stat-label">Promedio</div></div></div>
       <div class="stat-card"><div class="stat-icon yellow">🏆</div><div><div class="stat-value">${best}%</div><div class="stat-label">Mejor nota</div></div></div>
     </div>
-    <div class="card">
-      <div class="card-header"><div class="card-title">Historial de evaluaciones</div></div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Módulo</th><th>Nota</th><th>Estado</th><th>Intento N°</th><th>Fecha</th></tr></thead>
-          <tbody>
-            ${(comps||[]).length === 0
-              ? '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">Todavía no rendiste ninguna evaluación</td></tr>'
-              : (comps||[]).map(c => {
-                  const mod = mMap[c.module_id];
-                  const scoreColor = c.score >= 80 ? 'var(--success)' : c.score >= 60 ? 'var(--warning)' : 'var(--danger)';
-                  return `<tr>
-                    <td><strong>${mod?.title||'Módulo eliminado'}</strong><br><span class="text-sm text-muted">${mod?.campaign||''}</span></td>
-                    <td>
-                      <div style="display:flex;align-items:center;gap:10px">
-                        <span style="font-size:22px;font-weight:800;color:${scoreColor}">${c.score}%</span>
-                        <div style="width:60px">
-                          <div class="progress-bar"><div class="progress-fill" style="width:${c.score}%;background:${scoreColor}"></div></div>
+
+    ${Object.keys(byModule).length === 0
+      ? `<div class="empty-state"><div class="empty-icon">📊</div><h3>Todavía no rendiste ninguna evaluación</h3></div>`
+      : Object.entries(byModule).map(([modId, attempts]) => {
+          const mod = mMap[modId];
+          const lastPassed = attempts.find(a => a.passed);
+          return `<div class="card" style="margin-bottom:16px">
+            <div class="card-header">
+              <div>
+                <div class="card-title">${mod?.title || 'Módulo eliminado'}</div>
+                <div class="text-sm text-muted">${mod?.campaign||''}</div>
+              </div>
+              <span class="badge ${lastPassed ? 'badge-green' : 'badge-red'}">${lastPassed ? '✓ Aprobado' : '✗ Pendiente'}</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Intento</th><th>Nota</th><th>Estado</th><th>Fecha</th></tr></thead>
+                <tbody>
+                  ${attempts.map((a, i) => {
+                    const scoreColor = a.score >= 80 ? 'var(--success)' : a.score >= 60 ? 'var(--warning)' : 'var(--danger)';
+                    return `<tr>
+                      <td style="text-align:center;font-weight:600">${attempts.length - i}°</td>
+                      <td>
+                        <div style="display:flex;align-items:center;gap:10px">
+                          <span style="font-size:20px;font-weight:800;color:${scoreColor}">${a.score}%</span>
+                          <div style="width:60px"><div class="progress-bar"><div class="progress-fill" style="width:${a.score}%;background:${scoreColor}"></div></div></div>
                         </div>
-                      </div>
-                    </td>
-                    <td><span class="badge ${c.passed?'badge-green':'badge-red'}">${c.passed ? '✓ Aprobado' : '✗ Reprobado'}</span></td>
-                    <td style="text-align:center">${c.attempt}°</td>
-                    <td class="text-sm text-muted">${new Date(c.completed_at).toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric'})}</td>
-                  </tr>`;
-                }).join('')
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
+                      </td>
+                      <td><span class="badge ${a.passed?'badge-green':'badge-red'}">${a.passed?'✓ Aprobado':'✗ Reprobado'}</span></td>
+                      <td class="text-sm text-muted">${new Date(a.completed_at).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>`;
+        }).join('')
+    }
   `);
 }
 
