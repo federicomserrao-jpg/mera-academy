@@ -1130,11 +1130,14 @@ async function deleteQuestion(qId) {
 // ── USERS ADMIN ──
 async function renderUsers() {
   setTopbarActions(`
+    <button class="btn btn-secondary" onclick="exportUsersTemplate()">📋 Descargar Plantilla</button>
+    <button class="btn btn-secondary" onclick="exportCurrentUsers()">📤 Exportar Listado</button>
     <button class="btn btn-secondary" onclick="importUsersCSV()">📥 Importar CSV</button>
     <button class="btn btn-primary" onclick="openUserModal()">＋ Nuevo Colaborador</button>
   `);
   setContent('<div class="loading"><div class="spinner"></div></div>');
   const { data: users } = await sb.from('users').select('*').neq('role','adm').order('full_name');
+  window._usersData = users || [];
   setContent(`
     <div class="card">
       <div class="card-header">
@@ -1158,6 +1161,18 @@ async function renderUsers() {
             </tr>`).join('')}
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;padding:20px;background:var(--accent-light);border:1px dashed var(--accent)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:24px">💡</span>
+        <div>
+          <div style="font-weight:600;margin-bottom:4px">¿Cómo importar colaboradores en bloque?</div>
+          <div style="font-size:13px;color:var(--text-muted)">
+            1. Descargá la <strong>Plantilla CSV</strong> → completala en Excel → guardala como CSV → subila con <strong>Importar CSV</strong>.<br>
+            2. O exportá el <strong>Listado actual</strong>, editalo y volvé a importarlo para actualizar datos.
+          </div>
+        </div>
       </div>
     </div>
   `);
@@ -1199,17 +1214,75 @@ async function deleteUser(id) {
   renderUsers();
 }
 
+// ── EXPORTAR PLANTILLA VACÍA ──
+function exportUsersTemplate() {
+  const campList = CAMPAIGNS.join(' | ');
+  const today = new Date().toISOString().split('T')[0];
+  const rows = [
+    ['Nombre Completo', 'Usuario', 'Contraseña', 'Campaña', 'Fecha Ingreso'],
+    ['// Campañas disponibles: ' + campList, '', '', '', ''],
+    ['Juan Pérez', 'jperez', 'pass123', 'ADT', today],
+    ['María García', 'mgarcia', 'pass456', 'EDESUR', today],
+  ];
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = 'plantilla_colaboradores_MERA.csv';
+  a.click();
+}
+
+// ── EXPORTAR LISTADO ACTUAL ──
+function exportCurrentUsers() {
+  const users = window._usersData || [];
+  if (!users.length) { alert('No hay colaboradores para exportar.'); return; }
+  const rows = [['Nombre Completo', 'Usuario', 'Contraseña', 'Campaña', 'Fecha Ingreso']];
+  users.forEach(u => rows.push([
+    u.full_name,
+    u.username,
+    u.password,
+    u.campaign,
+    u.start_date || ''
+  ]));
+  const csv = rows.map(r => r.map(v => `"${v||''}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = `colaboradores_MERA_${new Date().toLocaleDateString('es-AR').replace(/\//g,'-')}.csv`;
+  a.click();
+}
+
+// ── IMPORTAR CSV ──
 function importUsersCSV() {
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.csv';
   inp.onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     const text = await file.text();
-    const rows = text.split('\n').slice(1).map(r => r.split(',').map(s => s.trim().replace(/^"|"$/g,'')));
-    const inserts = rows.filter(r => r.length >= 4 && r[0]).map(r => ({ full_name: r[0], username: r[1], password: r[2], campaign: r[3], role: 'col', start_date: r[4]||new Date().toISOString().split('T')[0] }));
-    if (!inserts.length) { alert('No se encontraron datos. Formato: Nombre,Usuario,Contraseña,Campaña,FechaIngreso'); return; }
+    const lines = text.split('\n');
+    // Saltear header y líneas de comentario (//)
+    const dataRows = lines.slice(1).filter(l => l.trim() && !l.trim().startsWith('//') && !l.trim().startsWith('"//'));
+    const rows = dataRows.map(r => r.split(',').map(s => s.trim().replace(/^"|"$/g,'')));
+    const inserts = rows.filter(r => r.length >= 4 && r[0] && r[1] && r[2]).map(r => ({
+      full_name: r[0],
+      username: r[1],
+      password: r[2],
+      campaign: r[3] || 'General',
+      role: 'col',
+      start_date: r[4] || new Date().toISOString().split('T')[0]
+    }));
+    if (!inserts.length) {
+      alert('No se encontraron datos válidos.\n\nFormato requerido:\nNombre Completo,Usuario,Contraseña,Campaña,Fecha Ingreso\n\nUsá la Plantilla para asegurarte del formato correcto.');
+      return;
+    }
+    // Preview antes de importar
+    const preview = inserts.slice(0,5).map(u => `• ${u.full_name} (${u.username}) — ${u.campaign}`).join('\n');
+    const more = inserts.length > 5 ? `\n...y ${inserts.length - 5} más` : '';
+    if (!confirm(`Se van a importar ${inserts.length} colaboradores:\n\n${preview}${more}\n\n¿Confirmás?`)) return;
     const { error } = await sb.from('users').insert(inserts);
-    if (error) { alert('Error: ' + error.message); return; }
-    alert(`✅ ${inserts.length} colaboradores importados.`);
+    if (error) {
+      if (error.message.includes('unique')) alert('⚠️ Algunos usuarios ya existen en el sistema. Verificá que los usuarios (columna Usuario) no estén duplicados.');
+      else alert('Error al importar: ' + error.message);
+      return;
+    }
+    alert(`✅ ${inserts.length} colaboradores importados correctamente.`);
     renderUsers();
   };
   inp.click();
