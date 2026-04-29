@@ -1629,15 +1629,17 @@ async function startModule(modId) {
           ${questions.map((q,i) => {
             const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options);
             const letters = ['A','B','C','D','E'];
-            return `<div class="eval-question-card">
+            return `<div class="eval-question-card" id="qcard-eval-${q.id}">
               <div class="eval-q-num">Pregunta ${i+1} de ${questions.length}</div>
               <div class="eval-q-text">${q.question}</div>
-              <div class="eval-options">
-                ${opts.map((o,oi) => `<div class="eval-option" id="opt-${q.id}-${oi}" onclick="selectAnswer('${q.id}',${oi})">
-                  <div class="eval-option-letter">${letters[oi]||oi+1}</div>${o}
-                </div>`).join('')}
+              <div class="eval-options" role="radiogroup">
+                ${opts.map((o,oi) => `<label class="eval-option" id="opt-${q.id}-${oi}" onclick="selectAnswer('${q.id}',${oi})" style="cursor:pointer">
+                  <input type="radio" name="q-${q.id}" value="${oi}" style="display:none">
+                  <div class="eval-option-letter">${letters[oi]||oi+1}</div>
+                  <span>${o}</span>
+                </label>`).join('')}
               </div>
-              <div class="eval-explanation" id="exp-${q.id}">${q.explanation||''}</div>
+              <div class="eval-explanation" id="exp-${q.id}" style="display:none">${q.explanation||''}</div>
             </div>`;
           }).join('')}
         </div>
@@ -1657,22 +1659,51 @@ async function submitEval() {
   const { mod, questions, answers, attempt } = window._evalState;
   const unanswered = questions.filter(q => answers[q.id] === undefined);
   if (unanswered.length > 0) { alert(`Faltan responder ${unanswered.length} pregunta(s).`); return; }
+  
   let correct = 0;
+  const opts_data = [];
   questions.forEach(q => {
-    const sel = document.getElementById(`opt-${q.id}-${answers[q.id]}`);
+    const userAns = answers[q.id];
+    const isCorrect = userAns === q.correct_index;
+    if (isCorrect) correct++;
+    const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options);
+    opts_data.push({ q, userAns, isCorrect, opts });
+
+    // Bloquear clicks en todas las opciones
+    document.querySelectorAll(`[id^="opt-${q.id}-"]`).forEach(el => {
+      el.style.pointerEvents = 'none';
+      el.style.cursor = 'default';
+    });
+
+    // Marcar la elegida por el usuario
+    const selEl = document.getElementById(`opt-${q.id}-${userAns}`);
     const corrEl = document.getElementById(`opt-${q.id}-${q.correct_index}`);
-    if (answers[q.id] === q.correct_index) { correct++; sel?.classList.add('correct'); }
-    else {
-      sel?.classList.add('wrong');
+
+    if (isCorrect) {
+      selEl?.classList.add('correct');
+      selEl?.querySelector('.eval-option-letter') && (selEl.querySelector('.eval-option-letter').textContent = '✓');
+    } else {
+      // La que eligió: roja
+      selEl?.classList.add('wrong');
+      // La correcta: verde + etiqueta
       corrEl?.classList.add('correct');
-      const expEl = document.getElementById(`exp-${q.id}`);
-      if (expEl && expEl.textContent.trim()) expEl.style.display = 'block';
+      corrEl?.querySelector('.eval-option-letter') && (corrEl.querySelector('.eval-option-letter').textContent = '✓');
+      // Mostrar banner "Respuesta correcta" dentro de la card
+      const card = document.getElementById(`qcard-eval-${q.id}`);
+      if (card) {
+        const banner = document.createElement('div');
+        banner.style.cssText = 'margin-top:12px;padding:10px 14px;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;font-size:13px;color:#065f46;display:flex;align-items:center;gap:8px';
+        banner.innerHTML = `<span style="font-size:16px">✅</span><div><strong>Respuesta correcta:</strong> ${opts[q.correct_index]}${q.explanation ? `<br><span style="color:#047857;font-size:12px">${q.explanation}</span>` : ''}</div>`;
+        card.appendChild(banner);
+      }
     }
   });
+
   const score = Math.round(correct / questions.length * 100);
   const passed = score >= 60;
   const submitBtn = document.querySelector('[onclick="submitEval()"]');
   if (submitBtn) submitBtn.remove();
+
   const uid = window.S.user.id;
   const { data: existing } = await sb.from('completions').select('id').eq('user_id', uid).eq('module_id', mod.id).single().catch(() => ({data:null}));
   if (existing) await sb.from('completions').update({ score, passed, attempt, completed_at: new Date().toISOString() }).eq('id', existing.id);
@@ -1683,10 +1714,14 @@ async function submitEval() {
     <div class="result-score ${passed?'pass':'fail'}">${score}%</div>
     <h3>${passed ? '¡Aprobado!' : 'No aprobado'}</h3>
     <p class="text-muted" style="margin:8px 0">${correct} de ${questions.length} respuestas correctas${!passed?' · Se requiere 60% para aprobar':''}</p>
+    ${!passed ? `<p style="font-size:13px;color:var(--text-muted);margin-top:4px">↑ Revisá las respuestas correctas marcadas en verde arriba</p>` : ''}
     ${passed ? `<button class="btn btn-success" style="margin:16px 8px 0" onclick="showCertificate()">🎓 Ver Certificado</button>` : ''}
     <button class="btn btn-secondary" style="margin:16px 8px 0" onclick="renderMyModules()">← Volver a Módulos</button>
   </div>`;
   document.getElementById('evalQuestions')?.insertAdjacentHTML('afterend', resultHtml);
+  // Scroll al resultado
+  document.querySelector('.result-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
   if (passed) {
     window._certData = { name: window.S.user.full_name, module: mod.title, score, date: new Date().toLocaleDateString('es-AR', { year:'numeric', month:'long', day:'numeric' }) };
     setTimeout(() => showSurveyModal(uid, mod.id), 2000);
