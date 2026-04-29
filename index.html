@@ -1089,36 +1089,95 @@ async function openQuestionsModal(modId, modTitle) {
 
 function renderQuestionItem(q, i) {
   const opts = JSON.parse(typeof q.options === 'string' ? q.options : JSON.stringify(q.options));
-  return `<div class="card" style="margin-bottom:12px;padding:16px" id="qcard-${q.id}">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <strong style="font-size:13px">Pregunta ${i+1}</strong>
+  // Pad to 4 options minimum
+  while (opts.length < 4) opts.push('');
+  const letters = ['A','B','C','D'];
+  return `<div class="card" style="margin-bottom:16px;padding:20px;border:1px solid var(--border)" id="qcard-${q.id}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700">${i+1}</div>
+        <strong style="font-size:14px">Pregunta ${i+1}</strong>
+      </div>
       <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteQuestion('${q.id}')">🗑️ Eliminar</button>
     </div>
-    <div class="form-group"><label class="form-label">Pregunta</label><input class="form-control" id="qt-${q.id}" value="${q.question.replace(/"/g,'&quot;')}"></div>
-    <div class="form-group"><label class="form-label">Opciones (una por línea)</label><textarea class="form-control" id="qo-${q.id}" rows="4">${opts.join('\n')}</textarea></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Índice correcto (0=primera)</label><input class="form-control" id="qc-${q.id}" type="number" value="${q.correct_index}"></div>
-      <div class="form-group"><label class="form-label">Explicación</label><input class="form-control" id="qe-${q.id}" value="${q.explanation||''}"></div>
+
+    <div class="form-group">
+      <label class="form-label">Enunciado de la pregunta</label>
+      <input class="form-control" id="qt-${q.id}" placeholder="Escribí la pregunta acá..." value="${q.question.replace(/"/g,'&quot;')}">
     </div>
-    <button class="btn btn-primary btn-sm" onclick="saveQuestion('${q.id}')">💾 Guardar</button>
+
+    <div class="form-group">
+      <label class="form-label" style="margin-bottom:10px">Opciones — <span style="color:var(--accent);font-weight:600">marcá la correcta con el círculo</span></label>
+      <div style="display:flex;flex-direction:column;gap:8px" id="opts-${q.id}">
+        ${opts.map((o, oi) => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid ${oi === q.correct_index ? 'var(--success)' : 'var(--border)'};border-radius:var(--radius-sm);background:${oi === q.correct_index ? 'var(--success-light)' : 'white'};transition:all 0.15s" id="optrow-${q.id}-${oi}">
+            <input type="radio" name="correct-${q.id}" value="${oi}" ${oi === q.correct_index ? 'checked' : ''}
+              onchange="highlightCorrect('${q.id}', ${oi})"
+              style="width:18px;height:18px;accent-color:var(--success);cursor:pointer;flex-shrink:0">
+            <div style="width:24px;height:24px;border-radius:50%;background:${oi === q.correct_index ? 'var(--success)' : 'var(--bg)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${oi === q.correct_index ? 'white' : 'var(--text-muted)'};flex-shrink:0">${letters[oi]}</div>
+            <input type="text" value="${o}" placeholder="Opción ${letters[oi]}..."
+              id="qopt-${q.id}-${oi}"
+              style="flex:1;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:13px;background:transparent;color:var(--text)">
+            ${oi === q.correct_index ? '<span style="font-size:11px;font-weight:600;color:var(--success);white-space:nowrap">✓ Correcta</span>' : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Explicación (se muestra si el colaborador se equivoca)</label>
+      <input class="form-control" id="qe-${q.id}" placeholder="Ej: La respuesta correcta es A porque..." value="${q.explanation||''}">
+    </div>
+
+    <button class="btn btn-primary btn-sm" onclick="saveQuestion('${q.id}')">💾 Guardar pregunta</button>
   </div>`;
 }
 
+window.highlightCorrect = function(qId, selectedIdx) {
+  for (let i = 0; i < 4; i++) {
+    const row = document.getElementById(`optrow-${qId}-${i}`);
+    const letter = row?.querySelector('div[style*="border-radius:50%"]');
+    if (!row) continue;
+    const isCorrect = i === selectedIdx;
+    row.style.border = `2px solid ${isCorrect ? 'var(--success)' : 'var(--border)'}`;
+    row.style.background = isCorrect ? 'var(--success-light)' : 'white';
+    if (letter) {
+      letter.style.background = isCorrect ? 'var(--success)' : 'var(--bg)';
+      letter.style.color = isCorrect ? 'white' : 'var(--text-muted)';
+    }
+    // Update/remove "✓ Correcta" label
+    const existing = row.querySelector('span');
+    if (isCorrect && !existing) {
+      const span = document.createElement('span');
+      span.style.cssText = 'font-size:11px;font-weight:600;color:var(--success);white-space:nowrap';
+      span.textContent = '✓ Correcta';
+      row.appendChild(span);
+    } else if (!isCorrect && existing) {
+      existing.remove();
+    }
+  }
+};
+
 async function addNewQuestion(modId) {
-  const { data: q } = await sb.from('questions').insert({ module_id: modId, question: 'Nueva pregunta', options: ['Opción A', 'Opción B', 'Opción C'], correct_index: 0 }).select().single();
+  const { data: q } = await sb.from('questions').insert({ module_id: modId, question: '', options: ['', '', '', ''], correct_index: 0 }).select().single();
   const { data: allQs } = await sb.from('questions').select('*').eq('module_id', modId).order('created_at');
   document.getElementById('questionsList').innerHTML = (allQs||[]).map((q2,i) => renderQuestionItem(q2, i)).join('');
+  // Scroll to new question
+  document.getElementById(`qcard-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function saveQuestion(qId) {
-  const q = document.getElementById('qt-'+qId).value;
-  const opts = document.getElementById('qo-'+qId).value.split('\n').map(s => s.trim()).filter(Boolean);
-  const ci = parseInt(document.getElementById('qc-'+qId).value)||0;
+  const question = document.getElementById('qt-'+qId).value.trim();
+  if (!question) { alert('Escribí el enunciado de la pregunta'); return; }
+  const opts = [0,1,2,3].map(i => (document.getElementById(`qopt-${qId}-${i}`)?.value||'').trim()).filter(Boolean);
+  if (opts.length < 2) { alert('Agregá al menos 2 opciones'); return; }
+  const ci = parseInt(document.querySelector(`input[name="correct-${qId}"]:checked`)?.value) || 0;
   const exp = document.getElementById('qe-'+qId).value;
-  await sb.from('questions').update({ question: q, options: opts, correct_index: ci, explanation: exp }).eq('id', qId);
+  await sb.from('questions').update({ question, options: opts, correct_index: ci, explanation: exp }).eq('id', qId);
   const card = document.getElementById('qcard-'+qId);
   card.style.borderColor = 'var(--success)';
-  setTimeout(() => { card.style.borderColor = ''; }, 1500);
+  card.style.background = 'var(--success-light)';
+  setTimeout(() => { card.style.borderColor = ''; card.style.background = ''; }, 1500);
 }
 
 async function deleteQuestion(qId) {
