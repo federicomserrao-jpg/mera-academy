@@ -1839,9 +1839,12 @@ async function submitEval() {
   if (submitBtn) submitBtn.remove();
 
   const uid = window.S.user.id;
-  const { data: existing } = await sb.from('completions').select('id').eq('user_id', uid).eq('module_id', mod.id).single().catch(() => ({data:null}));
-  if (existing) await sb.from('completions').update({ score, passed, attempt, completed_at: new Date().toISOString() }).eq('id', existing.id);
-  else await sb.from('completions').insert({ user_id: uid, module_id: mod.id, score, passed, attempt });
+  // Upsert: si ya existe el registro lo actualiza, si no lo crea
+  const { error: saveError } = await sb.from('completions').upsert(
+    { user_id: uid, module_id: mod.id, score, passed, attempt, completed_at: new Date().toISOString() },
+    { onConflict: 'user_id,module_id' }
+  );
+  if (saveError) console.error('Error guardando resultado:', saveError);
 
   const resultHtml = `<div class="result-card" style="margin-top:24px">
     <div style="font-size:48px">${passed?'🏆':'😔'}</div>
@@ -1910,21 +1913,45 @@ async function renderMyResults() {
     sb.from('modules').select('*')
   ]);
   const mMap = Object.fromEntries((mods||[]).map(m => [m.id, m]));
+  const passed = (comps||[]).filter(c => c.passed).length;
+  const failed = (comps||[]).filter(c => !c.passed).length;
+  const avg = (comps||[]).length ? Math.round((comps||[]).reduce((a,c) => a+c.score,0)/(comps||[]).length) : 0;
+  const best = (comps||[]).length ? Math.max(...(comps||[]).map(c => c.score)) : 0;
+
   setContent(`
+    <div class="stats-grid" style="margin-bottom:24px">
+      <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-value">${passed}</div><div class="stat-label">Aprobados</div></div></div>
+      <div class="stat-card"><div class="stat-icon red">❌</div><div><div class="stat-value">${failed}</div><div class="stat-label">Reprobados</div></div></div>
+      <div class="stat-card"><div class="stat-icon orange">📊</div><div><div class="stat-value">${avg}%</div><div class="stat-label">Promedio</div></div></div>
+      <div class="stat-card"><div class="stat-icon yellow">🏆</div><div><div class="stat-value">${best}%</div><div class="stat-label">Mejor nota</div></div></div>
+    </div>
     <div class="card">
-      <div class="card-header"><div class="card-title">Mis Resultados</div></div>
+      <div class="card-header"><div class="card-title">Historial de evaluaciones</div></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Módulo</th><th>Puntaje</th><th>Estado</th><th>Intento</th><th>Fecha</th></tr></thead>
+          <thead><tr><th>Módulo</th><th>Nota</th><th>Estado</th><th>Intento N°</th><th>Fecha</th></tr></thead>
           <tbody>
-            ${(comps||[]).length === 0 ? '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">Sin resultados aún</td></tr>' :
-              (comps||[]).map(c => `<tr>
-                <td>${mMap[c.module_id]?.title||'-'}</td>
-                <td><strong>${c.score}%</strong></td>
-                <td><span class="badge ${c.passed?'badge-green':'badge-red'}">${c.passed?'Aprobado':'Reprobado'}</span></td>
-                <td>${c.attempt}</td>
-                <td class="text-sm text-muted">${new Date(c.completed_at).toLocaleDateString('es-AR')}</td>
-              </tr>`).join('')}
+            ${(comps||[]).length === 0
+              ? '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-muted)">Todavía no rendiste ninguna evaluación</td></tr>'
+              : (comps||[]).map(c => {
+                  const mod = mMap[c.module_id];
+                  const scoreColor = c.score >= 80 ? 'var(--success)' : c.score >= 60 ? 'var(--warning)' : 'var(--danger)';
+                  return `<tr>
+                    <td><strong>${mod?.title||'Módulo eliminado'}</strong><br><span class="text-sm text-muted">${mod?.campaign||''}</span></td>
+                    <td>
+                      <div style="display:flex;align-items:center;gap:10px">
+                        <span style="font-size:22px;font-weight:800;color:${scoreColor}">${c.score}%</span>
+                        <div style="width:60px">
+                          <div class="progress-bar"><div class="progress-fill" style="width:${c.score}%;background:${scoreColor}"></div></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td><span class="badge ${c.passed?'badge-green':'badge-red'}">${c.passed ? '✓ Aprobado' : '✗ Reprobado'}</span></td>
+                    <td style="text-align:center">${c.attempt}°</td>
+                    <td class="text-sm text-muted">${new Date(c.completed_at).toLocaleDateString('es-AR', {day:'2-digit',month:'2-digit',year:'numeric'})}</td>
+                  </tr>`;
+                }).join('')
+            }
           </tbody>
         </table>
       </div>
