@@ -1879,7 +1879,27 @@ async function startModule(modId) {
       <button class="btn btn-ghost btn-sm" onclick="renderMyModules()" style="margin-bottom:20px">← Volver</button>
       <h2 style="margin-bottom:8px">${mod.title}</h2>
       <p class="text-muted" style="margin-bottom:24px">${mod.description||''}</p>
-      ${ytId ? `<div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen></iframe></div>` : mod.video_url ? `<div class="card" style="padding:16px;margin-bottom:24px;text-align:center"><a href="${mod.video_url}" target="_blank" class="btn btn-primary">▶️ Ver Video</a></div>` : ''}
+      ${ytId ? `
+        <div class="video-wrap"><iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen></iframe></div>
+        <div id="videoGate" style="text-align:center;margin:24px 0;padding:24px;background:var(--accent-light);border:2px dashed var(--accent);border-radius:var(--radius)">
+          <div style="font-size:32px;margin-bottom:12px">🎬</div>
+          <div style="font-weight:600;font-size:15px;margin-bottom:8px">Mirá el video completo antes de continuar</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Una vez que terminaste, hacé click en el botón para acceder a la evaluación</div>
+          <button class="btn btn-primary" style="padding:12px 32px;font-size:15px" onclick="window.revealEval()">✅ Terminé de ver el video — Ir a la evaluación</button>
+        </div>
+        <div id="evalSection" style="display:none">
+      ` : mod.video_url ? `
+        <div class="card" style="padding:16px;margin-bottom:24px;text-align:center">
+          <a href="${mod.video_url}" target="_blank" class="btn btn-primary">▶️ Ver Video</a>
+        </div>
+        <div id="videoGate" style="text-align:center;margin:24px 0;padding:24px;background:var(--accent-light);border:2px dashed var(--accent);border-radius:var(--radius)">
+          <div style="font-size:32px;margin-bottom:12px">🎬</div>
+          <div style="font-weight:600;font-size:15px;margin-bottom:8px">Abrí el video en la nueva pestaña y miralo completo</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Cuando termines, volvé acá y hacé click para continuar</div>
+          <button class="btn btn-primary" style="padding:12px 32px;font-size:15px" onclick="window.revealEval()">✅ Terminé de ver el video — Ir a la evaluación</button>
+        </div>
+        <div id="evalSection" style="display:none">
+      ` : '<div id="evalSection">'}
       ${questions.length ? `
         <div id="evalQuestions">
           ${questions.map((q,i) => {
@@ -1901,6 +1921,7 @@ async function startModule(modId) {
         </div>
         <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;margin-top:8px" onclick="submitEval()">Enviar Evaluación</button>
       ` : `<div class="card" style="padding:32px;text-align:center"><p class="text-muted">Este módulo aún no tiene preguntas.</p><button class="btn btn-secondary" style="margin-top:16px" onclick="renderMyModules()">← Volver</button></div>`}
+      </div>
     </div>
   `);
 }
@@ -1910,6 +1931,16 @@ function selectAnswer(qId, oi) {
   document.querySelectorAll(`[id^="opt-${qId}-"]`).forEach(el => el.classList.remove('selected'));
   document.getElementById(`opt-${qId}-${oi}`).classList.add('selected');
 }
+
+window.revealEval = function() {
+  const gate = document.getElementById('videoGate');
+  const evalSection = document.getElementById('evalSection');
+  if (gate) gate.style.display = 'none';
+  if (evalSection) {
+    evalSection.style.display = 'block';
+    evalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
 
 async function submitEval() {
   const { mod, questions, answers, attempt } = window._evalState;
