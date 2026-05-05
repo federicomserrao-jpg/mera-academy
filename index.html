@@ -986,6 +986,7 @@ function buildNav() {
   const nav = document.getElementById('sidebarNav');
   const items = isAdm ? [
     { id:'dashboard', icon:'📊', label:'Dashboard' },
+    { id:'courses', icon:'🎓', label:'Cursos' },
     { id:'modules', icon:'📚', label:'Módulos' },
     { id:'users', icon:'👥', label:'Colaboradores' },
     { id:'results', icon:'📈', label:'Resultados' },
@@ -996,6 +997,7 @@ function buildNav() {
     { id:'logs', icon:'📋', label:'Historial' },
   ] : [
     { id:'dashboard', icon:'🏠', label:'Mi Dashboard' },
+    { id:'mycourses', icon:'🎓', label:'Mis Cursos' },
     { id:'mymodules', icon:'📚', label:'Mis Módulos' },
     { id:'myresults', icon:'📈', label:'Mis Resultados' },
     { id:'myprofile', icon:'👤', label:'Mi Perfil' },
@@ -1008,14 +1010,15 @@ function navigate(page) {
   const el = document.getElementById('nav-' + page);
   if (el) el.classList.add('active');
   const titles = {
-    dashboard: 'Dashboard', modules: 'Módulos', users: 'Colaboradores',
+    dashboard: 'Dashboard', courses: 'Cursos', modules: 'Módulos', users: 'Colaboradores',
     results: 'Resultados', campaigns: 'Por Campaña', overdue: 'Módulos Vencidos',
     surveys: 'Encuestas', assignments: 'Asignaciones', logs: 'Historial de Cambios',
-    mymodules: 'Mis Módulos', myresults: 'Mis Resultados', myprofile: 'Mi Perfil'
+    mycourses: 'Mis Cursos', mymodules: 'Mis Módulos', myresults: 'Mis Resultados', myprofile: 'Mi Perfil'
   };
   document.getElementById('topbarTitle').textContent = titles[page] || page;
   const pages = {
     dashboard: window.S.role === 'adm' ? renderAdminDashboard : renderColDashboard,
+    courses: renderCourses,
     modules: renderModules,
     users: renderUsers,
     results: renderResults,
@@ -1024,6 +1027,7 @@ function navigate(page) {
     surveys: renderSurveys,
     assignments: renderAssignments,
     logs: renderLogs,
+    mycourses: renderMyCourses,
     mymodules: renderMyModules,
     myresults: renderMyResults,
     myprofile: renderMyProfile,
@@ -1088,6 +1092,195 @@ async function renderAdminDashboard() {
       </div>
     </div>
   `);
+}
+
+// ── COURSES ADMIN ──
+async function renderCourses() {
+  setTopbarActions(`<button class="btn btn-primary" onclick="openCourseModal()">＋ Nuevo Curso</button>`);
+  setContent('<div class="loading"><div class="spinner"></div></div>');
+  const { data: courses } = await sb.from('courses').select('*').order('campaign').order('created_at');
+  const { data: cms } = await sb.from('course_modules').select('course_id');
+  const modCount = (cms||[]).reduce((acc, cm) => { acc[cm.course_id] = (acc[cm.course_id]||0)+1; return acc; }, {});
+  setContent(`
+    <div class="campaign-grid">
+      ${(courses||[]).length === 0 ? `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🎓</div><h3>No hay cursos todavía</h3><p>Creá el primer curso con el botón de arriba</p></div>` :
+        (courses||[]).map(c => `
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="background:var(--accent);padding:20px 20px 16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <span class="badge" style="background:rgba(255,255,255,0.2);color:white">${c.campaign}</span>
+                <span style="font-size:11px;color:rgba(255,255,255,0.7)">${c.activo ? '● Activo' : '○ Inactivo'}</span>
+              </div>
+              <div style="font-size:17px;font-weight:700;color:white;margin-bottom:4px">${c.title}</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.75)">${c.description||''}</div>
+            </div>
+            <div style="padding:16px 20px">
+              <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">📚 ${modCount[c.id]||0} módulos</div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-secondary btn-sm" style="flex:1" onclick="openCourseModulesModal('${c.id}','${c.title.replace(/'/g,"\\'")}')">📋 Módulos</button>
+                <button class="btn btn-ghost btn-sm" onclick="openCourseModal('${c.id}')">✏️</button>
+                <button class="btn btn-ghost btn-sm" onclick="deleteCourse('${c.id}')" style="color:var(--danger)">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+    </div>
+  `);
+}
+
+async function openCourseModal(id) {
+  let course = null;
+  if (id) { const { data } = await sb.from('courses').select('*').eq('id', id).single(); course = data; }
+  const campOpts = CAMPAIGNS.map(c => `<option value="${c}" ${course?.campaign===c?'selected':''}>${c}</option>`).join('');
+  showModal('modal-course', `${id?'Editar':'Nuevo'} Curso`, `
+    <div class="form-group"><label class="form-label">Título del Curso</label><input class="form-control" id="cTitle" placeholder="Ej: Inducción ADT" value="${course?.title||''}"></div>
+    <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-control" id="cDesc" rows="2" placeholder="Breve descripción del curso...">${course?.description||''}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Campaña</label><select class="form-control" id="cCamp">${campOpts}</select></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:28px">
+        <input type="checkbox" id="cActivo" ${course?.activo!==false?'checked':''}>
+        <label for="cActivo" style="font-size:13px;font-weight:500">Curso activo</label>
+      </div>
+    </div>
+  `, async () => {
+    const payload = {
+      title: document.getElementById('cTitle').value.trim(),
+      description: document.getElementById('cDesc').value.trim(),
+      campaign: document.getElementById('cCamp').value,
+      activo: document.getElementById('cActivo').checked,
+      updated_at: new Date().toISOString()
+    };
+    if (!payload.title) { alert('El título es obligatorio'); return; }
+    if (id) await sb.from('courses').update(payload).eq('id', id);
+    else await sb.from('courses').insert(payload);
+    closeModal(); renderCourses();
+  });
+}
+
+async function deleteCourse(id) {
+  if (!confirm('¿Eliminar este curso? Se eliminarán también las asignaciones de módulos.')) return;
+  await sb.from('courses').delete().eq('id', id);
+  renderCourses();
+}
+
+async function openCourseModulesModal(courseId, courseTitle) {
+  const [{ data: allMods }, { data: cms }] = await Promise.all([
+    sb.from('modules').select('*').order('campaign').order('sort_order'),
+    sb.from('course_modules').select('*').eq('course_id', courseId).order('sort_order')
+  ]);
+  const assignedIds = new Set((cms||[]).map(cm => cm.module_id));
+  const assigned = (cms||[]).map(cm => ({ ...cm, mod: (allMods||[]).find(m => m.id === cm.module_id) })).filter(cm => cm.mod).sort((a,b) => a.sort_order - b.sort_order);
+  const available = (allMods||[]).filter(m => !assignedIds.has(m.id));
+
+  showModal('modal-course-mods', `Módulos del curso: ${courseTitle}`, `
+    <div style="margin-bottom:20px">
+      <label class="form-label">Módulos en este curso (en orden)</label>
+      <div id="assignedModsList" style="display:flex;flex-direction:column;gap:8px;min-height:40px">
+        ${assigned.length === 0 ? '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Sin módulos asignados aún</div>' :
+          assigned.map((cm, i) => `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)" id="cmrow-${cm.id}">
+              <div style="width:24px;height:24px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:700;flex-shrink:0">${i+1}</div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600">${cm.mod.title}</div>
+                <div style="font-size:11px;color:var(--text-muted)">${cm.mod.campaign}</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeCourseModule('${cm.id}','${courseId}','${courseTitle.replace(/'/g,"\\'")}')">✕</button>
+            </div>
+          `).join('')}
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <label class="form-label">Agregar módulo</label>
+      <div style="display:flex;gap:8px">
+        <select class="form-control" id="modToAdd">
+          <option value="">— Seleccioná un módulo —</option>
+          ${available.map(m => `<option value="${m.id}">[${m.campaign}] ${m.title}</option>`).join('')}
+        </select>
+        <button class="btn btn-primary" onclick="addCourseModule('${courseId}','${courseTitle.replace(/'/g,"\\'")}')">＋ Agregar</button>
+      </div>
+    </div>
+  `, null, true);
+}
+
+async function addCourseModule(courseId, courseTitle) {
+  const modId = document.getElementById('modToAdd').value;
+  if (!modId) { alert('Seleccioná un módulo'); return; }
+  const { data: existing } = await sb.from('course_modules').select('count').eq('course_id', courseId);
+  const order = (existing?.[0]?.count || 0);
+  await sb.from('course_modules').insert({ course_id: courseId, module_id: modId, sort_order: order });
+  closeModal();
+  openCourseModulesModal(courseId, courseTitle);
+}
+
+async function removeCourseModule(cmId, courseId, courseTitle) {
+  await sb.from('course_modules').delete().eq('id', cmId);
+  closeModal();
+  openCourseModulesModal(courseId, courseTitle);
+}
+
+// ── MY COURSES (colaborador) ──
+async function renderMyCourses() {
+  setTopbarActions('');
+  setContent('<div class="loading"><div class="spinner"></div></div>');
+  const uid = window.S.user.id;
+  const camp = window.S.user.campaign;
+  const [{ data: courses }, { data: cms }, { data: allMods }, { data: comps }] = await Promise.all([
+    sb.from('courses').select('*').eq('campaign', camp).eq('activo', true).order('created_at'),
+    sb.from('course_modules').select('*').order('sort_order'),
+    sb.from('modules').select('*'),
+    sb.from('completions').select('*').eq('user_id', uid)
+  ]);
+  const modMap = Object.fromEntries((allMods||[]).map(m => [m.id, m]));
+  const compMap = Object.fromEntries((comps||[]).map(c => [c.module_id, c]));
+  const cmsByCourse = (cms||[]).reduce((acc, cm) => { if (!acc[cm.course_id]) acc[cm.course_id] = []; acc[cm.course_id].push(cm); return acc; }, {});
+
+  if (!(courses||[]).length) {
+    setContent(`<div class="empty-state"><div class="empty-icon">🎓</div><h3>Sin cursos asignados</h3><p>Tu supervisor asignará cursos a tu campaña pronto.</p></div>`);
+    return;
+  }
+
+  setContent((courses||[]).map(course => {
+    const courseMods = (cmsByCourse[course.id]||[]).sort((a,b) => a.sort_order - b.sort_order).map(cm => ({ ...cm, mod: modMap[cm.module_id] })).filter(cm => cm.mod);
+    const total = courseMods.length;
+    const done = courseMods.filter(cm => compMap[cm.module_id]?.passed).length;
+    const pct = total > 0 ? Math.round(done/total*100) : 0;
+    const courseComplete = done === total && total > 0;
+
+    return `<div class="card" style="margin-bottom:20px">
+      <div style="background:var(--accent);padding:20px 24px 18px;border-radius:var(--radius) var(--radius) 0 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span class="badge" style="background:rgba(255,255,255,0.2);color:white">${course.campaign}</span>
+          ${courseComplete ? '<span class="badge" style="background:#10B981;color:white">✓ Completado</span>' : `<span style="font-size:12px;color:rgba(255,255,255,0.8)">${done}/${total} módulos</span>`}
+        </div>
+        <div style="font-size:18px;font-weight:700;color:white;margin-bottom:8px">${course.title}</div>
+        <div class="progress-bar" style="height:6px;background:rgba(255,255,255,0.2)">
+          <div style="height:100%;width:${pct}%;background:white;border-radius:10px;transition:width 0.3s"></div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:4px">${pct}% completado</div>
+      </div>
+      <div style="padding:20px 24px">
+        ${total === 0 ? '<p class="text-muted text-sm">Este curso no tiene módulos asignados aún.</p>' :
+          courseMods.map((cm, i) => {
+            const mod = cm.mod;
+            const comp = compMap[mod.id];
+            const prevDone = i === 0 || compMap[courseMods[i-1].mod.id]?.passed;
+            const locked = !prevDone && i > 0;
+            const statusIcon = comp?.passed ? '✅' : comp ? '❌' : locked ? '🔒' : '⏳';
+            const statusText = comp?.passed ? 'Aprobado' : comp ? 'Reprobado' : locked ? 'Bloqueado' : 'Pendiente';
+            const statusColor = comp?.passed ? 'var(--success)' : comp ? 'var(--danger)' : locked ? 'var(--text-light)' : 'var(--warning)';
+            return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);${locked?'opacity:0.5':''}">
+              <div style="width:32px;height:32px;background:${comp?.passed?'var(--success)':locked?'var(--border)':'var(--accent-light)'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${statusIcon}</div>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:600">${i+1}. ${mod.title}</div>
+                <div style="font-size:11px;color:${statusColor};font-weight:600">${statusText}${comp ? ` · ${comp.score}%` : ''}</div>
+              </div>
+              ${!locked ? `<button class="btn btn-sm ${comp?.passed?'btn-secondary':'btn-primary'}" onclick="startModule('${mod.id}')">${comp?.passed ? '↺ Repasar' : comp ? '↺ Reintentar' : '▶ Iniciar'}</button>` : ''}
+            </div>`;
+          }).join('')}
+      </div>
+    </div>`;
+  }).join(''));
 }
 
 // ── MODULES ADMIN ──
