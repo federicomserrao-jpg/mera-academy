@@ -1324,6 +1324,7 @@ async function renderModules() {
               <td>
                 <button class="btn btn-ghost btn-sm" onclick="openModuleModal('${m.id}')">✏️ Editar</button>
                 <button class="btn btn-ghost btn-sm" onclick="openQuestionsModal('${m.id}','${m.title.replace(/'/g,"\\'")}')">❓ Preguntas</button>
+                <button class="btn btn-ghost btn-sm" onclick="openModuleFilesModal('${m.id}','${m.title.replace(/'/g,"\\'")}')">📎 Archivos</button>
                 <button class="btn btn-ghost btn-sm" onclick="deleteModule('${m.id}')" style="color:var(--danger)">🗑️</button>
               </td>
             </tr>`).join('')}
@@ -1389,6 +1390,103 @@ async function deleteModule(id) {
   if (!confirm('¿Eliminar este módulo?')) return;
   await sb.from('modules').delete().eq('id', id);
   renderModules();
+}
+
+// ── MODULE FILES ──
+async function openModuleFilesModal(modId, modTitle) {
+  showModal('modal-files', `📎 Archivos — ${modTitle}`, `
+    <div style="margin-bottom:20px">
+      <label class="form-label">Subir archivo</label>
+      <div style="border:2px dashed var(--border);border-radius:var(--radius);padding:24px;text-align:center;background:var(--bg)" id="dropZone">
+        <div style="font-size:32px;margin-bottom:8px">📁</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Arrastrá un archivo acá o hacé click para seleccionar</div>
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('fileInput-${modId}').click()">Seleccionar archivo</button>
+        <input type="file" id="fileInput-${modId}" style="display:none" onchange="uploadModuleFile('${modId}', this)">
+      </div>
+      <div id="uploadProgress-${modId}" style="display:none;margin-top:10px">
+        <div class="progress-bar"><div class="progress-fill" id="uploadBar-${modId}" style="width:0%"></div></div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px" id="uploadStatus-${modId}">Subiendo...</div>
+      </div>
+    </div>
+    <div>
+      <label class="form-label">Archivos del módulo</label>
+      <div id="filesList-${modId}"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  `, null, true);
+  loadModuleFiles(modId);
+}
+
+async function loadModuleFiles(modId) {
+  const el = document.getElementById(`filesList-${modId}`);
+  if (!el) return;
+  const { data, error } = await sb.storage.from('module-files').list(modId, { sortBy: { column: 'created_at', order: 'desc' } });
+  if (error || !data || data.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">Sin archivos adjuntos aún</div>';
+    return;
+  }
+  el.innerHTML = data.map(f => {
+    const ext = f.name.split('.').pop().toUpperCase();
+    const size = f.metadata?.size ? (f.metadata.size / 1024 < 1024 ? (f.metadata.size/1024).toFixed(1)+'KB' : (f.metadata.size/1048576).toFixed(1)+'MB') : '';
+    const iconMap = { PDF:'📄', DOC:'📝', DOCX:'📝', XLS:'📊', XLSX:'📊', PPT:'📋', PPTX:'📋', PNG:'🖼️', JPG:'🖼️', JPEG:'🖼️', MP4:'🎬', ZIP:'🗜️' };
+    const icon = iconMap[ext] || '📎';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;background:var(--bg)">
+      <span style="font-size:22px">${icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+        <div style="font-size:11px;color:var(--text-muted)">${ext} ${size ? '· '+size : ''}</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="downloadModuleFile('${modId}','${f.name}')">⬇️ Descargar</button>
+      <button class="btn btn-ghost btn-sm" onclick="deleteModuleFile('${modId}','${f.name}')" style="color:var(--danger)">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+async function uploadModuleFile(modId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const progressEl = document.getElementById(`uploadProgress-${modId}`);
+  const barEl = document.getElementById(`uploadBar-${modId}`);
+  const statusEl = document.getElementById(`uploadStatus-${modId}`);
+  progressEl.style.display = 'block';
+  barEl.style.width = '30%';
+  statusEl.textContent = `Subiendo ${file.name}...`;
+  const filePath = `${modId}/${Date.now()}_${file.name}`;
+  const { error } = await sb.storage.from('module-files').upload(filePath, file, { upsert: true });
+  if (error) {
+    barEl.style.width = '100%';
+    barEl.style.background = 'var(--danger)';
+    statusEl.textContent = 'Error al subir: ' + error.message;
+    return;
+  }
+  barEl.style.width = '100%';
+  barEl.style.background = 'var(--success)';
+  statusEl.textContent = '✅ Archivo subido correctamente';
+  input.value = '';
+  setTimeout(() => { progressEl.style.display = 'none'; barEl.style.width = '0%'; barEl.style.background = ''; }, 2000);
+  loadModuleFiles(modId);
+}
+
+async function downloadModuleFile(modId, fileName) {
+  const { data } = sb.storage.from('module-files').getPublicUrl(`${modId}/${fileName}`);
+  // Try to find the exact path
+  const { data: files } = await sb.storage.from('module-files').list(modId);
+  const file = (files||[]).find(f => f.name === fileName);
+  if (!file) return;
+  const fullPath = `${modId}/${fileName}`;
+  const { data: blob, error } = await sb.storage.from('module-files').download(fullPath);
+  if (error) { alert('Error al descargar'); return; }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function deleteModuleFile(modId, fileName) {
+  if (!confirm(`¿Eliminar "${fileName}"?`)) return;
+  const { data: files } = await sb.storage.from('module-files').list(modId);
+  const file = (files||[]).find(f => f.name === fileName);
+  if (!file) return;
+  await sb.storage.from('module-files').remove([`${modId}/${fileName}`]);
+  loadModuleFiles(modId);
 }
 
 // ── QUESTIONS ──
@@ -2069,10 +2167,11 @@ async function renderMyModules() {
 // ── START MODULE ──
 async function startModule(modId) {
   setContent('<div class="loading"><div class="spinner"></div></div>');
-  const [{ data: mod }, { data: qs }, { data: comps }] = await Promise.all([
+  const [{ data: mod }, { data: qs }, { data: comps }, { data: files }] = await Promise.all([
     sb.from('modules').select('*').eq('id', modId).single(),
     sb.from('questions').select('*').eq('module_id', modId),
-    sb.from('completions').select('*').eq('user_id', window.S.user.id).eq('module_id', modId)
+    sb.from('completions').select('*').eq('user_id', window.S.user.id).eq('module_id', modId),
+    sb.storage.from('module-files').list(modId, { sortBy: { column: 'name', order: 'asc' } }).then(r => r)
   ]);
   const attempts = (comps||[]).length;
   if (attempts >= (mod.max_attempts||3)) {
@@ -2083,11 +2182,36 @@ async function startModule(modId) {
   const ytId = getYouTubeId(mod.video_url);
   const questions = (qs||[]).slice(0,10);
   window._evalState = { mod, questions, answers: {}, submitted: false, attempt: attempts + 1 };
+
+  // Files section for collaborator
+  const filesList = (files?.data||[]);
+  const filesHtml = filesList.length > 0 ? `
+    <div class="card" style="margin-bottom:24px">
+      <div class="card-header"><div class="card-title">📎 Material de apoyo</div></div>
+      <div class="card-body">
+        ${filesList.map(f => {
+          const ext = f.name.split('.').pop().toUpperCase();
+          const iconMap = { PDF:'📄', DOC:'📝', DOCX:'📝', XLS:'📊', XLSX:'📊', PPT:'📋', PPTX:'📋', PNG:'🖼️', JPG:'🖼️', JPEG:'🖼️', MP4:'🎬', ZIP:'🗜️' };
+          const icon = iconMap[ext] || '📎';
+          const size = f.metadata?.size ? (f.metadata.size/1024<1024?(f.metadata.size/1024).toFixed(1)+'KB':(f.metadata.size/1048576).toFixed(1)+'MB') : '';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:20px">${icon}</span>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:600">${f.name}</div>
+              <div style="font-size:11px;color:var(--text-muted)">${ext}${size?' · '+size:''}</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="downloadModuleFile('${modId}','${f.name}')">⬇️ Descargar</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+
   setContent(`
     <div class="eval-container">
       <button class="btn btn-ghost btn-sm" onclick="renderMyModules()" style="margin-bottom:20px">← Volver</button>
       <h2 style="margin-bottom:8px">${mod.title}</h2>
       <p class="text-muted" style="margin-bottom:24px">${mod.description||''}</p>
+      ${filesHtml}
       ${ytId ? `
         <div class="video-wrap">
           <iframe id="ytPlayer" src="https://www.youtube.com/embed/${ytId}?enablejsapi=1&origin=${encodeURIComponent(location.origin)}" allowfullscreen></iframe>
