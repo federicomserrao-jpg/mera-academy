@@ -1351,12 +1351,12 @@ async function openModuleModal(id) {
     <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-control" id="mDesc" rows="2">${mod?.description||''}</textarea></div>
     <div class="form-group"><label class="form-label">URL del Video (YouTube embed)</label><input class="form-control" id="mVideo" placeholder="https://www.youtube.com/embed/..." value="${mod?.video_url||''}"></div>
     <div class="form-group">
-      <label class="form-label">Duración del video (en segundos) <span style="color:var(--text-muted);font-weight:400">— las preguntas se habilitan al completar este tiempo</span></label>
+      <label class="form-label">Duración del video (en minutos) <span style="color:var(--text-muted);font-weight:400">— las preguntas se habilitan al completar este tiempo</span></label>
       <div style="display:flex;align-items:center;gap:10px">
-        <input class="form-control" id="mDuration" type="number" min="0" placeholder="Ej: 180 = 3 minutos" value="${mod?.video_duration||0}" style="max-width:200px">
-        <span style="font-size:13px;color:var(--text-muted)" id="durationLabel">${mod?.video_duration ? formatDuration(mod.video_duration) : ''}</span>
+        <input class="form-control" id="mDuration" type="number" min="0" step="0.5" placeholder="Ej: 3.5 = 3 min 30 seg" value="${mod?.video_duration ? Math.round(mod.video_duration/60*10)/10 : 0}" style="max-width:200px">
+        <span style="font-size:13px;color:var(--text-muted)">minutos</span>
       </div>
-      <div style="font-size:12px;color:var(--text-muted);margin-top:6px">💡 Tip: 1 min = 60s · 5 min = 300s · 10 min = 600s · 0 = sin restricción</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px">💡 Tip: 1 min = 1 · 1:30 = 1.5 · 5 min = 5 · 0 = sin restricción</div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Campaña</label><select class="form-control" id="mCamp">${campOpts}</select></div>
@@ -1375,7 +1375,7 @@ async function openModuleModal(id) {
       title: document.getElementById('mTitle').value.trim(),
       description: document.getElementById('mDesc').value.trim(),
       video_url: document.getElementById('mVideo').value.trim(),
-      video_duration: parseInt(document.getElementById('mDuration').value)||0,
+      video_duration: Math.round((parseFloat(document.getElementById('mDuration').value)||0) * 60),
       campaign: document.getElementById('mCamp').value,
       sort_order: parseInt(document.getElementById('mOrder').value)||0,
       days_limit: parseInt(document.getElementById('mDays').value)||7,
@@ -2309,7 +2309,7 @@ window.revealEval = function() {
 window._videoTimer = null;
 
 function formatDuration(secs) {
-  if (!secs) return '';
+  if (!secs) return '0:00';
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   return `${m}:${s.toString().padStart(2,'0')}`;
