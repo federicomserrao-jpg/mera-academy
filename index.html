@@ -1511,16 +1511,34 @@ async function openQuestionsModal(modId, modTitle) {
 
 function renderQuestionItem(q, i) {
   const opts = JSON.parse(typeof q.options === 'string' ? q.options : JSON.stringify(q.options));
-  // Pad to 4 options minimum
   while (opts.length < 4) opts.push('');
   const letters = ['A','B','C','D'];
+  const type = q.type || 'single';
+  const correctIndices = Array.isArray(q.correct_indices) ? q.correct_indices : 
+    (q.correct_indices ? JSON.parse(q.correct_indices) : [q.correct_index || 0]);
+
+  const typeLabels = { single: '☑️ Una respuesta', multiple: '✅ Varias respuestas', open: '✏️ Desarrollo', image: '🖼️ Con imagen' };
+
   return `<div class="card" style="margin-bottom:16px;padding:20px;border:1px solid var(--border)" id="qcard-${q.id}">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700">${i+1}</div>
         <strong style="font-size:14px">Pregunta ${i+1}</strong>
+        <span class="badge badge-blue">${typeLabels[type]||type}</span>
       </div>
       <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteQuestion('${q.id}')">🗑️ Eliminar</button>
+    </div>
+
+    <div class="form-row" style="margin-bottom:16px">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Tipo de pregunta</label>
+        <select class="form-control" id="qtype-${q.id}" onchange="changeQuestionType('${q.id}', this.value)">
+          <option value="single" ${type==='single'?'selected':''}>☑️ Una respuesta correcta</option>
+          <option value="multiple" ${type==='multiple'?'selected':''}>✅ Varias respuestas correctas</option>
+          <option value="open" ${type==='open'?'selected':''}>✏️ Desarrollo (texto libre)</option>
+          <option value="image" ${type==='image'?'selected':''}>🖼️ Con imagen</option>
+        </select>
+      </div>
     </div>
 
     <div class="form-group">
@@ -1528,74 +1546,146 @@ function renderQuestionItem(q, i) {
       <input class="form-control" id="qt-${q.id}" placeholder="Escribí la pregunta acá..." value="${q.question.replace(/"/g,'&quot;')}">
     </div>
 
+    ${type === 'image' ? `
+    <div class="form-group" id="imgSection-${q.id}">
+      <label class="form-label">Imagen de la pregunta</label>
+      ${q.image_url ? `<img src="${q.image_url}" style="max-width:100%;border-radius:8px;margin-bottom:10px;max-height:200px;object-fit:cover">` : ''}
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="file" id="qimg-${q.id}" accept="image/*" style="display:none" onchange="uploadQuestionImage('${q.id}', this)">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('qimg-${q.id}').click()">📷 ${q.image_url ? 'Cambiar imagen' : 'Subir imagen'}</button>
+        <span id="imgStatus-${q.id}" style="font-size:12px;color:var(--text-muted)"></span>
+      </div>
+    </div>` : ''}
+
+    ${type === 'open' ? `
     <div class="form-group">
-      <label class="form-label" style="margin-bottom:10px">Opciones — <span style="color:var(--accent);font-weight:600">marcá la correcta con el círculo</span></label>
-      <div style="display:flex;flex-direction:column;gap:8px" id="opts-${q.id}">
-        ${opts.map((o, oi) => `
-          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid ${oi === q.correct_index ? 'var(--success)' : 'var(--border)'};border-radius:var(--radius-sm);background:${oi === q.correct_index ? 'var(--success-light)' : 'white'};transition:all 0.15s" id="optrow-${q.id}-${oi}">
-            <input type="radio" name="correct-${q.id}" value="${oi}" ${oi === q.correct_index ? 'checked' : ''}
-              onchange="highlightCorrect('${q.id}', ${oi})"
+      <label class="form-label">Guía de corrección (visible solo para el admin)</label>
+      <textarea class="form-control" id="qe-${q.id}" rows="2" placeholder="Ej: El colaborador debe mencionar los 3 pasos del proceso...">${q.explanation||''}</textarea>
+    </div>
+    ` : `
+    <div class="form-group" id="optsSection-${q.id}">
+      <label class="form-label" style="margin-bottom:10px">
+        Opciones — 
+        <span style="color:var(--accent);font-weight:600">
+          ${type==='multiple' ? 'marcá TODAS las correctas' : 'marcá la correcta'}
+        </span>
+      </label>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${opts.map((o, oi) => {
+          const isCorrect = correctIndices.includes(oi);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid ${isCorrect?'var(--success)':'var(--border)'};border-radius:var(--radius-sm);background:${isCorrect?'var(--success-light)':'white'};transition:all 0.15s" id="optrow-${q.id}-${oi}">
+            <input type="${type==='multiple'?'checkbox':'radio'}" name="correct-${q.id}" value="${oi}" ${isCorrect?'checked':''}
+              onchange="${type==='multiple'?`highlightMultiple('${q.id}',${oi},this.checked)`:`highlightCorrect('${q.id}',${oi})`}"
               style="width:18px;height:18px;accent-color:var(--success);cursor:pointer;flex-shrink:0">
-            <div style="width:24px;height:24px;border-radius:50%;background:${oi === q.correct_index ? 'var(--success)' : 'var(--bg)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${oi === q.correct_index ? 'white' : 'var(--text-muted)'};flex-shrink:0">${letters[oi]}</div>
+            <div style="width:24px;height:24px;border-radius:${type==='multiple'?'4px':'50%'};background:${isCorrect?'var(--success)':'var(--bg)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${isCorrect?'white':'var(--text-muted)'};flex-shrink:0">${letters[oi]}</div>
             <input type="text" value="${o}" placeholder="Opción ${letters[oi]}..."
               id="qopt-${q.id}-${oi}"
               style="flex:1;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:13px;background:transparent;color:var(--text)">
-            ${oi === q.correct_index ? '<span style="font-size:11px;font-weight:600;color:var(--success);white-space:nowrap">✓ Correcta</span>' : ''}
-          </div>
-        `).join('')}
+            ${isCorrect ? `<span style="font-size:11px;font-weight:600;color:var(--success);white-space:nowrap">✓ Correcta</span>` : ''}
+          </div>`;
+        }).join('')}
       </div>
     </div>
-
     <div class="form-group">
       <label class="form-label">Explicación (se muestra si el colaborador se equivoca)</label>
       <input class="form-control" id="qe-${q.id}" placeholder="Ej: La respuesta correcta es A porque..." value="${q.explanation||''}">
     </div>
+    `}
 
     <button class="btn btn-primary btn-sm" onclick="saveQuestion('${q.id}')">💾 Guardar pregunta</button>
   </div>`;
 }
 
+window.changeQuestionType = function(qId, newType) {
+  // Re-render just this card
+  const card = document.getElementById('qcard-'+qId);
+  if (!card) return;
+  // Update type visually by reloading the modal
+  const fakeQ = {
+    id: qId,
+    question: document.getElementById('qt-'+qId)?.value || '',
+    options: [0,1,2,3].map(i => document.getElementById(`qopt-${qId}-${i}`)?.value||''),
+    correct_index: 0, correct_indices: [], explanation: document.getElementById('qe-'+qId)?.value||'',
+    type: newType, image_url: ''
+  };
+  card.outerHTML = renderQuestionItem(fakeQ, parseInt(card.querySelector('strong')?.textContent?.replace('Pregunta ',''))-1 || 0);
+};
+
 window.highlightCorrect = function(qId, selectedIdx) {
   for (let i = 0; i < 4; i++) {
     const row = document.getElementById(`optrow-${qId}-${i}`);
-    const letter = row?.querySelector('div[style*="border-radius:50%"]');
     if (!row) continue;
     const isCorrect = i === selectedIdx;
-    row.style.border = `2px solid ${isCorrect ? 'var(--success)' : 'var(--border)'}`;
+    row.style.border = `2px solid ${isCorrect?'var(--success)':'var(--border)'}`;
     row.style.background = isCorrect ? 'var(--success-light)' : 'white';
-    if (letter) {
-      letter.style.background = isCorrect ? 'var(--success)' : 'var(--bg)';
-      letter.style.color = isCorrect ? 'white' : 'var(--text-muted)';
-    }
-    // Update/remove "✓ Correcta" label
-    const existing = row.querySelector('span');
-    if (isCorrect && !existing) {
-      const span = document.createElement('span');
-      span.style.cssText = 'font-size:11px;font-weight:600;color:var(--success);white-space:nowrap';
-      span.textContent = '✓ Correcta';
-      row.appendChild(span);
-    } else if (!isCorrect && existing) {
-      existing.remove();
-    }
+    const letter = row.querySelectorAll('div')[1];
+    if (letter) { letter.style.background = isCorrect?'var(--success)':'var(--bg)'; letter.style.color = isCorrect?'white':'var(--text-muted)'; }
+    const span = row.querySelector('span');
+    if (isCorrect && !span) { const s=document.createElement('span'); s.style.cssText='font-size:11px;font-weight:600;color:var(--success);white-space:nowrap'; s.textContent='✓ Correcta'; row.appendChild(s); }
+    else if (!isCorrect && span) span.remove();
   }
 };
 
+window.highlightMultiple = function(qId, idx, checked) {
+  const row = document.getElementById(`optrow-${qId}-${idx}`);
+  if (!row) return;
+  row.style.border = `2px solid ${checked?'var(--success)':'var(--border)'}`;
+  row.style.background = checked ? 'var(--success-light)' : 'white';
+  const letter = row.querySelectorAll('div')[1];
+  if (letter) { letter.style.background = checked?'var(--success)':'var(--bg)'; letter.style.color = checked?'white':'var(--text-muted)'; }
+  const span = row.querySelector('span');
+  if (checked && !span) { const s=document.createElement('span'); s.style.cssText='font-size:11px;font-weight:600;color:var(--success);white-space:nowrap'; s.textContent='✓ Correcta'; row.appendChild(s); }
+  else if (!checked && span) span.remove();
+};
+
+async function uploadQuestionImage(qId, input) {
+  const file = input.files[0]; if (!file) return;
+  const statusEl = document.getElementById('imgStatus-'+qId);
+  if (statusEl) statusEl.textContent = 'Subiendo...';
+  const path = `questions/${qId}_${Date.now()}.${file.name.split('.').pop()}`;
+  const { error } = await sb.storage.from('module-files').upload(path, file, { upsert: true });
+  if (error) { if (statusEl) statusEl.textContent = 'Error: '+error.message; return; }
+  const { data: { publicUrl } } = sb.storage.from('module-files').getPublicUrl(path);
+  await sb.from('questions').update({ image_url: publicUrl }).eq('id', qId);
+  if (statusEl) statusEl.textContent = '✅ Imagen subida';
+  // Show preview
+  const imgSection = document.getElementById('imgSection-'+qId);
+  if (imgSection) {
+    const existing = imgSection.querySelector('img');
+    if (existing) existing.src = publicUrl;
+    else imgSection.insertAdjacentHTML('afterbegin', `<img src="${publicUrl}" style="max-width:100%;border-radius:8px;margin-bottom:10px;max-height:200px;object-fit:cover">`);
+  }
+}
+
 async function addNewQuestion(modId) {
-  const { data: q } = await sb.from('questions').insert({ module_id: modId, question: '', options: ['', '', '', ''], correct_index: 0 }).select().single();
+  const { data: q } = await sb.from('questions').insert({ module_id: modId, question: '', options: ['','','',''], correct_index: 0, correct_indices: [], type: 'single' }).select().single();
   const { data: allQs } = await sb.from('questions').select('*').eq('module_id', modId).order('created_at');
   document.getElementById('questionsList').innerHTML = (allQs||[]).map((q2,i) => renderQuestionItem(q2, i)).join('');
-  // Scroll to new question
   document.getElementById(`qcard-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function saveQuestion(qId) {
   const question = document.getElementById('qt-'+qId).value.trim();
   if (!question) { alert('Escribí el enunciado de la pregunta'); return; }
-  const opts = [0,1,2,3].map(i => (document.getElementById(`qopt-${qId}-${i}`)?.value||'').trim()).filter(Boolean);
-  if (opts.length < 2) { alert('Agregá al menos 2 opciones'); return; }
-  const ci = parseInt(document.querySelector(`input[name="correct-${qId}"]:checked`)?.value) || 0;
-  const exp = document.getElementById('qe-'+qId).value;
-  await sb.from('questions').update({ question, options: opts, correct_index: ci, explanation: exp }).eq('id', qId);
+  const type = document.getElementById('qtype-'+qId)?.value || 'single';
+  const exp = document.getElementById('qe-'+qId)?.value || '';
+
+  let opts = [], correctIndex = 0, correctIndices = [];
+
+  if (type !== 'open') {
+    opts = [0,1,2,3].map(i => (document.getElementById(`qopt-${qId}-${i}`)?.value||'').trim()).filter(Boolean);
+    if (opts.length < 2) { alert('Agregá al menos 2 opciones'); return; }
+    if (type === 'multiple') {
+      correctIndices = [0,1,2,3].filter(i => document.querySelector(`input[name="correct-${qId}"][value="${i}"]`)?.checked);
+      if (!correctIndices.length) { alert('Marcá al menos una respuesta correcta'); return; }
+      correctIndex = correctIndices[0];
+    } else {
+      correctIndex = parseInt(document.querySelector(`input[name="correct-${qId}"]:checked`)?.value) || 0;
+      correctIndices = [correctIndex];
+    }
+  }
+
+  await sb.from('questions').update({ question, options: opts, correct_index: correctIndex, correct_indices: correctIndices, type, explanation: exp }).eq('id', qId);
   const card = document.getElementById('qcard-'+qId);
   card.style.borderColor = 'var(--success)';
   card.style.background = 'var(--success-light)';
@@ -2266,16 +2356,55 @@ async function startModule(modId) {
       ${questions.length ? `
         <div id="evalQuestions">
           ${questions.map((q,i) => {
-            const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options);
+            const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
             const letters = ['A','B','C','D','E'];
+            const type = q.type || 'single';
+
+            if (type === 'open') {
+              return `<div class="eval-question-card" id="qcard-eval-${q.id}">
+                <div class="eval-q-num">Pregunta ${i+1} de ${questions.length} · ✏️ Desarrollo</div>
+                <div class="eval-q-text">${q.question}</div>
+                <textarea id="open-${q.id}" class="form-control" rows="4" placeholder="Escribí tu respuesta acá..." style="margin-top:12px;resize:vertical"></textarea>
+              </div>`;
+            }
+
+            if (type === 'image') {
+              return `<div class="eval-question-card" id="qcard-eval-${q.id}">
+                <div class="eval-q-num">Pregunta ${i+1} de ${questions.length} · 🖼️ Con imagen</div>
+                ${q.image_url ? `<img src="${q.image_url}" style="width:100%;max-height:280px;object-fit:contain;border-radius:8px;margin-bottom:16px;border:1px solid var(--border)">` : ''}
+                <div class="eval-q-text">${q.question}</div>
+                ${opts.length >= 2 ? `<div class="eval-options" role="radiogroup">
+                  ${opts.map((o,oi) => `<label class="eval-option" id="opt-${q.id}-${oi}" onclick="selectAnswer('${q.id}',${oi})" style="cursor:pointer">
+                    <input type="radio" name="q-${q.id}" value="${oi}" style="display:none">
+                    <div class="eval-option-letter">${letters[oi]||oi+1}</div><span>${o}</span>
+                  </label>`).join('')}
+                </div>` : `<textarea id="open-${q.id}" class="form-control" rows="4" placeholder="Describí lo que ves en la imagen..." style="margin-top:12px;resize:vertical"></textarea>`}
+                <div class="eval-explanation" id="exp-${q.id}" style="display:none">${q.explanation||''}</div>
+              </div>`;
+            }
+
+            if (type === 'multiple') {
+              return `<div class="eval-question-card" id="qcard-eval-${q.id}">
+                <div class="eval-q-num">Pregunta ${i+1} de ${questions.length} · ✅ Seleccioná todas las correctas</div>
+                <div class="eval-q-text">${q.question}</div>
+                <div class="eval-options">
+                  ${opts.map((o,oi) => `<label class="eval-option" id="opt-${q.id}-${oi}" style="cursor:pointer" onclick="selectMultiple('${q.id}',${oi})">
+                    <input type="checkbox" name="q-${q.id}" value="${oi}" style="display:none">
+                    <div class="eval-option-letter" style="border-radius:4px">${letters[oi]||oi+1}</div><span>${o}</span>
+                  </label>`).join('')}
+                </div>
+                <div class="eval-explanation" id="exp-${q.id}" style="display:none">${q.explanation||''}</div>
+              </div>`;
+            }
+
+            // default: single
             return `<div class="eval-question-card" id="qcard-eval-${q.id}">
               <div class="eval-q-num">Pregunta ${i+1} de ${questions.length}</div>
               <div class="eval-q-text">${q.question}</div>
               <div class="eval-options" role="radiogroup">
                 ${opts.map((o,oi) => `<label class="eval-option" id="opt-${q.id}-${oi}" onclick="selectAnswer('${q.id}',${oi})" style="cursor:pointer">
                   <input type="radio" name="q-${q.id}" value="${oi}" style="display:none">
-                  <div class="eval-option-letter">${letters[oi]||oi+1}</div>
-                  <span>${o}</span>
+                  <div class="eval-option-letter">${letters[oi]||oi+1}</div><span>${o}</span>
                 </label>`).join('')}
               </div>
               <div class="eval-explanation" id="exp-${q.id}" style="display:none">${q.explanation||''}</div>
@@ -2293,6 +2422,15 @@ function selectAnswer(qId, oi) {
   window._evalState.answers[qId] = oi;
   document.querySelectorAll(`[id^="opt-${qId}-"]`).forEach(el => el.classList.remove('selected'));
   document.getElementById(`opt-${qId}-${oi}`).classList.add('selected');
+}
+
+function selectMultiple(qId, oi) {
+  if (!window._evalState.answers[qId]) window._evalState.answers[qId] = [];
+  const arr = window._evalState.answers[qId];
+  const idx = arr.indexOf(oi);
+  const el = document.getElementById(`opt-${qId}-${oi}`);
+  if (idx === -1) { arr.push(oi); el?.classList.add('selected'); }
+  else { arr.splice(idx, 1); el?.classList.remove('selected'); }
 }
 
 window.revealEval = function() {
@@ -2396,71 +2534,110 @@ if (!window.YT) {
 
 async function submitEval() {
   const { mod, questions, answers, attempt } = window._evalState;
-  const unanswered = questions.filter(q => answers[q.id] === undefined);
+
+  // Check unanswered (open questions always count as answered)
+  const unanswered = questions.filter(q => {
+    const type = q.type || 'single';
+    if (type === 'open') return !document.getElementById(`open-${q.id}`)?.value?.trim();
+    if (type === 'multiple') return !answers[q.id]?.length;
+    if (type === 'image' && (!q.options || q.options.length < 2)) return !document.getElementById(`open-${q.id}`)?.value?.trim();
+    return answers[q.id] === undefined;
+  });
   if (unanswered.length > 0) { alert(`Faltan responder ${unanswered.length} pregunta(s).`); return; }
-  
+
   let correct = 0;
-  const opts_data = [];
+  let scoreable = 0; // only auto-scored questions count
+  const openAnswers = {};
+
   questions.forEach(q => {
-    const userAns = answers[q.id];
-    const isCorrect = userAns === q.correct_index;
-    if (isCorrect) correct++;
-    const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options);
-    opts_data.push({ q, userAns, isCorrect, opts });
+    const type = q.type || 'single';
+    const correctIndices = Array.isArray(q.correct_indices) && q.correct_indices.length ? q.correct_indices : [q.correct_index||0];
 
-    // Bloquear clicks en todas las opciones
-    document.querySelectorAll(`[id^="opt-${q.id}-"]`).forEach(el => {
-      el.style.pointerEvents = 'none';
-      el.style.cursor = 'default';
-    });
+    if (type === 'open') {
+      const ans = document.getElementById(`open-${q.id}`)?.value?.trim() || '';
+      openAnswers[q.id] = ans;
+      // Open questions don't auto-score but show as "respondida"
+      return;
+    }
 
-    // Marcar la elegida por el usuario
-    const selEl = document.getElementById(`opt-${q.id}-${userAns}`);
-    const corrEl = document.getElementById(`opt-${q.id}-${q.correct_index}`);
+    if (type === 'image' && (!q.options || q.options.length < 2)) {
+      const ans = document.getElementById(`open-${q.id}`)?.value?.trim() || '';
+      openAnswers[q.id] = ans;
+      return;
+    }
 
-    if (isCorrect) {
-      selEl?.classList.add('correct');
-      selEl?.querySelector('.eval-option-letter') && (selEl.querySelector('.eval-option-letter').textContent = '✓');
+    scoreable++;
+
+    if (type === 'multiple') {
+      const userAns = answers[q.id] || [];
+      const isCorrect = correctIndices.length === userAns.length && correctIndices.every(ci => userAns.includes(ci));
+      if (isCorrect) {
+        correct++;
+        document.querySelectorAll(`[id^="opt-${q.id}-"]`).forEach(el => el.classList.add('correct'));
+      } else {
+        userAns.forEach(oi => {
+          const el = document.getElementById(`opt-${q.id}-${oi}`);
+          if (!correctIndices.includes(oi)) el?.classList.add('wrong');
+        });
+        correctIndices.forEach(ci => document.getElementById(`opt-${q.id}-${ci}`)?.classList.add('correct'));
+        const expEl = document.getElementById(`exp-${q.id}`);
+        if (expEl?.textContent?.trim()) expEl.style.display = 'block';
+        const card = document.getElementById(`qcard-eval-${q.id}`);
+        if (card) {
+          const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
+          const banner = document.createElement('div');
+          banner.style.cssText = 'margin-top:12px;padding:10px 14px;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;font-size:13px;color:#065f46';
+          banner.innerHTML = `<strong>✅ Respuestas correctas:</strong> ${correctIndices.map(ci => opts[ci]).join(', ')}${q.explanation?`<br><span style="color:#047857;font-size:12px">${q.explanation}</span>`:''}`;
+          card.appendChild(banner);
+        }
+      }
     } else {
-      // La que eligió: roja
-      selEl?.classList.add('wrong');
-      // La correcta: verde + etiqueta
-      corrEl?.classList.add('correct');
-      corrEl?.querySelector('.eval-option-letter') && (corrEl.querySelector('.eval-option-letter').textContent = '✓');
-      // Mostrar banner "Respuesta correcta" dentro de la card
-      const card = document.getElementById(`qcard-eval-${q.id}`);
-      if (card) {
-        const banner = document.createElement('div');
-        banner.style.cssText = 'margin-top:12px;padding:10px 14px;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;font-size:13px;color:#065f46;display:flex;align-items:center;gap:8px';
-        banner.innerHTML = `<span style="font-size:16px">✅</span><div><strong>Respuesta correcta:</strong> ${opts[q.correct_index]}${q.explanation ? `<br><span style="color:#047857;font-size:12px">${q.explanation}</span>` : ''}</div>`;
-        card.appendChild(banner);
+      // single or image with options
+      const userAns = answers[q.id];
+      const isCorrect = userAns === (q.correct_index||0);
+      const selEl = document.getElementById(`opt-${q.id}-${userAns}`);
+      const corrEl = document.getElementById(`opt-${q.id}-${q.correct_index||0}`);
+      if (isCorrect) {
+        correct++;
+        selEl?.classList.add('correct');
+        selEl?.querySelector('.eval-option-letter') && (selEl.querySelector('.eval-option-letter').textContent = '✓');
+      } else {
+        selEl?.classList.add('wrong');
+        corrEl?.classList.add('correct');
+        corrEl?.querySelector('.eval-option-letter') && (corrEl.querySelector('.eval-option-letter').textContent = '✓');
+        const card = document.getElementById(`qcard-eval-${q.id}`);
+        if (card) {
+          const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
+          const banner = document.createElement('div');
+          banner.style.cssText = 'margin-top:12px;padding:10px 14px;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px;font-size:13px;color:#065f46;display:flex;align-items:flex-start;gap:8px';
+          banner.innerHTML = `<span style="font-size:16px">✅</span><div><strong>Respuesta correcta:</strong> ${opts[q.correct_index||0]}${q.explanation?`<br><span style="color:#047857;font-size:12px">${q.explanation}</span>`:''}  </div>`;
+          card.appendChild(banner);
+        }
       }
     }
+    // Block clicks
+    document.querySelectorAll(`[id^="opt-${q.id}-"]`).forEach(el => { el.style.pointerEvents='none'; el.style.cursor='default'; });
   });
 
-  const score = Math.round(correct / questions.length * 100);
+  const score = scoreable > 0 ? Math.round(correct / scoreable * 100) : 100;
   const passed = score >= 60;
+  const hasOpen = Object.keys(openAnswers).length > 0;
   const submitBtn = document.querySelector('[onclick="submitEval()"]');
   if (submitBtn) submitBtn.remove();
 
   const uid = window.S.user.id;
-  // Siempre insertar nuevo intento (historial completo)
-  const { error: saveError } = await sb.from('completions').insert(
-    { user_id: uid, module_id: mod.id, score, passed, attempt, completed_at: new Date().toISOString() }
-  );
-  if (saveError) console.error('Error guardando resultado:', saveError);
+  await sb.from('completions').insert({ user_id: uid, module_id: mod.id, score, passed, attempt, completed_at: new Date().toISOString(), open_answers: openAnswers });
 
   const resultHtml = `<div class="result-card" style="margin-top:24px">
     <div style="font-size:48px">${passed?'🏆':'😔'}</div>
     <div class="result-score ${passed?'pass':'fail'}">${score}%</div>
     <h3>${passed ? '¡Aprobado!' : 'No aprobado'}</h3>
-    <p class="text-muted" style="margin:8px 0">${correct} de ${questions.length} respuestas correctas${!passed?' · Se requiere 60% para aprobar':''}</p>
-    ${!passed ? `<p style="font-size:13px;color:var(--text-muted);margin-top:4px">↑ Revisá las respuestas correctas marcadas en verde arriba</p>` : ''}
-    ${passed ? `<button class="btn btn-success" style="margin:16px 8px 0" onclick="showCertificate()">🎓 Ver Certificado</button>` : ''}
+    <p class="text-muted" style="margin:8px 0">${correct} de ${scoreable} respuestas correctas${hasOpen?' · Las preguntas de desarrollo serán revisadas por el equipo de capacitación':''}${!passed&&scoreable>0?' · Se requiere 60% para aprobar':''}</p>
+    ${!passed&&scoreable>0?`<p style="font-size:13px;color:var(--text-muted);margin-top:4px">↑ Revisá las respuestas correctas marcadas en verde arriba</p>`:''}
+    ${passed?`<button class="btn btn-success" style="margin:16px 8px 0" onclick="showCertificate()">🎓 Ver Certificado</button>`:''}
     <button class="btn btn-secondary" style="margin:16px 8px 0" onclick="renderMyModules()">← Volver a Módulos</button>
   </div>`;
   document.getElementById('evalQuestions')?.insertAdjacentHTML('afterend', resultHtml);
-  // Scroll al resultado
   document.querySelector('.result-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   if (passed) {
