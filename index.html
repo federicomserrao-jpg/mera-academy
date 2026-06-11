@@ -1097,7 +1097,7 @@ async function renderAdminDashboard() {
               recentComps.map(c => {
                 const u2 = userMap[c.user_id], m2 = modMap[c.module_id];
                 return `<tr>
-                  <td>${u2 ? u2.full_name : '-'}</td>
+                  <td><span onclick="viewUserProfile('${c.user_id}')" style="cursor:pointer;color:var(--accent);font-weight:600;text-decoration:underline dotted">${u2 ? u2.full_name : '-'}</span></td>
                   <td>${m2 ? m2.title : '-'}</td>
                   <td><span class="badge ${c.passed ? 'badge-green' : 'badge-red'}">${c.passed ? 'Aprobado' : 'Reprobado'} ${c.score}%</span></td>
                   <td class="text-muted text-sm">${new Date(c.completed_at).toLocaleDateString('es-AR')}</td>
@@ -1919,11 +1919,11 @@ async function renderResults() {
 function exportResults() {
   if (!window._resultsData) return;
   const { comps, uMap, mMap } = window._resultsData;
-  const rows = [['Colaborador','Campaña','Módulo','Puntaje','Estado','Intento','Fecha']];
+  const rows = [['Colaborador','Campaña','Módulo','Puntaje','Estado','Intento N°','Fecha']];
   comps.forEach(c => {
-    rows.push([uMap[c.user_id]?.full_name||'-', uMap[c.user_id]?.campaign||'-', mMap[c.module_id]?.title||'-', c.score+'%', c.passed?'Aprobado':'Reprobado', c.attempt, new Date(c.completed_at).toLocaleDateString('es-AR')]);
+    rows.push([uMap[c.user_id]?.full_name||'-', uMap[c.user_id]?.campaign||'-', mMap[c.module_id]?.title||'-', c.score+'%', c.passed?'Aprobado':'Reprobado', c.attempt+'°', new Date(c.completed_at).toLocaleDateString('es-AR')]);
   });
-  const csv = rows.map(r => r.join(',')).join('\n');
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
   const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
   a.download = 'resultados_mera_academy.csv'; a.click();
 }
@@ -2934,30 +2934,41 @@ window.toggleAccordion = function(id) {
 async function exportUserAnswers(uid) {
   const { u, comps, mMap, qByModule } = window._profileData || {};
   if (!u) return;
-  const rows = [['Colaborador','Campaña','Módulo','Intento','Puntaje','Estado','Fecha','Pregunta','Tipo','Respuesta del colaborador','Correcta']];
-  (comps||[]).forEach((c, ci) => {
+  const typeLabels = { single: 'Una respuesta', multiple: 'Varias respuestas', open: 'Desarrollo', image: 'Con imagen' };
+  const sep = ';'; // punto y coma para Excel en español
+  const rows = [['Colaborador','Campaña','Módulo','Intento N°','Puntaje','Estado','Fecha','N° Pregunta','Pregunta','Tipo','Respuesta del colaborador','Respuesta correcta']];
+  (comps||[]).forEach((c) => {
     const mod = mMap[c.module_id];
     const qs = qByModule[c.module_id] || [];
     const openAnswers = c.open_answers || {};
     const byMod = (comps||[]).filter(x => x.module_id === c.module_id);
     const intentoNum = byMod.length - byMod.indexOf(c);
+    const fecha = new Date(c.completed_at).toLocaleDateString('es-AR');
+    const estado = c.passed ? 'Aprobado' : 'Reprobado';
     if (qs.length === 0) {
-      rows.push([u.full_name, u.campaign, mod?.title||'—', intentoNum, c.score+'%', c.passed?'Aprobado':'Reprobado', new Date(c.completed_at).toLocaleDateString('es-AR'), '—', '—', '—', '—']);
+      rows.push([u.full_name, u.campaign, mod?.title||'—', intentoNum+'°', c.score+'%', estado, fecha, '—', '—', '—', '—', '—']);
     } else {
-      qs.forEach(q => {
+      qs.forEach((q, qi) => {
         const type = q.type || 'single';
         const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
         const correctIndices = Array.isArray(q.correct_indices) && q.correct_indices.length ? q.correct_indices : [q.correct_index||0];
-        const correctText = correctIndices.map(i => opts[i]).filter(Boolean).join(' / ') || '—';
-        let userAnswer = '—';
+        const correctText = correctIndices.map(i => opts[i]).filter(Boolean).join(' | ') || '—';
+        let userAnswer = '(sin respuesta)';
         if (type === 'open' || (type === 'image' && opts.length < 2)) {
           userAnswer = openAnswers[q.id] || '(sin respuesta)';
+        } else {
+          userAnswer = '(ver modal)';
         }
-        rows.push([u.full_name, u.campaign, mod?.title||'—', intentoNum, c.score+'%', c.passed?'Aprobado':'Reprobado', new Date(c.completed_at).toLocaleDateString('es-AR'), q.question, type, userAnswer, correctText]);
+        rows.push([
+          u.full_name, u.campaign, mod?.title||'—', intentoNum+'°',
+          c.score+'%', estado, fecha,
+          (qi+1)+'', q.question, typeLabels[type]||type,
+          userAnswer, correctText
+        ]);
       });
     }
   });
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(sep)).join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
   a.download = `respuestas_${u.full_name.replace(/ /g,'_')}.csv`;
