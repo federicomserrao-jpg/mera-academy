@@ -1350,6 +1350,14 @@ async function openModuleModal(id) {
     <div class="form-group"><label class="form-label">Título</label><input class="form-control" id="mTitle" value="${mod?.title||''}"></div>
     <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-control" id="mDesc" rows="2">${mod?.description||''}</textarea></div>
     <div class="form-group"><label class="form-label">URL del Video (YouTube embed)</label><input class="form-control" id="mVideo" placeholder="https://www.youtube.com/embed/..." value="${mod?.video_url||''}"></div>
+    <div class="form-group">
+      <label class="form-label">Duración del video (en segundos) <span style="color:var(--text-muted);font-weight:400">— las preguntas se habilitan al completar este tiempo</span></label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <input class="form-control" id="mDuration" type="number" min="0" placeholder="Ej: 180 = 3 minutos" value="${mod?.video_duration||0}" style="max-width:200px">
+        <span style="font-size:13px;color:var(--text-muted)" id="durationLabel">${mod?.video_duration ? formatDuration(mod.video_duration) : ''}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:6px">💡 Tip: 1 min = 60s · 5 min = 300s · 10 min = 600s · 0 = sin restricción</div>
+    </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Campaña</label><select class="form-control" id="mCamp">${campOpts}</select></div>
       <div class="form-group"><label class="form-label">Orden</label><input class="form-control" id="mOrder" type="number" value="${mod?.sort_order||0}"></div>
@@ -1367,6 +1375,7 @@ async function openModuleModal(id) {
       title: document.getElementById('mTitle').value.trim(),
       description: document.getElementById('mDesc').value.trim(),
       video_url: document.getElementById('mVideo').value.trim(),
+      video_duration: parseInt(document.getElementById('mDuration').value)||0,
       campaign: document.getElementById('mCamp').value,
       sort_order: parseInt(document.getElementById('mOrder').value)||0,
       days_limit: parseInt(document.getElementById('mDays').value)||7,
@@ -2216,12 +2225,31 @@ async function startModule(modId) {
         <div class="video-wrap">
           <iframe id="ytPlayer" src="https://www.youtube.com/embed/${ytId}?enablejsapi=1&origin=${encodeURIComponent(location.origin)}" allowfullscreen></iframe>
         </div>
-        <div id="videoGate" style="text-align:center;margin:24px 0;padding:24px;background:var(--accent-light);border:2px dashed var(--accent);border-radius:var(--radius)">
-          <div style="font-size:32px;margin-bottom:10px">⏳</div>
-          <div style="font-weight:600;font-size:15px;margin-bottom:6px">Mirá el video completo</div>
-          <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">La evaluación se habilitará automáticamente cuando termine el video</div>
-          <button class="btn btn-secondary btn-sm" onclick="window.revealEval()" style="font-size:12px;opacity:0.7">¿No se habilitó sola? Hacé click acá</button>
+        ${mod.video_duration > 0 ? `
+        <div id="videoGate" style="margin:24px 0;padding:20px 24px;background:var(--accent-light);border:2px solid var(--accent);border-radius:var(--radius)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div>
+              <div style="font-weight:700;font-size:15px;margin-bottom:3px">⏱️ Mirá el video completo</div>
+              <div style="font-size:13px;color:var(--text-muted)">La evaluación se habilita cuando termine el video</div>
+            </div>
+            <div style="text-align:center">
+              <div id="timerDisplay" style="font-size:28px;font-weight:800;color:var(--accent);font-family:'DM Mono',monospace">${formatDuration(mod.video_duration)}</div>
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">restante</div>
+            </div>
+          </div>
+          <div class="progress-bar" style="height:8px;margin-bottom:12px">
+            <div id="timerBar" style="height:100%;width:0%;background:var(--accent);border-radius:10px;transition:width 1s linear"></div>
+          </div>
+          <button class="btn btn-primary" id="evalBtn" style="width:100%;padding:12px;font-size:15px;opacity:0.4;cursor:not-allowed" disabled onclick="window.revealEval()">
+            🔒 Completá el video para desbloquear la evaluación
+          </button>
         </div>
+        ` : `
+        <div id="videoGate" style="text-align:center;margin:24px 0;padding:20px;background:var(--accent-light);border:2px dashed var(--accent);border-radius:var(--radius)">
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Mirá el video y cuando termines hacé click</div>
+          <button class="btn btn-primary" style="padding:12px 32px" onclick="window.revealEval()">✅ Continuar a la evaluación</button>
+        </div>
+        `}
         <div id="evalSection" style="display:none">
       ` : mod.video_url ? `
         <div class="card" style="padding:16px;margin-bottom:24px;text-align:center">
@@ -2277,58 +2305,90 @@ window.revealEval = function() {
   }
 };
 
-// ── YOUTUBE IFRAME API ──
+// ── VIDEO TIMER SYSTEM ──
+window._videoTimer = null;
+
+function formatDuration(secs) {
+  if (!secs) return '';
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return `${m}:${s.toString().padStart(2,'0')}`;
+}
+
+function startVideoTimer(totalSeconds) {
+  if (!totalSeconds || totalSeconds <= 0) return;
+  let remaining = totalSeconds;
+  let elapsed = 0;
+  const timerDisplay = document.getElementById('timerDisplay');
+  const timerBar = document.getElementById('timerBar');
+  const evalBtn = document.getElementById('evalBtn');
+  if (!timerDisplay || !evalBtn) return;
+
+  window._videoTimer = setInterval(() => {
+    elapsed++;
+    remaining = Math.max(0, totalSeconds - elapsed);
+    const pct = Math.round(elapsed / totalSeconds * 100);
+
+    if (timerDisplay) timerDisplay.textContent = formatDuration(remaining);
+    if (timerBar) timerBar.style.width = pct + '%';
+
+    if (remaining <= 0) {
+      clearInterval(window._videoTimer);
+      // Unlock button
+      if (evalBtn) {
+        evalBtn.disabled = false;
+        evalBtn.style.opacity = '1';
+        evalBtn.style.cursor = 'pointer';
+        evalBtn.textContent = '✅ ¡Video completado! — Ir a la evaluación';
+        evalBtn.style.background = 'var(--success)';
+      }
+      if (timerBar) timerBar.style.background = 'var(--success)';
+      if (timerDisplay) { timerDisplay.textContent = '0:00'; timerDisplay.style.color = 'var(--success)'; }
+    }
+  }, 1000);
+}
+
+// ── YOUTUBE IFRAME API (solo para detectar play) ──
 window.onYouTubeIframeAPIReady = function() {
   const iframe = document.getElementById('ytPlayer');
   if (!iframe) return;
   try {
+    const mod = window._evalState?.mod;
+    const duration = mod?.video_duration || 0;
     new YT.Player('ytPlayer', {
       events: {
         onStateChange: function(e) {
+          // YT.PlayerState.PLAYING = 1 — start timer when video plays
+          if (e.data === 1 && duration > 0 && !window._videoTimer) {
+            startVideoTimer(duration);
+          }
           // YT.PlayerState.ENDED = 0
           if (e.data === 0) {
-            const gate = document.getElementById('videoGate');
-            if (gate) {
-              gate.innerHTML = `
-                <div style="font-size:36px;margin-bottom:12px">🎉</div>
-                <div style="font-weight:700;font-size:16px;color:var(--success);margin-bottom:6px">¡Video completado!</div>
-                <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Ya podés responder la evaluación</div>
-                <button class="btn btn-primary" style="padding:12px 32px;font-size:15px" onclick="window.revealEval()">📝 Ir a la evaluación</button>
-              `;
-              gate.style.borderColor = 'var(--success)';
-              gate.style.background = 'var(--success-light)';
+            // Clear any remaining timer and unlock immediately
+            if (window._videoTimer) clearInterval(window._videoTimer);
+            const evalBtn = document.getElementById('evalBtn');
+            if (evalBtn) {
+              evalBtn.disabled = false;
+              evalBtn.style.opacity = '1';
+              evalBtn.style.cursor = 'pointer';
+              evalBtn.textContent = '✅ ¡Video completado! — Ir a la evaluación';
+              evalBtn.style.background = 'var(--success)';
             }
-            // Auto reveal after 1 second
-            setTimeout(() => window.revealEval(), 1000);
-          }
-        },
-        onError: function() {
-          // If player errors, show manual button prominently
-          const gate = document.getElementById('videoGate');
-          if (gate) {
-            const btn = gate.querySelector('button');
-            if (btn) { btn.style.opacity = '1'; btn.style.fontSize = '14px'; btn.className = 'btn btn-primary'; btn.textContent = '✅ Continuar a la evaluación'; }
+            const timerBar = document.getElementById('timerBar');
+            if (timerBar) { timerBar.style.width = '100%'; timerBar.style.background = 'var(--success)'; }
+            const timerDisplay = document.getElementById('timerDisplay');
+            if (timerDisplay) { timerDisplay.textContent = '0:00'; timerDisplay.style.color = 'var(--success)'; }
+            setTimeout(() => window.revealEval(), 800);
           }
         }
       }
     });
-  } catch(e) {
-    console.warn('YouTube API error:', e);
-  }
+  } catch(e) { console.warn('YouTube API error:', e); }
 };
 
-// Cargar YouTube IFrame API si no está cargada
 if (!window.YT) {
   const tag = document.createElement('script');
   tag.src = 'https://www.youtube.com/iframe_api';
-  tag.onerror = function() {
-    // If API fails to load, make fallback button visible
-    const gate = document.getElementById('videoGate');
-    if (gate) {
-      const btn = gate.querySelector('button');
-      if (btn) { btn.style.opacity = '1'; btn.className = 'btn btn-primary'; btn.textContent = '✅ Terminé de ver el video'; }
-    }
-  };
   document.head.appendChild(tag);
 } else if (window.YT && window.YT.Player) {
   window.onYouTubeIframeAPIReady();
