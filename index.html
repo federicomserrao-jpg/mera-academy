@@ -2822,34 +2822,146 @@ async function renderMyProfile() {
 }
 
 async function viewUserProfile(uid) {
-  const [{ data: u }, { data: comps }, { data: mods }] = await Promise.all([
+  const [{ data: u }, { data: comps }, { data: mods }, { data: questions }] = await Promise.all([
     sb.from('users').select('*').eq('id', uid).single(),
-    sb.from('completions').select('*').eq('user_id', uid),
-    sb.from('modules').select('*')
+    sb.from('completions').select('*').eq('user_id', uid).order('completed_at', { ascending: false }),
+    sb.from('modules').select('*'),
+    sb.from('questions').select('*')
   ]);
   const mMap = Object.fromEntries((mods||[]).map(m => [m.id, m]));
+  const qByModule = (questions||[]).reduce((acc, q) => { if (!acc[q.module_id]) acc[q.module_id] = []; acc[q.module_id].push(q); return acc; }, {});
   const passed = (comps||[]).filter(c => c.passed).length;
-  showModal('modal-profile', `Perfil de ${u.full_name}`, `
-    <div style="margin-bottom:16px">
-      <div style="font-size:16px;font-weight:600">${u.full_name}</div>
-      <div class="text-sm text-muted">${u.username} · ${u.campaign}</div>
+  const avg = (comps||[]).length ? Math.round((comps||[]).reduce((a,c)=>a+c.score,0)/(comps||[]).length) : 0;
+
+  // Group completions by module
+  const byModule = {};
+  (comps||[]).forEach(c => { if (!byModule[c.module_id]) byModule[c.module_id] = []; byModule[c.module_id].push(c); });
+
+  window._profileData = { u, comps, mMap, qByModule };
+
+  showModal('modal-profile', `Perfil — ${u.full_name}`, `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+      <div style="width:48px;height:48px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;font-weight:700;flex-shrink:0">${u.full_name.charAt(0)}</div>
+      <div>
+        <div style="font-size:17px;font-weight:700">${u.full_name}</div>
+        <div style="font-size:13px;color:var(--text-muted)">${u.username} · ${u.campaign}</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="exportUserAnswers('${uid}')">📥 Exportar respuestas</button>
+      </div>
     </div>
-    <div class="form-row" style="margin-bottom:16px">
-      <div><span class="text-sm text-muted">Aprobados</span><div style="font-size:20px;font-weight:700;color:var(--success)">${passed}</div></div>
-      <div><span class="text-sm text-muted">Promedio</span><div style="font-size:20px;font-weight:700;color:var(--accent)">${(comps||[]).length ? Math.round((comps||[]).reduce((a,c)=>a+c.score,0)/(comps||[]).length) : 0}%</div></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+      <div style="text-align:center;padding:12px;background:var(--bg);border-radius:var(--radius-sm)">
+        <div style="font-size:22px;font-weight:800;color:var(--success)">${passed}</div>
+        <div style="font-size:11px;color:var(--text-muted)">Aprobados</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--bg);border-radius:var(--radius-sm)">
+        <div style="font-size:22px;font-weight:800;color:var(--accent)">${avg}%</div>
+        <div style="font-size:11px;color:var(--text-muted)">Promedio</div>
+      </div>
+      <div style="text-align:center;padding:12px;background:var(--bg);border-radius:var(--radius-sm)">
+        <div style="font-size:22px;font-weight:800;color:var(--text)">${(comps||[]).length}</div>
+        <div style="font-size:11px;color:var(--text-muted)">Intentos</div>
+      </div>
     </div>
-    <table style="width:100%;border-collapse:collapse">
-      <thead><tr>${['Módulo','Puntaje','Estado','Fecha'].map(h=>`<th style="text-align:left;padding:8px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border)">${h}</th>`).join('')}</tr></thead>
-      <tbody>
-        ${(comps||[]).map(c => `<tr>
-          <td style="padding:8px;font-size:13px;border-bottom:1px solid var(--border)">${mMap[c.module_id]?.title||'-'}</td>
-          <td style="padding:8px;font-size:13px;border-bottom:1px solid var(--border)">${c.score}%</td>
-          <td style="padding:8px;border-bottom:1px solid var(--border)"><span class="badge ${c.passed?'badge-green':'badge-red'}">${c.passed?'✓':'✗'}</span></td>
-          <td style="padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">${new Date(c.completed_at).toLocaleDateString('es-AR')}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
+
+    ${Object.entries(byModule).map(([modId, attempts]) => {
+      const mod = mMap[modId];
+      const qs = qByModule[modId] || [];
+      return attempts.map((c, ai) => {
+        const openAnswers = c.open_answers || {};
+        const scoreColor = c.score>=80?'var(--success)':c.score>=60?'var(--warning)':'var(--danger)';
+        return `<div style="margin-bottom:16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+          <div style="padding:12px 16px;background:var(--bg);display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleAccordion('acc-${c.id}')">
+            <div>
+              <div style="font-weight:700;font-size:14px">${mod?.title||'—'} <span style="font-weight:400;color:var(--text-muted);font-size:12px">· Intento ${attempts.length - ai}°</span></div>
+              <div style="font-size:12px;color:var(--text-muted)">${new Date(c.completed_at).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'})}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:18px;font-weight:800;color:${scoreColor}">${c.score}%</span>
+              <span class="badge ${c.passed?'badge-green':'badge-red'}">${c.passed?'✓ Aprobado':'✗ Reprobado'}</span>
+              <span style="color:var(--text-muted)">▼</span>
+            </div>
+          </div>
+          <div id="acc-${c.id}" style="display:none;padding:16px">
+            ${qs.length === 0 ? '<p class="text-muted text-sm">Sin preguntas registradas</p>' :
+              qs.map((q, qi) => {
+                const type = q.type || 'single';
+                const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
+                const correctIndices = Array.isArray(q.correct_indices) && q.correct_indices.length ? q.correct_indices : [q.correct_index||0];
+
+                if (type === 'open' || (type === 'image' && opts.length < 2)) {
+                  const ans = openAnswers[q.id] || '(sin respuesta)';
+                  return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+                    <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">P${qi+1} · ✏️ Desarrollo</div>
+                    <div style="font-size:13px;font-weight:600;margin-bottom:6px">${q.question}</div>
+                    <div style="padding:8px 12px;background:var(--accent-light);border-radius:6px;font-size:13px;color:var(--text)">${ans}</div>
+                    ${q.explanation ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">📋 Guía: ${q.explanation}</div>` : ''}
+                  </div>`;
+                }
+
+                return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+                  <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">P${qi+1}</div>
+                  <div style="font-size:13px;font-weight:600;margin-bottom:8px">${q.question}</div>
+                  <div style="display:flex;flex-direction:column;gap:4px">
+                    ${opts.map((o, oi) => {
+                      const isCorrect = correctIndices.includes(oi);
+                      return `<div style="padding:6px 10px;border-radius:6px;font-size:12px;background:${isCorrect?'var(--success-light)':'var(--bg)'};border:1px solid ${isCorrect?'var(--success)':'var(--border)'};display:flex;align-items:center;gap:8px">
+                        <span>${isCorrect?'✅':'⬜'}</span>
+                        <span style="flex:1">${o}</span>
+                        ${isCorrect?'<span style="font-size:11px;font-weight:700;color:var(--success)">Correcta</span>':''}
+                      </div>`;
+                    }).join('')}
+                  </div>
+                </div>`;
+              }).join('')
+            }
+          </div>
+        </div>`;
+      }).join('');
+    }).join('')}
   `, null, true);
+}
+
+window.toggleAccordion = function(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  const arrow = el.previousElementSibling?.querySelector('span:last-child');
+  if (arrow) arrow.textContent = el.style.display === 'none' ? '▼' : '▲';
+};
+
+async function exportUserAnswers(uid) {
+  const { u, comps, mMap, qByModule } = window._profileData || {};
+  if (!u) return;
+  const rows = [['Colaborador','Campaña','Módulo','Intento','Puntaje','Estado','Fecha','Pregunta','Tipo','Respuesta del colaborador','Correcta']];
+  (comps||[]).forEach((c, ci) => {
+    const mod = mMap[c.module_id];
+    const qs = qByModule[c.module_id] || [];
+    const openAnswers = c.open_answers || {};
+    const byMod = (comps||[]).filter(x => x.module_id === c.module_id);
+    const intentoNum = byMod.length - byMod.indexOf(c);
+    if (qs.length === 0) {
+      rows.push([u.full_name, u.campaign, mod?.title||'—', intentoNum, c.score+'%', c.passed?'Aprobado':'Reprobado', new Date(c.completed_at).toLocaleDateString('es-AR'), '—', '—', '—', '—']);
+    } else {
+      qs.forEach(q => {
+        const type = q.type || 'single';
+        const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
+        const correctIndices = Array.isArray(q.correct_indices) && q.correct_indices.length ? q.correct_indices : [q.correct_index||0];
+        const correctText = correctIndices.map(i => opts[i]).filter(Boolean).join(' / ') || '—';
+        let userAnswer = '—';
+        if (type === 'open' || (type === 'image' && opts.length < 2)) {
+          userAnswer = openAnswers[q.id] || '(sin respuesta)';
+        }
+        rows.push([u.full_name, u.campaign, mod?.title||'—', intentoNum, c.score+'%', c.passed?'Aprobado':'Reprobado', new Date(c.completed_at).toLocaleDateString('es-AR'), q.question, type, userAnswer, correctText]);
+      });
+    }
+  });
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = `respuestas_${u.full_name.replace(/ /g,'_')}.csv`;
+  a.click();
 }
 
 // ── SUPERVISOR VIEWS (solo lectura) ──
