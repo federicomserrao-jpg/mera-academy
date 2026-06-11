@@ -2219,7 +2219,8 @@ async function startModule(modId) {
         <div id="videoGate" style="text-align:center;margin:24px 0;padding:24px;background:var(--accent-light);border:2px dashed var(--accent);border-radius:var(--radius)">
           <div style="font-size:32px;margin-bottom:10px">⏳</div>
           <div style="font-weight:600;font-size:15px;margin-bottom:6px">Mirá el video completo</div>
-          <div style="font-size:13px;color:var(--text-muted)">La evaluación se habilitará automáticamente cuando termine el video</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">La evaluación se habilitará automáticamente cuando termine el video</div>
+          <button class="btn btn-secondary btn-sm" onclick="window.revealEval()" style="font-size:12px;opacity:0.7">¿No se habilitó sola? Hacé click acá</button>
         </div>
         <div id="evalSection" style="display:none">
       ` : mod.video_url ? `
@@ -2280,32 +2281,54 @@ window.revealEval = function() {
 window.onYouTubeIframeAPIReady = function() {
   const iframe = document.getElementById('ytPlayer');
   if (!iframe) return;
-  new YT.Player('ytPlayer', {
-    events: {
-      onStateChange: function(e) {
-        // YT.PlayerState.ENDED = 0
-        if (e.data === 0) {
+  try {
+    new YT.Player('ytPlayer', {
+      events: {
+        onStateChange: function(e) {
+          // YT.PlayerState.ENDED = 0
+          if (e.data === 0) {
+            const gate = document.getElementById('videoGate');
+            if (gate) {
+              gate.innerHTML = `
+                <div style="font-size:36px;margin-bottom:12px">🎉</div>
+                <div style="font-weight:700;font-size:16px;color:var(--success);margin-bottom:6px">¡Video completado!</div>
+                <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Ya podés responder la evaluación</div>
+                <button class="btn btn-primary" style="padding:12px 32px;font-size:15px" onclick="window.revealEval()">📝 Ir a la evaluación</button>
+              `;
+              gate.style.borderColor = 'var(--success)';
+              gate.style.background = 'var(--success-light)';
+            }
+            // Auto reveal after 1 second
+            setTimeout(() => window.revealEval(), 1000);
+          }
+        },
+        onError: function() {
+          // If player errors, show manual button prominently
           const gate = document.getElementById('videoGate');
           if (gate) {
-            gate.innerHTML = `
-              <div style="font-size:36px;margin-bottom:12px">🎉</div>
-              <div style="font-weight:700;font-size:16px;color:var(--success);margin-bottom:6px">¡Video completado!</div>
-              <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Ya podés responder la evaluación</div>
-              <button class="btn btn-primary" style="padding:12px 32px;font-size:15px" onclick="window.revealEval()">📝 Ir a la evaluación</button>
-            `;
-            gate.style.borderColor = 'var(--success)';
-            gate.style.background = 'var(--success-light)';
+            const btn = gate.querySelector('button');
+            if (btn) { btn.style.opacity = '1'; btn.style.fontSize = '14px'; btn.className = 'btn btn-primary'; btn.textContent = '✅ Continuar a la evaluación'; }
           }
         }
       }
-    }
-  });
+    });
+  } catch(e) {
+    console.warn('YouTube API error:', e);
+  }
 };
 
 // Cargar YouTube IFrame API si no está cargada
 if (!window.YT) {
   const tag = document.createElement('script');
   tag.src = 'https://www.youtube.com/iframe_api';
+  tag.onerror = function() {
+    // If API fails to load, make fallback button visible
+    const gate = document.getElementById('videoGate');
+    if (gate) {
+      const btn = gate.querySelector('button');
+      if (btn) { btn.style.opacity = '1'; btn.className = 'btn btn-primary'; btn.textContent = '✅ Terminé de ver el video'; }
+    }
+  };
   document.head.appendChild(tag);
 } else if (window.YT && window.YT.Player) {
   window.onYouTubeIframeAPIReady();
