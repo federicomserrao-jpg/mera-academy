@@ -2546,8 +2546,9 @@ async function submitEval() {
   if (unanswered.length > 0) { alert(`Faltan responder ${unanswered.length} pregunta(s).`); return; }
 
   let correct = 0;
-  let scoreable = 0; // only auto-scored questions count
+  let scoreable = 0;
   const openAnswers = {};
+  const mcAnswers = {}; // guardar respuestas de multiple choice
 
   questions.forEach(q => {
     const type = q.type || 'single';
@@ -2556,7 +2557,6 @@ async function submitEval() {
     if (type === 'open') {
       const ans = document.getElementById(`open-${q.id}`)?.value?.trim() || '';
       openAnswers[q.id] = ans;
-      // Open questions don't auto-score but show as "respondida"
       return;
     }
 
@@ -2570,6 +2570,7 @@ async function submitEval() {
 
     if (type === 'multiple') {
       const userAns = answers[q.id] || [];
+      mcAnswers[q.id] = userAns; // guardar índices elegidos
       const isCorrect = correctIndices.length === userAns.length && correctIndices.every(ci => userAns.includes(ci));
       if (isCorrect) {
         correct++;
@@ -2592,8 +2593,8 @@ async function submitEval() {
         }
       }
     } else {
-      // single or image with options
       const userAns = answers[q.id];
+      mcAnswers[q.id] = userAns; // guardar índice elegido
       const isCorrect = userAns === (q.correct_index||0);
       const selEl = document.getElementById(`opt-${q.id}-${userAns}`);
       const corrEl = document.getElementById(`opt-${q.id}-${q.correct_index||0}`);
@@ -2615,7 +2616,6 @@ async function submitEval() {
         }
       }
     }
-    // Block clicks
     document.querySelectorAll(`[id^="opt-${q.id}-"]`).forEach(el => { el.style.pointerEvents='none'; el.style.cursor='default'; });
   });
 
@@ -2626,7 +2626,7 @@ async function submitEval() {
   if (submitBtn) submitBtn.remove();
 
   const uid = window.S.user.id;
-  await sb.from('completions').insert({ user_id: uid, module_id: mod.id, score, passed, attempt, completed_at: new Date().toISOString(), open_answers: openAnswers });
+  await sb.from('completions').insert({ user_id: uid, module_id: mod.id, score, passed, attempt, completed_at: new Date().toISOString(), open_answers: openAnswers, mc_answers: mcAnswers });
 
   const resultHtml = `<div class="result-card" style="margin-top:24px">
     <div style="font-size:48px">${passed?'🏆':'😔'}</div>
@@ -2941,6 +2941,7 @@ async function exportUserAnswers(uid) {
     const mod = mMap[c.module_id];
     const qs = qByModule[c.module_id] || [];
     const openAnswers = c.open_answers || {};
+    const mcAnswers = c.mc_answers || {};
     const byMod = (comps||[]).filter(x => x.module_id === c.module_id);
     const intentoNum = byMod.length - byMod.indexOf(c);
     const fecha = new Date(c.completed_at).toLocaleDateString('es-AR');
@@ -2956,8 +2957,12 @@ async function exportUserAnswers(uid) {
         let userAnswer = '(sin respuesta)';
         if (type === 'open' || (type === 'image' && opts.length < 2)) {
           userAnswer = openAnswers[q.id] || '(sin respuesta)';
+        } else if (type === 'multiple') {
+          const chosen = mcAnswers[q.id] || [];
+          userAnswer = Array.isArray(chosen) && chosen.length ? chosen.map(i => opts[i]).filter(Boolean).join(' | ') : '(sin respuesta)';
         } else {
-          userAnswer = '(ver modal)';
+          const chosen = mcAnswers[q.id];
+          userAnswer = (chosen !== undefined && chosen !== null) ? (opts[chosen] || '(sin respuesta)') : '(sin respuesta)';
         }
         rows.push([
           u.full_name, u.campaign, mod?.title||'—', intentoNum+'°',
