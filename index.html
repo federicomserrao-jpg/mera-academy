@@ -2822,12 +2822,22 @@ async function renderMyProfile() {
 }
 
 async function viewUserProfile(uid) {
-  const [{ data: u }, { data: comps }, { data: mods }, { data: questions }] = await Promise.all([
+  const [{ data: u }, { data: comps }, { data: mods }, { data: questions }, { data: openScores }] = await Promise.all([
     sb.from('users').select('*').eq('id', uid).single(),
     sb.from('completions').select('*').eq('user_id', uid).order('completed_at', { ascending: false }),
     sb.from('modules').select('*'),
-    sb.from('questions').select('*')
+    sb.from('questions').select('*'),
+    sb.from('open_scores').select('*').eq('scored_by', window.S.user?.id || '').then(r => r).catch(() => ({data:[]}))
   ]);
+  // Load ALL open scores for this user's completions
+  const compIds = (comps||[]).map(c => c.id);
+  let allOpenScores = [];
+  if (compIds.length) {
+    const { data: scores } = await sb.from('open_scores').select('*').in('completion_id', compIds);
+    allOpenScores = scores || [];
+  }
+  const scoreMap = {}; // key: completion_id+question_id
+  allOpenScores.forEach(s => { scoreMap[`${s.completion_id}_${s.question_id}`] = s; });
   const mMap = Object.fromEntries((mods||[]).map(m => [m.id, m]));
   const qByModule = (questions||[]).reduce((acc, q) => { if (!acc[q.module_id]) acc[q.module_id] = []; acc[q.module_id].push(q); return acc; }, {});
   const passed = (comps||[]).filter(c => c.passed).length;
@@ -2892,11 +2902,28 @@ async function viewUserProfile(uid) {
 
                 if (type === 'open' || (type === 'image' && opts.length < 2)) {
                   const ans = openAnswers[q.id] || '(sin respuesta)';
-                  return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
-                    <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">P${qi+1} · ✏️ Desarrollo</div>
-                    <div style="font-size:13px;font-weight:600;margin-bottom:6px">${q.question}</div>
-                    <div style="padding:8px 12px;background:var(--accent-light);border-radius:6px;font-size:13px;color:var(--text)">${ans}</div>
-                    ${q.explanation ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">📋 Guía: ${q.explanation}</div>` : ''}
+                  const existingScore = scoreMap[`${c.id}_${q.id}`];
+                  const canScore = window.S.role === 'adm' || window.S.role === 'sup';
+                  return `<div style="padding:12px 0;border-bottom:1px solid var(--border)">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                      <div style="font-size:12px;font-weight:700;color:var(--text-muted)">P${qi+1} · ✏️ Desarrollo</div>
+                      ${existingScore ? `<span class="badge badge-blue">Calificado: ${existingScore.score}/10</span>` : `<span class="badge badge-yellow">Pendiente de calificación</span>`}
+                    </div>
+                    <div style="font-size:13px;font-weight:600;margin-bottom:8px">${q.question}</div>
+                    <div style="padding:10px 12px;background:var(--accent-light);border-radius:6px;font-size:13px;color:var(--text);margin-bottom:10px">${ans}</div>
+                    ${q.explanation ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">📋 Guía: ${q.explanation}</div>` : ''}
+                    ${canScore ? `
+                    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)">
+                      <span style="font-size:13px;font-weight:600">Calificar:</span>
+                      <div style="display:flex;gap:4px">
+                        ${[1,2,3,4,5,6,7,8,9,10].map(n => `
+                          <button onclick="scoreOpenAnswer('${c.id}','${q.id}',${n},'${uid}')"
+                            style="width:28px;height:28px;border-radius:6px;border:1px solid ${existingScore?.score===n?'var(--accent)':'var(--border)'};background:${existingScore?.score===n?'var(--accent)':'white'};color:${existingScore?.score===n?'white':'var(--text)'};font-size:12px;font-weight:600;cursor:pointer"
+                            id="score-btn-${c.id}-${q.id}-${n}">${n}</button>
+                        `).join('')}
+                      </div>
+                      <span style="font-size:12px;color:var(--text-muted)">/10</span>
+                    </div>` : ''}
                   </div>`;
                 }
 
@@ -2979,6 +3006,84 @@ async function exportUserAnswers(uid) {
   a.download = `respuestas_${u.full_name.replace(/ /g,'_')}.csv`;
   a.click();
 }
+
+// ── SCORE OPEN ANSWERS ──
+window.scoreOpenAnswer = async function(completionId, questionId, score, userId) {
+  // Save or update score
+  await sb.from('open_scores').upsert(
+    { completion_id: completionId, question_id: questionId, score, scored_by: window.S.user.id, scored_at: new Date().toISOString() },
+    { onConflict: 'completion_id,question_id' }
+  );
+
+  // Update button visuals
+  for (let n = 1; n <= 10; n++) {
+    const btn = document.getElementById(`score-btn-${completionId}-${questionId}-${n}`);
+    if (!btn) continue;
+    btn.style.background = n === score ? 'var(--accent)' : 'white';
+    btn.style.color = n === score ? 'white' : 'var(--text)';
+    btn.style.borderColor = n === score ? 'var(--accent)' : 'var(--border)';
+  }
+
+  // Recalculate module score
+  // Get completion data
+  const { data: comp } = await sb.from('completions').select('*').eq('id', completionId).single();
+  if (!comp) return;
+
+  // Get all questions for this module
+  const { data: allQs } = await sb.from('questions').select('*').eq('module_id', comp.module_id);
+  const { data: allScores } = await sb.from('open_scores').select('*').eq('completion_id', completionId);
+  const scoresMap = Object.fromEntries((allScores||[]).map(s => [s.question_id, s.score]));
+
+  const mcAnswers = comp.mc_answers || {};
+  let totalPoints = 0;
+  let maxPoints = 0;
+
+  (allQs||[]).forEach(q => {
+    const type = q.type || 'single';
+    const correctIndices = Array.isArray(q.correct_indices) && q.correct_indices.length ? q.correct_indices : [q.correct_index||0];
+
+    if (type === 'open' || (type === 'image' && (!q.options || q.options.length < 2))) {
+      const s = scoresMap[q.id];
+      if (s !== undefined) {
+        totalPoints += s;
+        maxPoints += 10;
+      }
+      // If not yet scored, don't count in max (pending)
+    } else {
+      maxPoints += 10;
+      const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
+      if (type === 'multiple') {
+        const userAns = Array.isArray(mcAnswers[q.id]) ? mcAnswers[q.id] : [];
+        const isCorrect = correctIndices.length === userAns.length && correctIndices.every(ci => userAns.includes(ci));
+        if (isCorrect) totalPoints += 10;
+      } else {
+        const userAns = mcAnswers[q.id];
+        if (userAns === (q.correct_index||0)) totalPoints += 10;
+      }
+    }
+  });
+
+  const newScore = maxPoints > 0 ? Math.round(totalPoints / maxPoints * 100) : comp.score;
+  const newPassed = newScore >= 60;
+
+  await sb.from('completions').update({ score: newScore, passed: newPassed }).eq('id', completionId);
+
+  // Update score display in the accordion header
+  const scoreColor = newScore>=80?'var(--success)':newScore>=60?'var(--warning)':'var(--danger)';
+  const headerScore = document.querySelector(`[onclick="toggleAccordion('acc-${completionId}')"] span:first-of-type`);
+  if (headerScore) headerScore.textContent = newScore + '%';
+
+  // Update badge label
+  const badgeEl = document.querySelector(`[onclick="toggleAccordion('acc-${completionId}')"] .badge`);
+  if (badgeEl) {
+    badgeEl.textContent = newPassed ? '✓ Aprobado' : '✗ Reprobado';
+    badgeEl.className = `badge ${newPassed?'badge-green':'badge-red'}`;
+  }
+
+  // Show feedback
+  const pendingBadge = document.getElementById(`score-btn-${completionId}-${questionId}-${score}`)?.closest('div[style*="border-bottom"]')?.querySelector('.badge');
+  if (pendingBadge) { pendingBadge.textContent = `Calificado: ${score}/10`; pendingBadge.className = 'badge badge-blue'; }
+};
 
 // ── SUPERVISOR VIEWS (solo lectura) ──
 async function renderSupDashboard() {
