@@ -1153,10 +1153,19 @@ async function openCourseModal(id) {
     <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-control" id="cDesc" rows="2" placeholder="Breve descripción del curso...">${course?.description||''}</textarea></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Campaña</label><select class="form-control" id="cCamp">${campOpts}</select></div>
-      <div class="form-group" style="display:flex;align-items:center;gap:10px;padding-top:28px">
-        <input type="checkbox" id="cActivo" ${course?.activo!==false?'checked':''}>
-        <label for="cActivo" style="font-size:13px;font-weight:500">Curso activo</label>
+      <div class="form-group" style="display:flex;flex-direction:column;gap:10px;padding-top:28px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="cActivo" ${course?.activo!==false?'checked':''}>
+          <label for="cActivo" style="font-size:13px;font-weight:500">Curso activo</label>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="cOrden" ${course?.orden_obligatorio!==false?'checked':''}>
+          <label for="cOrden" style="font-size:13px;font-weight:500">Orden obligatorio</label>
+        </div>
       </div>
+    </div>
+    <div style="padding:12px 16px;background:var(--warning-light);border:1px solid var(--warning);border-radius:var(--radius-sm);font-size:12px;color:#92400e;margin-top:4px">
+      ⚠️ Si desactivás el orden obligatorio, <strong>todos</strong> los colaboradores del curso podrán acceder a cualquier módulo sin restricción.
     </div>
   `, async () => {
     const payload = {
@@ -1164,6 +1173,7 @@ async function openCourseModal(id) {
       description: document.getElementById('cDesc').value.trim(),
       campaign: document.getElementById('cCamp').value,
       activo: document.getElementById('cActivo').checked,
+      orden_obligatorio: document.getElementById('cOrden').checked,
       updated_at: new Date().toISOString()
     };
     if (!payload.title) { alert('El título es obligatorio'); return; }
@@ -1241,15 +1251,19 @@ async function renderMyCourses() {
   setContent('<div class="loading"><div class="spinner"></div></div>');
   const uid = window.S.user.id;
   const camp = window.S.user.campaign;
-  const [{ data: courses }, { data: cms }, { data: allMods }, { data: comps }] = await Promise.all([
+  const [{ data: courses }, { data: cms }, { data: allMods }, { data: comps }, { data: modUnlocks }, { data: courseUnlocks }] = await Promise.all([
     sb.from('courses').select('*').eq('campaign', camp).eq('activo', true).order('created_at'),
     sb.from('course_modules').select('*').order('sort_order'),
     sb.from('modules').select('*'),
-    sb.from('completions').select('*').eq('user_id', uid)
+    sb.from('completions').select('*').eq('user_id', uid),
+    sb.from('module_unlocks').select('module_id').eq('user_id', uid),
+    sb.from('course_unlocks').select('course_id').eq('user_id', uid)
   ]);
   const modMap = Object.fromEntries((allMods||[]).map(m => [m.id, m]));
   const compMap = Object.fromEntries((comps||[]).map(c => [c.module_id, c]));
   const cmsByCourse = (cms||[]).reduce((acc, cm) => { if (!acc[cm.course_id]) acc[cm.course_id] = []; acc[cm.course_id].push(cm); return acc; }, {});
+  const unlockedModules = new Set((modUnlocks||[]).map(u => u.module_id));
+  const unlockedCourses = new Set((courseUnlocks||[]).map(u => u.course_id));
 
   if (!(courses||[]).length) {
     setContent(`<div class="empty-state"><div class="empty-icon">🎓</div><h3>Sin cursos asignados</h3><p>Tu supervisor asignará cursos a tu campaña pronto.</p></div>`);
@@ -1262,12 +1276,20 @@ async function renderMyCourses() {
     const done = courseMods.filter(cm => compMap[cm.module_id]?.passed).length;
     const pct = total > 0 ? Math.round(done/total*100) : 0;
     const courseComplete = done === total && total > 0;
+    // Opción 2: curso completamente desbloqueado para este colaborador
+    const courseFullyUnlocked = unlockedCourses.has(course.id);
+    // Opción 3: curso sin orden obligatorio
+    const noOrden = course.orden_obligatorio === false;
 
     return `<div class="card" style="margin-bottom:20px">
       <div style="background:var(--accent);padding:20px 24px 18px;border-radius:var(--radius) var(--radius) 0 0">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <span class="badge" style="background:rgba(255,255,255,0.2);color:white">${course.campaign}</span>
-          ${courseComplete ? '<span class="badge" style="background:#10B981;color:white">✓ Completado</span>' : `<span style="font-size:12px;color:rgba(255,255,255,0.8)">${done}/${total} módulos</span>`}
+          <div style="display:flex;gap:6px;align-items:center">
+            ${noOrden ? '<span class="badge" style="background:rgba(255,255,255,0.15);color:white;font-size:10px">🔓 Sin orden</span>' : ''}
+            ${courseFullyUnlocked ? '<span class="badge" style="background:rgba(255,255,255,0.15);color:white;font-size:10px">🔓 Desbloqueado</span>' : ''}
+            ${courseComplete ? '<span class="badge" style="background:#10B981;color:white">✓ Completado</span>' : `<span style="font-size:12px;color:rgba(255,255,255,0.8)">${done}/${total} módulos</span>`}
+          </div>
         </div>
         <div style="font-size:18px;font-weight:700;color:white;margin-bottom:8px">${course.title}</div>
         <div class="progress-bar" style="height:6px;background:rgba(255,255,255,0.2)">
@@ -1281,14 +1303,16 @@ async function renderMyCourses() {
             const mod = cm.mod;
             const comp = compMap[mod.id];
             const prevDone = i === 0 || compMap[courseMods[i-1].mod.id]?.passed;
-            const locked = !prevDone && i > 0;
+            // Locked if: not first, prev not done, AND none of the unlock conditions apply
+            const locked = !prevDone && i > 0 && !noOrden && !courseFullyUnlocked && !unlockedModules.has(mod.id);
             const statusIcon = comp?.passed ? '✅' : comp ? '❌' : locked ? '🔒' : '⏳';
             const statusText = comp?.passed ? 'Aprobado' : comp ? 'Reprobado' : locked ? 'Bloqueado' : 'Pendiente';
             const statusColor = comp?.passed ? 'var(--success)' : comp ? 'var(--danger)' : locked ? 'var(--text-light)' : 'var(--warning)';
+            const isUnlocked = !locked && unlockedModules.has(mod.id) && !prevDone;
             return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);${locked?'opacity:0.5':''}">
               <div style="width:32px;height:32px;background:${comp?.passed?'var(--success)':locked?'var(--border)':'var(--accent-light)'};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${statusIcon}</div>
               <div style="flex:1">
-                <div style="font-size:14px;font-weight:600">${i+1}. ${mod.title}</div>
+                <div style="font-size:14px;font-weight:600">${i+1}. ${mod.title} ${isUnlocked?'<span style="font-size:11px;color:var(--accent)">🔓 Desbloqueado</span>':''}</div>
                 <div style="font-size:11px;color:${statusColor};font-weight:600">${statusText}${comp ? ` · ${comp.score}%` : ''}</div>
               </div>
               ${!locked ? `<button class="btn btn-sm ${comp?.passed?'btn-secondary':'btn-primary'}" onclick="startModule('${mod.id}')">${comp?.passed ? '↺ Repasar' : comp ? '↺ Reintentar' : '▶ Iniciar'}</button>` : ''}
@@ -2822,12 +2846,12 @@ async function renderMyProfile() {
 }
 
 async function viewUserProfile(uid) {
-  const [{ data: u }, { data: comps }, { data: mods }, { data: questions }, { data: openScores }] = await Promise.all([
+  const [{ data: u }, { data: comps }, { data: mods }, { data: questions }, { data: courses }] = await Promise.all([
     sb.from('users').select('*').eq('id', uid).single(),
     sb.from('completions').select('*').eq('user_id', uid).order('completed_at', { ascending: false }),
     sb.from('modules').select('*'),
     sb.from('questions').select('*'),
-    sb.from('open_scores').select('*').eq('scored_by', window.S.user?.id || '').then(r => r).catch(() => ({data:[]}))
+    sb.from('courses').select('*')
   ]);
   // Load ALL open scores for this user's completions
   const compIds = (comps||[]).map(c => c.id);
@@ -2857,6 +2881,7 @@ async function viewUserProfile(uid) {
         <div style="font-size:13px;color:var(--text-muted)">${u.username} · ${u.campaign}</div>
       </div>
       <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="openUnlockModal('${uid}')">🔓 Desbloqueos</button>
         <button class="btn btn-secondary btn-sm" onclick="exportUserAnswers('${uid}')">📥 Exportar respuestas</button>
       </div>
     </div>
@@ -3005,6 +3030,102 @@ async function exportUserAnswers(uid) {
   a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
   a.download = `respuestas_${u.full_name.replace(/ /g,'_')}.csv`;
   a.click();
+}
+
+// ── UNLOCK MANAGEMENT ──
+async function openUnlockModal(uid) {
+  const [{ data: u }, { data: courses }, { data: allMods }, { data: modUnlocks }, { data: courseUnlocks }] = await Promise.all([
+    sb.from('users').select('*').eq('id', uid).single(),
+    sb.from('courses').select('*').eq('campaign', (await sb.from('users').select('campaign').eq('id',uid).single()).data?.campaign||'').eq('activo',true),
+    sb.from('modules').select('*'),
+    sb.from('module_unlocks').select('*').eq('user_id', uid),
+    sb.from('course_unlocks').select('*').eq('user_id', uid)
+  ]);
+  const unlockedModIds = new Set((modUnlocks||[]).map(u => u.module_id));
+  const unlockedCourseIds = new Set((courseUnlocks||[]).map(u => u.course_id));
+
+  showModal('modal-unlocks', `🔓 Desbloqueos — ${u?.full_name}`, `
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Gestioná las excepciones de orden para este colaborador.</p>
+
+    <div class="form-group">
+      <label class="form-label">📚 Opción 1 — Desbloquear módulo específico</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <select class="form-control" id="unlockModSelect">
+          <option value="">— Seleccioná un módulo —</option>
+          ${(allMods||[]).map(m => `<option value="${m.id}" ${unlockedModIds.has(m.id)?'disabled':''}">[${m.campaign}] ${m.title} ${unlockedModIds.has(m.id)?'✓ ya desbloqueado':''}</option>`).join('')}
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="unlockModule('${uid}')">🔓 Desbloquear</button>
+      </div>
+      ${(modUnlocks||[]).length > 0 ? `
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Módulos desbloqueados:</div>
+        ${(modUnlocks||[]).map(ul => {
+          const mod = (allMods||[]).find(m => m.id === ul.module_id);
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--success-light);border-radius:6px;margin-bottom:4px;font-size:12px">
+            <span>🔓 ${mod?.title||'—'}</span>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger);padding:2px 8px" onclick="lockModule('${ul.id}','${uid}')">✕ Revocar</button>
+          </div>`;
+        }).join('')}
+      ` : ''}
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="form-group">
+      <label class="form-label">🎓 Opción 2 — Desbloquear curso completo para este colaborador</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <select class="form-control" id="unlockCourseSelect">
+          <option value="">— Seleccioná un curso —</option>
+          ${(courses||[]).map(c => `<option value="${c.id}" ${unlockedCourseIds.has(c.id)?'disabled':''}>${c.title} ${unlockedCourseIds.has(c.id)?'✓ ya desbloqueado':''}</option>`).join('')}
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="unlockCourse('${uid}')">🔓 Desbloquear</button>
+      </div>
+      ${(courseUnlocks||[]).length > 0 ? `
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Cursos desbloqueados:</div>
+        ${(courseUnlocks||[]).map(ul => {
+          const course = (courses||[]).find(c => c.id === ul.course_id);
+          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--success-light);border-radius:6px;margin-bottom:4px;font-size:12px">
+            <span>🔓 ${course?.title||'—'}</span>
+            <button class="btn btn-ghost btn-sm" style="color:var(--danger);padding:2px 8px" onclick="lockCourse('${ul.id}','${uid}')">✕ Revocar</button>
+          </div>`;
+        }).join('')}
+      ` : ''}
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="padding:12px 16px;background:var(--bg);border-radius:var(--radius-sm);font-size:13px">
+      <div style="font-weight:600;margin-bottom:4px">⚙️ Opción 3 — Sin orden obligatorio en el curso</div>
+      <div style="color:var(--text-muted);font-size:12px">Configurá esto desde <strong>Cursos → ✏️ Editar</strong> y desactivá "Orden obligatorio". Aplica para todos los colaboradores del curso.</div>
+    </div>
+  `, null, true);
+}
+
+async function unlockModule(uid) {
+  const modId = document.getElementById('unlockModSelect').value;
+  if (!modId) { alert('Seleccioná un módulo'); return; }
+  await sb.from('module_unlocks').insert({ user_id: uid, module_id: modId, unlocked_by: window.S.user.id });
+  closeModal();
+  openUnlockModal(uid);
+}
+
+async function lockModule(ulId, uid) {
+  await sb.from('module_unlocks').delete().eq('id', ulId);
+  closeModal();
+  openUnlockModal(uid);
+}
+
+async function unlockCourse(uid) {
+  const courseId = document.getElementById('unlockCourseSelect').value;
+  if (!courseId) { alert('Seleccioná un curso'); return; }
+  await sb.from('course_unlocks').insert({ user_id: uid, course_id: courseId, unlocked_by: window.S.user.id });
+  closeModal();
+  openUnlockModal(uid);
+}
+
+async function lockCourse(ulId, uid) {
+  await sb.from('course_unlocks').delete().eq('id', ulId);
+  closeModal();
+  openUnlockModal(uid);
 }
 
 // ── SCORE OPEN ANSWERS ──
