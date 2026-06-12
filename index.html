@@ -2290,12 +2290,19 @@ async function renderMyModules() {
 // ── START MODULE ──
 async function startModule(modId) {
   setContent('<div class="loading"><div class="spinner"></div></div>');
-  const [{ data: mod }, { data: qs }, { data: comps }, { data: files }] = await Promise.all([
+  const [{ data: mod }, { data: qs }, { data: comps }] = await Promise.all([
     sb.from('modules').select('*').eq('id', modId).single(),
     sb.from('questions').select('*').eq('module_id', modId),
-    sb.from('completions').select('*').eq('user_id', window.S.user.id).eq('module_id', modId),
-    sb.storage.from('module-files').list(modId, { sortBy: { column: 'name', order: 'asc' } }).then(r => r)
+    sb.from('completions').select('*').eq('user_id', window.S.user.id).eq('module_id', modId)
   ]);
+
+  // Load files separately to handle errors gracefully
+  let filesList = [];
+  try {
+    const { data: filesData, error: filesError } = await sb.storage.from('module-files').list(modId, { sortBy: { column: 'name', order: 'asc' } });
+    if (!filesError && filesData) filesList = filesData.filter(f => f.name && f.name !== '.emptyFolderPlaceholder');
+  } catch(e) { console.warn('Files load error:', e); }
+
   const attempts = (comps||[]).length;
   if (attempts >= (mod.max_attempts||3)) {
     setContent(`<div class="result-card"><div style="font-size:48px">🚫</div><h2 style="margin:16px 0">Intentos agotados</h2><p class="text-muted">Alcanzaste el máximo de ${mod.max_attempts} intentos para este módulo.</p><button class="btn btn-secondary" style="margin-top:24px" onclick="renderMyModules()">← Volver</button></div>`);
@@ -2307,23 +2314,25 @@ async function startModule(modId) {
   window._evalState = { mod, questions, answers: {}, submitted: false, attempt: attempts + 1 };
 
   // Files section for collaborator
-  const filesList = (files?.data||[]);
   const filesHtml = filesList.length > 0 ? `
     <div class="card" style="margin-bottom:24px">
       <div class="card-header"><div class="card-title">📎 Material de apoyo</div></div>
       <div class="card-body">
         ${filesList.map(f => {
-          const ext = f.name.split('.').pop().toUpperCase();
+          const ext = (f.name.split('.').pop()||'').toUpperCase();
           const iconMap = { PDF:'📄', DOC:'📝', DOCX:'📝', XLS:'📊', XLSX:'📊', PPT:'📋', PPTX:'📋', PNG:'🖼️', JPG:'🖼️', JPEG:'🖼️', MP4:'🎬', ZIP:'🗜️' };
           const icon = iconMap[ext] || '📎';
           const size = f.metadata?.size ? (f.metadata.size/1024<1024?(f.metadata.size/1024).toFixed(1)+'KB':(f.metadata.size/1048576).toFixed(1)+'MB') : '';
+          // Get public URL directly
+          const { data: urlData } = sb.storage.from('module-files').getPublicUrl(`${modId}/${f.name}`);
+          const publicUrl = urlData?.publicUrl || '';
           return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
             <span style="font-size:20px">${icon}</span>
             <div style="flex:1">
               <div style="font-size:13px;font-weight:600">${f.name}</div>
               <div style="font-size:11px;color:var(--text-muted)">${ext}${size?' · '+size:''}</div>
             </div>
-            <button class="btn btn-secondary btn-sm" onclick="downloadModuleFile('${modId}','${f.name}')">⬇️ Descargar</button>
+            <a href="${publicUrl}" target="_blank" download class="btn btn-secondary btn-sm">⬇️ Descargar</a>
           </div>`;
         }).join('')}
       </div>
