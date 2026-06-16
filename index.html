@@ -2392,6 +2392,12 @@ async function startModule(modId) {
   if (evalSection) {
     evalSection.innerHTML = buildQuestionsHtml(questions);
   }
+
+  // Auto-start timer if video_duration is set
+  if (mod.video_duration > 0) {
+    if (window._videoTimer) clearInterval(window._videoTimer);
+    setTimeout(() => startVideoTimer(mod.video_duration), 500);
+  }
 }
 
 function buildQuestionsHtml(questions) {
@@ -2519,19 +2525,13 @@ window.onYouTubeIframeAPIReady = function() {
   const iframe = document.getElementById('ytPlayer');
   if (!iframe) return;
   try {
-    const mod = window._evalState?.mod;
-    const duration = mod?.video_duration || 0;
     new YT.Player('ytPlayer', {
       events: {
         onStateChange: function(e) {
-          // YT.PlayerState.PLAYING = 1 — start timer when video plays
-          if (e.data === 1 && duration > 0 && !window._videoTimer) {
-            startVideoTimer(duration);
-          }
-          // YT.PlayerState.ENDED = 0
+          // YT.PlayerState.ENDED = 0 — unlock immediately when video ends
           if (e.data === 0) {
-            // Clear any remaining timer and unlock immediately
             if (window._videoTimer) clearInterval(window._videoTimer);
+            window._videoTimer = null;
             const evalBtn = document.getElementById('evalBtn');
             if (evalBtn) {
               evalBtn.disabled = false;
