@@ -2469,11 +2469,17 @@ function selectMultiple(qId, oi) {
 window.revealEval = function() {
   const gate = document.getElementById('videoGate');
   const evalSection = document.getElementById('evalSection');
-  if (gate) gate.style.display = 'none';
+  if (gate) { gate.style.display = 'none'; gate.remove(); }
   if (evalSection) {
     evalSection.style.display = 'block';
-    evalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    evalSection.style.visibility = 'visible';
+    evalSection.style.opacity = '1';
+    // Force reflow
+    evalSection.offsetHeight;
+    setTimeout(() => evalSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
   }
+  // Stop timer if running
+  if (window._videoTimer) { clearInterval(window._videoTimer); window._videoTimer = null; }
 };
 
 // ── VIDEO TIMER SYSTEM ──
