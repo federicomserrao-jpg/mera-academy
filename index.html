@@ -2367,108 +2367,77 @@ async function startModule(modId) {
             🔒 Completá el video para desbloquear la evaluación
           </button>
         </div>
+        <div id="evalSection" style="display:none;margin-top:8px"></div>
         ` : `
         <div id="videoGate" style="text-align:center;margin:24px 0;padding:20px;background:var(--accent-light);border:2px dashed var(--accent);border-radius:var(--radius)">
           <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Mirá el video y cuando termines hacé click</div>
           <button class="btn btn-primary" style="padding:12px 32px" onclick="window.revealEval()">✅ Continuar a la evaluación</button>
         </div>
+        <div id="evalSection" style="display:none;margin-top:8px"></div>
         `}
-        <div id="evalSection" style="display:none;margin-top:8px">
-          ${questions.length ? `
-            <div id="evalQuestions">
-              ${questions.map((q,i) => {
-                const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
-                const letters = ['A','B','C','D','E'];
-                const type = q.type || 'single';
-                if (type === 'open') {
-                  return `<div class="eval-question-card" id="qcard-eval-${q.id}">
-                    <div class="eval-q-num">Pregunta ${i+1} de ${questions.length} · ✏️ Desarrollo</div>
-                    <div class="eval-q-text">${q.question}</div>
-                    <textarea id="open-${q.id}" class="form-control" rows="4" placeholder="Escribí tu respuesta acá..." style="margin-top:12px;resize:vertical"></textarea>
-                  </div>`;
-                }
-                if (type === 'image') {
-                  return `<div class="eval-question-card" id="qcard-eval-${q.id}">
-                    <div class="eval-q-num">Pregunta ${i+1} de ${questions.length} · 🖼️ Con imagen</div>
-                    ${q.image_url ? `<img src="${q.image_url}" style="width:100%;max-height:280px;object-fit:contain;border-radius:8px;margin-bottom:16px;border:1px solid var(--border)">` : ''}
-                    <div class="eval-q-text">${q.question}</div>
-                    ${opts.length >= 2 ? `<div class="eval-options" role="radiogroup">
-                      ${opts.map((o,oi) => `<label class="eval-option" id="opt-${q.id}-${oi}" onclick="selectAnswer('${q.id}',${oi})" style="cursor:pointer">
-                        <input type="radio" name="q-${q.id}" value="${oi}" style="display:none">
-                        <div class="eval-option-letter">${letters[oi]||oi+1}</div><span>${o}</span>
-                      </label>`).join('')}
-                    </div>` : `<textarea id="open-${q.id}" class="form-control" rows="4" placeholder="Describí lo que ves en la imagen..." style="margin-top:12px;resize:vertical"></textarea>`}
-                    <div class="eval-explanation" id="exp-${q.id}" style="display:none">${q.explanation||''}</div>
-                  </div>`;
-                }
-                if (type === 'multiple') {
-                  return `<div class="eval-question-card" id="qcard-eval-${q.id}">
-                    <div class="eval-q-num">Pregunta ${i+1} de ${questions.length} · ✅ Seleccioná todas las correctas</div>
-                    <div class="eval-q-text">${q.question}</div>
-                    <div class="eval-options">
-                      ${opts.map((o,oi) => `<label class="eval-option" id="opt-${q.id}-${oi}" style="cursor:pointer" onclick="selectMultiple('${q.id}',${oi})">
-                        <input type="checkbox" name="q-${q.id}" value="${oi}" style="display:none">
-                        <div class="eval-option-letter" style="border-radius:4px">${letters[oi]||oi+1}</div><span>${o}</span>
-                      </label>`).join('')}
-                    </div>
-                    <div class="eval-explanation" id="exp-${q.id}" style="display:none">${q.explanation||''}</div>
-                  </div>`;
-                }
-                return `<div class="eval-question-card" id="qcard-eval-${q.id}">
-                  <div class="eval-q-num">Pregunta ${i+1} de ${questions.length}</div>
-                  <div class="eval-q-text">${q.question}</div>
-                  <div class="eval-options" role="radiogroup">
-                    ${opts.map((o,oi) => `<label class="eval-option" id="opt-${q.id}-${oi}" onclick="selectAnswer('${q.id}',${oi})" style="cursor:pointer">
-                      <input type="radio" name="q-${q.id}" value="${oi}" style="display:none">
-                      <div class="eval-option-letter">${letters[oi]||oi+1}</div><span>${o}</span>
-                    </label>`).join('')}
-                  </div>
-                  <div class="eval-explanation" id="exp-${q.id}" style="display:none">${q.explanation||''}</div>
-                </div>`;
-              }).join('')}
-            </div>
-            <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;margin-top:8px" onclick="submitEval()">Enviar Evaluación</button>
-          ` : `<div class="card" style="padding:32px;text-align:center"><p class="text-muted">Este módulo aún no tiene preguntas.</p><button class="btn btn-secondary" style="margin-top:16px" onclick="renderMyModules()">← Volver</button></div>`}
-        </div>
       ` : mod.video_url ? `
         <div class="card" style="padding:16px;margin-bottom:24px;text-align:center">
           <a href="${mod.video_url}" target="_blank" class="btn btn-primary">▶️ Ver Video</a>
         </div>
         <div id="videoGate" style="text-align:center;margin:24px 0;padding:24px;background:var(--accent-light);border:2px dashed var(--accent);border-radius:var(--radius)">
-          <div style="font-size:32px;margin-bottom:10px">🎬</div>
-          <div style="font-weight:600;font-size:15px;margin-bottom:6px">Abrí el video y miralo completo</div>
-          <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Cuando termines, volvé acá y hacé click para continuar</div>
           <button class="btn btn-primary" style="padding:12px 32px" onclick="window.revealEval()">✅ Terminé de ver el video</button>
         </div>
-        <div id="evalSection" style="display:none;margin-top:8px">
-          ${questions.length ? `
-            <div id="evalQuestions">
-              ${questions.map((q,i) => {
-                const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
-                const letters = ['A','B','C','D','E'];
-                const type = q.type || 'single';
-                if (type === 'open') return `<div class="eval-question-card" id="qcard-eval-${q.id}"><div class="eval-q-num">Pregunta ${i+1} de ${questions.length} · ✏️ Desarrollo</div><div class="eval-q-text">${q.question}</div><textarea id="open-${q.id}" class="form-control" rows="4" placeholder="Escribí tu respuesta acá..." style="margin-top:12px;resize:vertical"></textarea></div>`;
-                return `<div class="eval-question-card" id="qcard-eval-${q.id}"><div class="eval-q-num">Pregunta ${i+1} de ${questions.length}</div><div class="eval-q-text">${q.question}</div><div class="eval-options" role="radiogroup">${opts.map((o,oi) => `<label class="eval-option" id="opt-${q.id}-${oi}" onclick="selectAnswer('${q.id}',${oi})" style="cursor:pointer"><input type="radio" name="q-${q.id}" value="${oi}" style="display:none"><div class="eval-option-letter">${letters[oi]||oi+1}</div><span>${o}</span></label>`).join('')}</div><div class="eval-explanation" id="exp-${q.id}" style="display:none">${q.explanation||''}</div></div>`;
-              }).join('')}
-            </div>
-            <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;margin-top:8px" onclick="submitEval()">Enviar Evaluación</button>
-          ` : `<div class="card" style="padding:32px;text-align:center"><p class="text-muted">Sin preguntas.</p></div>`}
-        </div>
-      ` : `
-        <div id="evalSection" style="margin-top:8px">
-          ${questions.length ? `
-            <div id="evalQuestions">
-              ${questions.map((q,i) => {
-                const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
-                const letters = ['A','B','C','D','E'];
-                const type = q.type || 'single';
-                if (type === 'open') return `<div class="eval-question-card" id="qcard-eval-${q.id}"><div class="eval-q-num">Pregunta ${i+1} de ${questions.length} · ✏️ Desarrollo</div><div class="eval-q-text">${q.question}</div><textarea id="open-${q.id}" class="form-control" rows="4" placeholder="Escribí tu respuesta acá..." style="margin-top:12px;resize:vertical"></textarea></div>`;
-                return `<div class="eval-question-card" id="qcard-eval-${q.id}"><div class="eval-q-num">Pregunta ${i+1} de ${questions.length}</div><div class="eval-q-text">${q.question}</div><div class="eval-options" role="radiogroup">${opts.map((o,oi) => `<label class="eval-option" id="opt-${q.id}-${oi}" onclick="selectAnswer('${q.id}',${oi})" style="cursor:pointer"><input type="radio" name="q-${q.id}" value="${oi}" style="display:none"><div class="eval-option-letter">${letters[oi]||oi+1}</div><span>${o}</span></label>`).join('')}</div><div class="eval-explanation" id="exp-${q.id}" style="display:none">${q.explanation||''}</div></div>`;
-              }).join('')}
-            </div>
-            <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;margin-top:8px" onclick="submitEval()">Enviar Evaluación</button>
-          ` : `<div class="card" style="padding:32px;text-align:center"><p class="text-muted">Sin preguntas.</p><button class="btn btn-secondary" style="margin-top:16px" onclick="renderMyModules()">← Volver</button></div>`}
-        </div>`}
+        <div id="evalSection" style="display:none;margin-top:8px"></div>
+      ` : '<div id="evalSection" style="margin-top:8px"></div>'}
+    </div>
+  `);
+
+  // Inject questions into evalSection after DOM is ready
+  const evalSection = document.getElementById('evalSection');
+  if (evalSection) {
+    evalSection.innerHTML = buildQuestionsHtml(questions);
+  }
+}
+
+function buildQuestionsHtml(questions) {
+  if (!questions.length) return '<div class="card" style="padding:32px;text-align:center"><p class="text-muted">Este módulo aún no tiene preguntas.</p><button class="btn btn-secondary" style="margin-top:16px" onclick="renderMyModules()">← Volver</button></div>';
+  const letters = ['A','B','C','D','E'];
+  let html = '<div id="evalQuestions">';
+  questions.forEach((q, i) => {
+    const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
+    const type = q.type || 'single';
+    html += '<div class="eval-question-card" id="qcard-eval-' + q.id + '">';
+    if (type === 'open') {
+      html += '<div class="eval-q-num">Pregunta ' + (i+1) + ' de ' + questions.length + ' · ✏️ Desarrollo</div>';
+      html += '<div class="eval-q-text">' + q.question + '</div>';
+      html += '<textarea id="open-' + q.id + '" class="form-control" rows="4" placeholder="Escribí tu respuesta acá..." style="margin-top:12px;resize:vertical"></textarea>';
+    } else if (type === 'image') {
+      html += '<div class="eval-q-num">Pregunta ' + (i+1) + ' de ' + questions.length + ' · 🖼️ Con imagen</div>';
+      if (q.image_url) html += '<img src="' + q.image_url + '" style="width:100%;max-height:280px;object-fit:contain;border-radius:8px;margin-bottom:16px;border:1px solid var(--border)">';
+      html += '<div class="eval-q-text">' + q.question + '</div>';
+      if (opts.length >= 2) {
+        html += '<div class="eval-options" role="radiogroup">';
+        opts.forEach((o, oi) => { html += '<label class="eval-option" id="opt-' + q.id + '-' + oi + '" onclick="selectAnswer(\'' + q.id + '\',' + oi + ')" style="cursor:pointer"><input type="radio" name="q-' + q.id + '" value="' + oi + '" style="display:none"><div class="eval-option-letter">' + (letters[oi]||oi+1) + '</div><span>' + o + '</span></label>'; });
+        html += '</div>';
+      } else {
+        html += '<textarea id="open-' + q.id + '" class="form-control" rows="4" placeholder="Describí lo que ves en la imagen..." style="margin-top:12px;resize:vertical"></textarea>';
+      }
+      html += '<div class="eval-explanation" id="exp-' + q.id + '" style="display:none">' + (q.explanation||'') + '</div>';
+    } else if (type === 'multiple') {
+      html += '<div class="eval-q-num">Pregunta ' + (i+1) + ' de ' + questions.length + ' · ✅ Seleccioná todas las correctas</div>';
+      html += '<div class="eval-q-text">' + q.question + '</div>';
+      html += '<div class="eval-options">';
+      opts.forEach((o, oi) => { html += '<label class="eval-option" id="opt-' + q.id + '-' + oi + '" style="cursor:pointer" onclick="selectMultiple(\'' + q.id + '\',' + oi + ')"><input type="checkbox" name="q-' + q.id + '" value="' + oi + '" style="display:none"><div class="eval-option-letter" style="border-radius:4px">' + (letters[oi]||oi+1) + '</div><span>' + o + '</span></label>'; });
+      html += '</div>';
+      html += '<div class="eval-explanation" id="exp-' + q.id + '" style="display:none">' + (q.explanation||'') + '</div>';
+    } else {
+      html += '<div class="eval-q-num">Pregunta ' + (i+1) + ' de ' + questions.length + '</div>';
+      html += '<div class="eval-q-text">' + q.question + '</div>';
+      html += '<div class="eval-options" role="radiogroup">';
+      opts.forEach((o, oi) => { html += '<label class="eval-option" id="opt-' + q.id + '-' + oi + '" onclick="selectAnswer(\'' + q.id + '\',' + oi + ')" style="cursor:pointer"><input type="radio" name="q-' + q.id + '" value="' + oi + '" style="display:none"><div class="eval-option-letter">' + (letters[oi]||oi+1) + '</div><span>' + o + '</span></label>'; });
+      html += '</div>';
+      html += '<div class="eval-explanation" id="exp-' + q.id + '" style="display:none">' + (q.explanation||'') + '</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  html += '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;margin-top:8px" onclick="submitEval()">Enviar Evaluación</button>';
+  return html;
 }
 
 function selectAnswer(qId, oi) {
