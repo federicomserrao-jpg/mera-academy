@@ -732,6 +732,14 @@ tbody tr:hover { background: #FAFAFA; }
 .cert-score { font-size: 48px; font-weight: 800; color: var(--accent); }
 .cert-date { font-size: 12px; color: var(--text-light); margin-top: 24px; }
 
+/* ── RICH TEXT EDITOR ── */
+.rte-wrap { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.rte-toolbar { display:flex;gap:2px;padding:6px 8px;background:var(--bg);border-bottom:1px solid var(--border); }
+.rte-btn { padding:4px 8px;border:1px solid transparent;border-radius:4px;background:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--text-muted);transition:all 0.15s;font-family:'DM Sans',sans-serif; }
+.rte-btn:hover { background:var(--border);color:var(--text); }
+.rte-content { padding:10px 14px;min-height:60px;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:white; }
+.rte-content:empty::before { content:attr(data-placeholder);color:var(--text-light); }
+
 /* ── LOADING ── */
 .loading { display: flex; align-items: center; justify-content: center; padding: 60px; }
 .spinner {
@@ -1372,7 +1380,7 @@ async function openModuleModal(id) {
   const campOpts = CAMPAIGNS.map(c => `<option value="${c}" ${mod?.campaign===c?'selected':''}>${c}</option>`).join('');
   showModal('modal-module', `${id ? 'Editar' : 'Nuevo'} Módulo`, `
     <div class="form-group"><label class="form-label">Título</label><input class="form-control" id="mTitle" value="${mod?.title||''}"></div>
-    <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-control" id="mDesc" rows="2">${mod?.description||''}</textarea></div>
+    <div class="form-group"><label class="form-label">Descripción</label>${makeRTE('mDesc', mod?.description||'', 'Descripción del módulo...')}</div>
     <div class="form-group"><label class="form-label">URL del Video (YouTube embed)</label><input class="form-control" id="mVideo" placeholder="https://www.youtube.com/embed/..." value="${mod?.video_url||''}"></div>
     <div class="form-group">
       <label class="form-label">Duración del video (en minutos) <span style="color:var(--text-muted);font-weight:400">— las preguntas se habilitan al completar este tiempo</span></label>
@@ -1390,14 +1398,20 @@ async function openModuleModal(id) {
       <div class="form-group"><label class="form-label">Días Límite</label><input class="form-control" id="mDays" type="number" value="${mod?.days_limit||7}"></div>
       <div class="form-group"><label class="form-label">Máx. Intentos</label><input class="form-control" id="mAttempts" type="number" value="${mod?.max_attempts||3}"></div>
     </div>
-    <div class="form-group" style="display:flex;align-items:center;gap:10px">
-      <input type="checkbox" id="mRequired" ${mod?.is_required!==false?'checked':''}>
-      <label for="mRequired" style="font-size:13px;font-weight:500">Módulo obligatorio</label>
+    <div class="form-group" style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="mRequired" ${mod?.is_required!==false?'checked':''}>
+        <label for="mRequired" style="font-size:13px;font-weight:500">Módulo obligatorio</label>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="mRequireVideo" ${mod?.require_video_on_retry!==false?'checked':''}>
+        <label for="mRequireVideo" style="font-size:13px;font-weight:500">Obligar a ver el video al reintentar</label>
+      </div>
     </div>
   `, async () => {
     const payload = {
       title: document.getElementById('mTitle').value.trim(),
-      description: document.getElementById('mDesc').value.trim(),
+      description: rteVal('mDesc'),
       video_url: document.getElementById('mVideo').value.trim(),
       video_duration: Math.round((parseFloat(document.getElementById('mDuration').value)||0) * 60),
       campaign: document.getElementById('mCamp').value,
@@ -1405,6 +1419,7 @@ async function openModuleModal(id) {
       days_limit: parseInt(document.getElementById('mDays').value)||7,
       max_attempts: parseInt(document.getElementById('mAttempts').value)||3,
       is_required: document.getElementById('mRequired').checked,
+      require_video_on_retry: document.getElementById('mRequireVideo').checked,
       updated_at: new Date().toISOString()
     };
     if (!payload.title) { alert('El título es obligatorio'); return; }
@@ -1524,6 +1539,7 @@ async function deleteModuleFile(modId, fileName) {
 
 // ── QUESTIONS ──
 async function openQuestionsModal(modId, modTitle) {
+  window._currentModId = modId;
   const { data: qs } = await sb.from('questions').select('*').eq('module_id', modId).order('created_at');
   showModal('modal-questions', `Preguntas — ${modTitle}`, `
     <div id="questionsList">
@@ -1584,7 +1600,7 @@ function renderQuestionItem(q, i) {
     ${type === 'open' ? `
     <div class="form-group">
       <label class="form-label">Guía de corrección (visible solo para el admin)</label>
-      <textarea class="form-control" id="qe-${q.id}" rows="2" placeholder="Ej: El colaborador debe mencionar los 3 pasos del proceso...">${q.explanation||''}</textarea>
+${makeRTE('qe-'+q.id, q.explanation||'', 'Guía de corrección...')}
     </div>
     ` : `
     <div class="form-group" id="optsSection-${q.id}">
@@ -1612,7 +1628,7 @@ function renderQuestionItem(q, i) {
     </div>
     <div class="form-group">
       <label class="form-label">Explicación (se muestra si el colaborador se equivoca)</label>
-      <input class="form-control" id="qe-${q.id}" placeholder="Ej: La respuesta correcta es A porque..." value="${q.explanation||''}">
+${makeRTE('qe-'+q.id, q.explanation||'', 'Ej: La respuesta correcta es A porque...')}
     </div>
     `}
 
@@ -1627,7 +1643,7 @@ window.changeQuestionType = function(qId, newType) {
   // Update type visually by reloading the modal
   const fakeQ = {
     id: qId,
-    question: document.getElementById('qt-'+qId)?.value || '',
+    question: rteVal('qt-'+qId) || '',
     options: [0,1,2,3].map(i => document.getElementById(`qopt-${qId}-${i}`)?.value||''),
     correct_index: 0, correct_indices: [], explanation: document.getElementById('qe-'+qId)?.value||'',
     type: newType, image_url: ''
@@ -1662,6 +1678,32 @@ window.highlightMultiple = function(qId, idx, checked) {
   else if (!checked && span) span.remove();
 };
 
+
+async function uploadOptionImage(qId, optIdx, input) {
+  const file = input.files[0]; if (!file) return;
+  const path = 'options/' + qId + '_' + optIdx + '_' + Date.now() + '.' + file.name.split('.').pop();
+  const { error } = await sb.storage.from('module-files').upload(path, file, { upsert: true });
+  if (error) { alert('Error subiendo imagen: ' + error.message); return; }
+  const { data: { publicUrl } } = sb.storage.from('module-files').getPublicUrl(path);
+  const { data: curQ } = await sb.from('questions').select('option_images').eq('id', qId).single().catch(() => ({data:null}));
+  const imgs = Array.isArray(curQ?.option_images) ? [...curQ.option_images] : [];
+  while (imgs.length <= optIdx) imgs.push('');
+  imgs[optIdx] = publicUrl;
+  await sb.from('questions').update({ option_images: imgs }).eq('id', qId);
+  // Refresh the question card
+  const { data: allQs } = await sb.from('questions').select('*').eq('module_id', window._currentModId||'').order('created_at');
+  if (allQs) document.getElementById('questionsList').innerHTML = (allQs||[]).map((q2,i) => renderQuestionItem(q2, i)).join('');
+}
+
+async function removeOptionImage(qId, optIdx) {
+  const { data: curQ } = await sb.from('questions').select('option_images').eq('id', qId).single().catch(() => ({data:null}));
+  const imgs = Array.isArray(curQ?.option_images) ? [...curQ.option_images] : [];
+  imgs[optIdx] = '';
+  await sb.from('questions').update({ option_images: imgs }).eq('id', qId);
+  const { data: allQs } = await sb.from('questions').select('*').eq('module_id', window._currentModId||'').order('created_at');
+  if (allQs) document.getElementById('questionsList').innerHTML = (allQs||[]).map((q2,i) => renderQuestionItem(q2, i)).join('');
+}
+
 async function uploadQuestionImage(qId, input) {
   const file = input.files[0]; if (!file) return;
   const statusEl = document.getElementById('imgStatus-'+qId);
@@ -1689,10 +1731,10 @@ async function addNewQuestion(modId) {
 }
 
 async function saveQuestion(qId) {
-  const question = document.getElementById('qt-'+qId).value.trim();
-  if (!question) { alert('Escribí el enunciado de la pregunta'); return; }
+  const question = rteVal('qt-'+qId);
+  if (!question || question === '<br>') { alert('Escribí el enunciado de la pregunta'); return; }
   const type = document.getElementById('qtype-'+qId)?.value || 'single';
-  const exp = document.getElementById('qe-'+qId)?.value || '';
+  const exp = rteVal('qe-'+qId) || '';
 
   let opts = [], correctIndex = 0, correctIndices = [];
 
@@ -1709,7 +1751,10 @@ async function saveQuestion(qId) {
     }
   }
 
-  await sb.from('questions').update({ question, options: opts, correct_index: correctIndex, correct_indices: correctIndices, type, explanation: exp }).eq('id', qId);
+  // Get current option_images (managed separately via uploadOptionImage)
+  const { data: curQ2 } = await sb.from('questions').select('option_images').eq('id', qId).single().catch(() => ({data:null}));
+  const curOptImgs = curQ2?.option_images || [];
+  await sb.from('questions').update({ question, options: opts, correct_index: correctIndex, correct_indices: correctIndices, type, explanation: exp, option_images: curOptImgs }).eq('id', qId);
   const card = document.getElementById('qcard-'+qId);
   card.style.borderColor = 'var(--success)';
   card.style.background = 'var(--success-light)';
@@ -2304,6 +2349,7 @@ async function startModule(modId) {
   } catch(e) { console.warn('Files load error:', e); }
 
   const attempts = (comps||[]).length;
+  const skipVideo = attempts > 0 && mod.require_video_on_retry === false;
   if (attempts >= (mod.max_attempts||3)) {
     setContent(`<div class="result-card"><div style="font-size:48px">🚫</div><h2 style="margin:16px 0">Intentos agotados</h2><p class="text-muted">Alcanzaste el máximo de ${mod.max_attempts} intentos para este módulo.</p><button class="btn btn-secondary" style="margin-top:24px" onclick="renderMyModules()">← Volver</button></div>`);
     return;
@@ -2344,7 +2390,7 @@ async function startModule(modId) {
       <h2 style="margin-bottom:8px">${mod.title}</h2>
       <p class="text-muted" style="margin-bottom:24px">${mod.description||''}</p>
       ${filesHtml}
-      ${ytId ? `
+      ${(ytId && !skipVideo) ? `
         <div class="video-wrap">
           <iframe id="ytPlayer" src="https://www.youtube.com/embed/${ytId}?enablejsapi=1&origin=${encodeURIComponent(location.origin)}" allowfullscreen></iframe>
         </div>
@@ -2393,8 +2439,8 @@ async function startModule(modId) {
     evalSection.innerHTML = buildQuestionsHtml(questions);
   }
 
-  // Auto-start timer if video_duration is set
-  if (mod.video_duration > 0) {
+  // Auto-start timer if video_duration is set and not skipping video
+  if (mod.video_duration > 0 && !skipVideo) {
     if (window._videoTimer) clearInterval(window._videoTimer);
     setTimeout(() => startVideoTimer(mod.video_duration), 500);
   }
@@ -2444,6 +2490,28 @@ function buildQuestionsHtml(questions) {
   html += '</div>';
   html += '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;margin-top:8px" onclick="submitEval()">Enviar Evaluación</button>';
   return html;
+}
+
+// ── RICH TEXT EDITOR ──
+function makeRTE(id, value, placeholder) {
+  var bbs = [
+    ['<b>B</b>', 'bold', 'Negrita'],
+    ['<i>I</i>', 'italic', 'Cursiva'],
+    ['<u>U</u>', 'underline', 'Subrayado'],
+    ['<s>S</s>', 'strikeThrough', 'Tachado'],
+  ];
+  var btns = bbs.map(function(b) {
+    return '<button class="rte-btn" onmousedown="event.preventDefault();document.execCommand(\'' + b[1] + '\')" title="' + b[2] + '">' + b[0] + '</button>';
+  }).join('');
+  btns += '<span style="width:1px;background:var(--border);margin:0 4px;display:inline-block"></span>';
+  btns += '<button class="rte-btn" onmousedown="event.preventDefault();document.execCommand(\'removeFormat\')" title="Limpiar">✕</button>';
+  return '<div class="rte-wrap"><div class="rte-toolbar">' + btns + '</div>'
+    + '<div class="rte-content" id="' + id + '" contenteditable="true" data-placeholder="' + placeholder + '">' + (value||'') + '</div></div>';
+}
+
+function rteVal(id) {
+  const el = document.getElementById(id);
+  return el ? el.innerHTML : '';
 }
 
 function selectAnswer(qId, oi) {
@@ -2956,19 +3024,28 @@ async function viewUserProfile(uid) {
                   </div>`;
                 }
 
+                const mcAnswers = c.mc_answers || {};
+                const userChoseArr = type === 'multiple'
+                  ? (Array.isArray(mcAnswers[q.id]) ? mcAnswers[q.id] : [])
+                  : (mcAnswers[q.id] !== undefined ? [mcAnswers[q.id]] : []);
                 return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
                   <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">P${qi+1}</div>
                   <div style="font-size:13px;font-weight:600;margin-bottom:8px">${q.question}</div>
                   <div style="display:flex;flex-direction:column;gap:4px">
                     ${opts.map((o, oi) => {
                       const isCorrect = correctIndices.includes(oi);
-                      return `<div style="padding:6px 10px;border-radius:6px;font-size:12px;background:${isCorrect?'var(--success-light)':'var(--bg)'};border:1px solid ${isCorrect?'var(--success)':'var(--border)'};display:flex;align-items:center;gap:8px">
-                        <span>${isCorrect?'✅':'⬜'}</span>
+                      const userChose = userChoseArr.includes(oi);
+                      let bg = 'var(--bg)', border = 'var(--border)', badge = '';
+                      if (isCorrect && userChose) { bg='var(--success-light)'; border='var(--success)'; badge='✅ Correcta'; }
+                      else if (isCorrect && !userChose) { bg='var(--success-light)'; border='var(--success)'; badge='✅ Correcta (no eligió)'; }
+                      else if (!isCorrect && userChose) { bg='var(--danger-light)'; border='var(--danger)'; badge='❌ Eligió esta'; }
+                      return `<div style="padding:6px 10px;border-radius:6px;font-size:12px;background:${bg};border:1px solid ${border};display:flex;align-items:center;gap:8px">
                         <span style="flex:1">${o}</span>
-                        ${isCorrect?'<span style="font-size:11px;font-weight:700;color:var(--success)">Correcta</span>':''}
+                        ${badge ? `<span style="font-size:11px;font-weight:700;white-space:nowrap;color:${isCorrect?'var(--success)':'var(--danger)'}">${badge}</span>` : ''}
                       </div>`;
                     }).join('')}
                   </div>
+                  ${userChoseArr.length === 0 ? '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">⚠️ Sin respuesta registrada (intento anterior)</div>' : ''}
                 </div>`;
               }).join('')
             }
