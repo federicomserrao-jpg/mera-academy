@@ -1588,14 +1588,24 @@ function renderQuestionItem(q, i) {
 
     ${type === 'image' ? `
     <div class="form-group" id="imgSection-${q.id}">
-      <label class="form-label">Imagen de la pregunta</label>
+      <label class="form-label">Imagen del enunciado</label>
       ${q.image_url ? `<img src="${q.image_url}" style="max-width:100%;border-radius:8px;margin-bottom:10px;max-height:200px;object-fit:cover">` : ''}
       <div style="display:flex;gap:8px;align-items:center">
         <input type="file" id="qimg-${q.id}" accept="image/*" style="display:none" onchange="uploadQuestionImage('${q.id}', this)">
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('qimg-${q.id}').click()">📷 ${q.image_url ? 'Cambiar imagen' : 'Subir imagen'}</button>
         <span id="imgStatus-${q.id}" style="font-size:12px;color:var(--text-muted)"></span>
       </div>
-    </div>` : ''}
+    </div>` : `
+    <div class="form-group" id="imgSection-${q.id}">
+      <label class="form-label">Imagen del enunciado <span style="color:var(--text-muted);font-weight:400">(opcional)</span></label>
+      ${q.image_url ? `<img src="${q.image_url}" style="max-width:100%;border-radius:8px;margin-bottom:10px;max-height:200px;object-fit:cover">` : ''}
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="file" id="qimg-${q.id}" accept="image/*" style="display:none" onchange="uploadQuestionImage('${q.id}', this)">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('qimg-${q.id}').click()">📷 ${q.image_url ? 'Cambiar imagen' : '+ Agregar imagen'}</button>
+        ${q.image_url ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="removeQuestionImage('${q.id}')">✕ Quitar</button>` : ''}
+        <span id="imgStatus-${q.id}" style="font-size:12px;color:var(--text-muted)"></span>
+      </div>
+    </div>`}
 
     ${type === 'open' ? `
     <div class="form-group">
@@ -1708,19 +1718,24 @@ async function uploadQuestionImage(qId, input) {
   const file = input.files[0]; if (!file) return;
   const statusEl = document.getElementById('imgStatus-'+qId);
   if (statusEl) statusEl.textContent = 'Subiendo...';
-  const path = `questions/${qId}_${Date.now()}.${file.name.split('.').pop()}`;
+  const path = 'questions/' + qId + '_' + Date.now() + '.' + file.name.split('.').pop();
   const { error } = await sb.storage.from('module-files').upload(path, file, { upsert: true });
   if (error) { if (statusEl) statusEl.textContent = 'Error: '+error.message; return; }
   const { data: { publicUrl } } = sb.storage.from('module-files').getPublicUrl(path);
   await sb.from('questions').update({ image_url: publicUrl }).eq('id', qId);
   if (statusEl) statusEl.textContent = '✅ Imagen subida';
-  // Show preview
   const imgSection = document.getElementById('imgSection-'+qId);
   if (imgSection) {
     const existing = imgSection.querySelector('img');
     if (existing) existing.src = publicUrl;
-    else imgSection.insertAdjacentHTML('afterbegin', `<img src="${publicUrl}" style="max-width:100%;border-radius:8px;margin-bottom:10px;max-height:200px;object-fit:cover">`);
+    else imgSection.insertAdjacentHTML('afterbegin', '<img src="' + publicUrl + '" style="max-width:100%;border-radius:8px;margin-bottom:10px;max-height:200px;object-fit:cover">');
   }
+}
+
+async function removeQuestionImage(qId) {
+  await sb.from('questions').update({ image_url: '' }).eq('id', qId);
+  const imgSection = document.getElementById('imgSection-'+qId);
+  if (imgSection) imgSection.querySelector('img')?.remove();
 }
 
 async function addNewQuestion(modId) {
@@ -2454,13 +2469,14 @@ function buildQuestionsHtml(questions) {
     const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
     const type = q.type || 'single';
     html += '<div class="eval-question-card" id="qcard-eval-' + q.id + '">';
+    // Show image for ANY question type if it has one
+    if (q.image_url) html += '<img src="' + q.image_url + '" style="width:100%;max-height:280px;object-fit:contain;border-radius:8px;margin-bottom:16px;border:1px solid var(--border)">';
     if (type === 'open') {
       html += '<div class="eval-q-num">Pregunta ' + (i+1) + ' de ' + questions.length + ' · ✏️ Desarrollo</div>';
       html += '<div class="eval-q-text">' + q.question + '</div>';
       html += '<textarea id="open-' + q.id + '" class="form-control" rows="4" placeholder="Escribí tu respuesta acá..." style="margin-top:12px;resize:vertical"></textarea>';
     } else if (type === 'image') {
       html += '<div class="eval-q-num">Pregunta ' + (i+1) + ' de ' + questions.length + ' · 🖼️ Con imagen</div>';
-      if (q.image_url) html += '<img src="' + q.image_url + '" style="width:100%;max-height:280px;object-fit:contain;border-radius:8px;margin-bottom:16px;border:1px solid var(--border)">';
       html += '<div class="eval-q-text">' + q.question + '</div>';
       if (opts.length >= 2) {
         html += '<div class="eval-options" role="radiogroup">';
