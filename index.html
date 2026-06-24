@@ -1769,8 +1769,8 @@ async function addNewQuestion(modId) {
 }
 
 async function saveQuestion(qId) {
-  const question = rteVal('qt-'+qId).replace(/<br\s*\/?>/gi,'').trim();
-  if (!question || question === '') { alert('Escribí el enunciado de la pregunta'); return; }
+  const question = (document.getElementById('qt-'+qId)?.value || rteVal('qt-'+qId) || '').replace(/<br\s*\/?>/gi,'').trim();
+  if (!question) { alert('Escribí el enunciado de la pregunta'); return; }
   const type = document.getElementById('qtype-'+qId)?.value || 'single';
   const exp = rteVal('qe-'+qId) || '';
 
