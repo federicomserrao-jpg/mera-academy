@@ -1004,6 +1004,7 @@ function buildNav() {
     { id:'campaigns', icon:'🏷️', label:'Por Campaña' },
     { id:'overdue', icon:'⏰', label:'Vencidos' },
     { id:'surveys', icon:'⭐', label:'Encuestas' },
+    { id:'custom_surveys', icon:'📝', label:'Crear Encuesta' },
     { id:'assignments', icon:'📌', label:'Asignaciones' },
     { id:'logs', icon:'📋', label:'Historial' },
   ] : window.S.role === 'sup' ? [
@@ -1029,7 +1030,7 @@ function navigate(page) {
   const titles = {
     dashboard: 'Dashboard', courses: 'Cursos', modules: 'Módulos', users: 'Colaboradores',
     results: 'Resultados', campaigns: 'Por Campaña', overdue: 'Módulos Vencidos',
-    surveys: 'Encuestas', assignments: 'Asignaciones', logs: 'Historial de Cambios',
+    surveys: 'Encuestas de Satisfacción', custom_surveys: 'Encuestas Personalizadas', assignments: 'Asignaciones', logs: 'Historial de Cambios',
     mycourses: 'Mis Cursos', mymodules: 'Mis Módulos', myresults: 'Mis Resultados', myprofile: 'Mi Perfil',
     sup_dashboard: 'Dashboard', sup_results: 'Resultados', sup_campaigns: 'Por Campaña',
     sup_overdue: 'Vencidos', sup_surveys: 'Encuestas'
@@ -1044,6 +1045,7 @@ function navigate(page) {
     campaigns: renderCampaigns,
     overdue: renderOverdue,
     surveys: renderSurveys,
+    custom_surveys: renderCustomSurveys,
     assignments: renderAssignments,
     logs: renderLogs,
     mycourses: renderMyCourses,
@@ -1552,6 +1554,7 @@ async function openQuestionsModal(modId, modTitle) {
 function renderQuestionItem(q, i) {
   const opts = JSON.parse(typeof q.options === 'string' ? q.options : JSON.stringify(q.options));
   while (opts.length < 4) opts.push('');
+  // Keep at least 2 options, hide empty ones beyond 2
   const letters = ['A','B','C','D'];
   const type = q.type || 'single';
   const correctIndices = Array.isArray(q.correct_indices) ? q.correct_indices : 
@@ -1623,15 +1626,23 @@ ${makeRTE('qe-'+q.id, q.explanation||'', 'Guía de corrección...')}
       <div style="display:flex;flex-direction:column;gap:8px">
         ${opts.map((o, oi) => {
           const isCorrect = correctIndices.includes(oi);
-          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid ${isCorrect?'var(--success)':'var(--border)'};border-radius:var(--radius-sm);background:${isCorrect?'var(--success-light)':'white'};transition:all 0.15s" id="optrow-${q.id}-${oi}">
-            <input type="${type==='multiple'?'checkbox':'radio'}" name="correct-${q.id}" value="${oi}" ${isCorrect?'checked':''}
-              onchange="${type==='multiple'?`highlightMultiple('${q.id}',${oi},this.checked)`:`highlightCorrect('${q.id}',${oi})`}"
-              style="width:18px;height:18px;accent-color:var(--success);cursor:pointer;flex-shrink:0">
-            <div style="width:24px;height:24px;border-radius:${type==='multiple'?'4px':'50%'};background:${isCorrect?'var(--success)':'var(--bg)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${isCorrect?'white':'var(--text-muted)'};flex-shrink:0">${letters[oi]}</div>
-            <input type="text" value="${o}" placeholder="Opción ${letters[oi]}..."
-              id="qopt-${q.id}-${oi}"
-              style="flex:1;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:13px;background:transparent;color:var(--text)">
-            ${isCorrect ? `<span style="font-size:11px;font-weight:600;color:var(--success);white-space:nowrap">✓ Correcta</span>` : ''}
+          const optImg = (optionImages||[])[oi] || '';
+          return `<div style="border:2px solid ${isCorrect?'var(--success)':'var(--border)'};border-radius:var(--radius-sm);background:${isCorrect?'var(--success-light)':'white'};overflow:hidden" id="optrow-${q.id}-${oi}">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px">
+              <input type="${type==='multiple'?'checkbox':'radio'}" name="correct-${q.id}" value="${oi}" ${isCorrect?'checked':''}
+                onchange="${type==='multiple'?`highlightMultiple('${q.id}',${oi},this.checked)`:`highlightCorrect('${q.id}',${oi})`}"
+                style="width:18px;height:18px;accent-color:var(--success);cursor:pointer;flex-shrink:0">
+              <div style="width:24px;height:24px;border-radius:${type==='multiple'?'4px':'50%'};background:${isCorrect?'var(--success)':'var(--bg)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${isCorrect?'white':'var(--text-muted)'};flex-shrink:0">${letters[oi]}</div>
+              <input type="text" value="${o}" placeholder="Opción ${letters[oi]}..."
+                id="qopt-${q.id}-${oi}"
+                style="flex:1;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:13px;background:transparent;color:var(--text)">
+              ${isCorrect ? `<span style="font-size:11px;font-weight:600;color:var(--success);white-space:nowrap">✓ Correcta</span>` : ''}
+            </div>
+            <div style="padding:0 12px 8px;display:flex;align-items:center;gap:8px">
+              ${optImg ? `<img src="${optImg}" style="max-width:100px;max-height:60px;border-radius:4px;object-fit:cover">` : ''}
+              <input type="file" id="optimg-${q.id}-${oi}" accept="image/*" style="display:none" onchange="uploadOptionImage('${q.id}',${oi},this)">
+              <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 8px" onclick="document.getElementById('optimg-${q.id}-${oi}').click()">🖼️ ${optImg?'Cambiar':'+ Imagen para opción '+letters[oi]}</button>
+            </div>
           </div>`;
         }).join('')}
       </div>
@@ -1785,6 +1796,7 @@ async function deleteQuestion(qId) {
 // ── USERS ADMIN ──
 async function renderUsers() {
   setTopbarActions(`
+    <button class="btn btn-secondary" onclick="openBulkCampaignModal()">🏷️ Cambiar Campaña Masiva</button>
     <button class="btn btn-secondary" onclick="exportUsersTemplate()">📋 Descargar Plantilla</button>
     <button class="btn btn-secondary" onclick="exportCurrentUsers()">📤 Exportar Listado</button>
     <button class="btn btn-secondary" onclick="importUsersCSV()">📥 Importar CSV</button>
@@ -3303,7 +3315,207 @@ window.scoreOpenAnswer = async function(completionId, questionId, score, userId)
   if (pendingBadge) { pendingBadge.textContent = `Calificado: ${score}/10`; pendingBadge.className = 'badge badge-blue'; }
 };
 
-// ── SUPERVISOR VIEWS (solo lectura) ──
+// ── BULK CAMPAIGN ASSIGNMENT ──
+async function openBulkCampaignModal() {
+  const campOpts = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR']
+    .map(c => `<option value="${c}">${c}</option>`).join('');
+  showModal('modal-bulk-campaign', '🏷️ Cambiar Campaña Masiva', `
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Podés cambiar la campaña a múltiples colaboradores de dos formas:</p>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="padding:16px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
+        <div style="font-weight:600;margin-bottom:8px">Opción 1 — Por campaña actual</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div class="form-group" style="margin:0;flex:1;min-width:150px">
+            <label class="form-label">De campaña</label>
+            <select class="form-control" id="bulkFrom">${campOpts}</select>
+          </div>
+          <div style="font-size:20px;padding-top:20px">→</div>
+          <div class="form-group" style="margin:0;flex:1;min-width:150px">
+            <label class="form-label">A campaña</label>
+            <select class="form-control" id="bulkTo">${campOpts}</select>
+          </div>
+          <button class="btn btn-primary" style="margin-top:20px" onclick="bulkChangeCampaign()">Cambiar</button>
+        </div>
+      </div>
+      <div style="padding:16px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
+        <div style="font-weight:600;margin-bottom:8px">Opción 2 — Por CSV</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Formato: Usuario,Campaña (una por línea)</div>
+        <textarea class="form-control" id="bulkCsvText" rows="5" placeholder="jperez,ADT&#10;mgarcia,EDESUR&#10;aalegre,FARMACITY"></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="bulkChangeCampaignCSV()">Aplicar CSV</button>
+      </div>
+    </div>
+    <div id="bulkResult" style="margin-top:12px"></div>
+  `, null, true);
+}
+
+async function bulkChangeCampaign() {
+  const from = document.getElementById('bulkFrom').value;
+  const to = document.getElementById('bulkTo').value;
+  if (from === to) { alert('Las campañas son iguales'); return; }
+  if (!confirm('¿Cambiar TODOS los colaboradores de ' + from + ' a ' + to + '?')) return;
+  const { data, error } = await sb.from('users').update({ campaign: to }).eq('campaign', from).eq('role', 'col').select('id');
+  const resultEl = document.getElementById('bulkResult');
+  if (error) { resultEl.innerHTML = '<div style="color:var(--danger)">Error: ' + error.message + '</div>'; return; }
+  resultEl.innerHTML = '<div style="color:var(--success);font-weight:600">✅ ' + (data?.length||0) + ' colaboradores actualizados de ' + from + ' → ' + to + '</div>';
+}
+
+async function bulkChangeCampaignCSV() {
+  const text = document.getElementById('bulkCsvText').value.trim();
+  if (!text) { alert('Pegá el contenido CSV'); return; }
+  const rows = text.split('\n').map(r => r.trim().split(',')).filter(r => r.length >= 2 && r[0]);
+  const resultEl = document.getElementById('bulkResult');
+  let ok = 0, fail = 0;
+  for (const [username, campaign] of rows) {
+    const { error } = await sb.from('users').update({ campaign: campaign.trim() }).eq('username', username.trim()).eq('role', 'col');
+    if (error) fail++; else ok++;
+  }
+  resultEl.innerHTML = '<div style="color:var(--success);font-weight:600">✅ ' + ok + ' actualizados' + (fail > 0 ? ' · ⚠️ ' + fail + ' errores' : '') + '</div>';
+}
+
+// ── CUSTOM SURVEYS ──
+async function renderCustomSurveys() {
+  setTopbarActions('<button class="btn btn-primary" onclick="openCustomSurveyModal()">＋ Nueva Encuesta</button>');
+  setContent('<div class="loading"><div class="spinner"></div></div>');
+  const { data: surveys } = await sb.from('custom_surveys').select('*').order('created_at', { ascending: false });
+  setContent(`
+    <div class="campaign-grid">
+      ${!(surveys||[]).length ? '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📝</div><h3>No hay encuestas personalizadas</h3><p>Creá la primera con el botón de arriba</p></div>' :
+        (surveys||[]).map(s => `
+          <div class="card" style="padding:0;overflow:hidden">
+            <div style="background:var(--accent);padding:16px 20px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span class="badge" style="background:rgba(255,255,255,0.2);color:white">${s.campaign}</span>
+                <span style="font-size:11px;color:rgba(255,255,255,0.7)">${s.activo?'● Activa':'○ Inactiva'}</span>
+              </div>
+              <div style="font-size:16px;font-weight:700;color:white">${s.title}</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.75)">${s.description||''}</div>
+            </div>
+            <div style="padding:14px 20px;display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" style="flex:1" onclick="openCustomSurveyQuestions('${s.id}','${s.title.replace(/'/g,"\\'")}')">❓ Preguntas</button>
+              <button class="btn btn-secondary btn-sm" style="flex:1" onclick="viewCustomSurveyResults('${s.id}','${s.title.replace(/'/g,"\\'")}')">📊 Resultados</button>
+              <button class="btn btn-ghost btn-sm" onclick="openCustomSurveyModal('${s.id}')">✏️</button>
+              <button class="btn btn-ghost btn-sm" onclick="deleteCustomSurvey('${s.id}')" style="color:var(--danger)">🗑️</button>
+            </div>
+          </div>`).join('')}
+    </div>
+  `);
+}
+
+async function openCustomSurveyModal(id) {
+  let s = null;
+  if (id) { const { data } = await sb.from('custom_surveys').select('*').eq('id', id).single(); s = data; }
+  const campOpts = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR']
+    .map(c => `<option value="${c}" ${s?.campaign===c?'selected':''}>${c}</option>`).join('');
+  showModal('modal-cs', `${id?'Editar':'Nueva'} Encuesta`, `
+    <div class="form-group"><label class="form-label">Título</label><input class="form-control" id="csTitle" value="${s?.title||''}"></div>
+    <div class="form-group"><label class="form-label">Descripción</label><textarea class="form-control" id="csDesc" rows="2">${s?.description||''}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Campaña</label><select class="form-control" id="csCamp">${campOpts}</select></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px;padding-top:28px">
+        <input type="checkbox" id="csActivo" ${s?.activo!==false?'checked':''}>
+        <label for="csActivo" style="font-size:13px;font-weight:500">Activa</label>
+      </div>
+    </div>
+  `, async () => {
+    const payload = { title: document.getElementById('csTitle').value.trim(), description: document.getElementById('csDesc').value.trim(), campaign: document.getElementById('csCamp').value, activo: document.getElementById('csActivo').checked };
+    if (!payload.title) { alert('El título es obligatorio'); return; }
+    if (id) await sb.from('custom_surveys').update(payload).eq('id', id);
+    else await sb.from('custom_surveys').insert(payload);
+    closeModal(); renderCustomSurveys();
+  });
+}
+
+async function deleteCustomSurvey(id) {
+  if (!confirm('¿Eliminar esta encuesta?')) return;
+  await sb.from('custom_surveys').delete().eq('id', id);
+  renderCustomSurveys();
+}
+
+async function openCustomSurveyQuestions(surveyId, surveyTitle) {
+  const { data: qs } = await sb.from('custom_survey_questions').select('*').eq('survey_id', surveyId).order('sort_order');
+  showModal('modal-csq', 'Preguntas — ' + surveyTitle, `
+    <div id="csSurveyQList">
+      ${!(qs||[]).length ? '<div style="text-align:center;padding:20px;color:var(--text-muted)">Sin preguntas aún</div>' :
+        (qs||[]).map((q,i) => buildSurveyQuestionItem(q,i)).join('')}
+    </div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:12px" onclick="addCustomSurveyQuestion('${surveyId}')">＋ Agregar Pregunta</button>
+  `, null, true);
+  window._currentSurveyId = surveyId;
+}
+
+function buildSurveyQuestionItem(q, i) {
+  const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
+  const types = { single: '☑️ Una respuesta', multiple: '✅ Varias', open: '✏️ Texto libre', scale: '⭐ Escala 1-5' };
+  return `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px" id="csqcard-${q.id}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span class="badge badge-blue">${types[q.type]||q.type}</span>
+      <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteCustomSurveyQuestion('${q.id}')">🗑️</button>
+    </div>
+    <div class="form-group"><label class="form-label">Pregunta</label><input class="form-control" id="csqt-${q.id}" value="${q.question.replace(/"/g,'&quot;')}"></div>
+    <div class="form-group"><label class="form-label">Tipo</label>
+      <select class="form-control" id="csqtype-${q.id}">
+        <option value="single" ${q.type==='single'?'selected':''}>☑️ Una respuesta</option>
+        <option value="multiple" ${q.type==='multiple'?'selected':''}>✅ Varias respuestas</option>
+        <option value="open" ${q.type==='open'?'selected':''}>✏️ Texto libre</option>
+        <option value="scale" ${q.type==='scale'?'selected':''}>⭐ Escala 1-5</option>
+      </select>
+    </div>
+    ${q.type !== 'open' && q.type !== 'scale' ? `
+    <div class="form-group"><label class="form-label">Opciones (una por línea)</label>
+      <textarea class="form-control" id="csqopts-${q.id}" rows="3">${opts.join('\n')}</textarea>
+    </div>` : ''}
+    <button class="btn btn-primary btn-sm" onclick="saveCustomSurveyQuestion('${q.id}')">💾 Guardar</button>
+  </div>`;
+}
+
+async function addCustomSurveyQuestion(surveyId) {
+  const { data: existing } = await sb.from('custom_survey_questions').select('count').eq('survey_id', surveyId);
+  const order = existing?.[0]?.count || 0;
+  await sb.from('custom_survey_questions').insert({ survey_id: surveyId, question: 'Nueva pregunta', type: 'single', options: ['Sí', 'No'], sort_order: order });
+  const { data: qs } = await sb.from('custom_survey_questions').select('*').eq('survey_id', surveyId).order('sort_order');
+  document.getElementById('csSurveyQList').innerHTML = (qs||[]).map((q,i) => buildSurveyQuestionItem(q,i)).join('');
+}
+
+async function saveCustomSurveyQuestion(qId) {
+  const question = document.getElementById('csqt-'+qId).value.trim();
+  const type = document.getElementById('csqtype-'+qId).value;
+  const optsEl = document.getElementById('csqopts-'+qId);
+  const options = optsEl ? optsEl.value.split('\n').map(s=>s.trim()).filter(Boolean) : [];
+  await sb.from('custom_survey_questions').update({ question, type, options }).eq('id', qId);
+  const card = document.getElementById('csqcard-'+qId);
+  if (card) { card.style.borderColor='var(--success)'; setTimeout(()=>{card.style.borderColor='';},1500); }
+}
+
+async function deleteCustomSurveyQuestion(qId) {
+  if (!confirm('¿Eliminar esta pregunta?')) return;
+  await sb.from('custom_survey_questions').delete().eq('id', qId);
+  document.getElementById('csqcard-'+qId)?.remove();
+}
+
+async function viewCustomSurveyResults(surveyId, surveyTitle) {
+  const [{ data: responses }, { data: users }, { data: qs }] = await Promise.all([
+    sb.from('custom_survey_responses').select('*').eq('survey_id', surveyId),
+    sb.from('users').select('id,full_name,campaign'),
+    sb.from('custom_survey_questions').select('*').eq('survey_id', surveyId).order('sort_order')
+  ]);
+  const uMap = Object.fromEntries((users||[]).map(u=>[u.id,u]));
+  showModal('modal-csr', 'Resultados — ' + surveyTitle, `
+    <div style="margin-bottom:16px;font-size:13px;color:var(--text-muted)">${(responses||[]).length} respuestas recibidas</div>
+    ${!(responses||[]).length ? '<div class="empty-state"><div class="empty-icon">📊</div><h3>Sin respuestas aún</h3></div>' :
+      (responses||[]).map(r => {
+        const u = uMap[r.user_id];
+        const answers = r.answers || {};
+        return `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px">
+          <div style="font-weight:600;margin-bottom:10px">${u?.full_name||'—'} <span style="font-size:12px;color:var(--text-muted)">${u?.campaign||''} · ${new Date(r.created_at).toLocaleDateString('es-AR')}</span></div>
+          ${(qs||[]).map(q => `<div style="margin-bottom:8px"><div style="font-size:12px;color:var(--text-muted)">${q.question}</div>
+            <div style="font-size:13px;font-weight:500">${Array.isArray(answers[q.id]) ? answers[q.id].join(', ') : (answers[q.id]||'—')}</div>
+          </div>`).join('')}
+        </div>`;
+      }).join('')}
+  `, null, true);
+}
+
+// ── SUPERVISOR VIEWS ──
 async function renderSupDashboard() {
   setTopbarActions('');
   setContent('<div class="loading"><div class="spinner"></div></div>');
