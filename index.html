@@ -1357,8 +1357,8 @@ async function renderModules() {
               <td>${m.questions?.[0]?.count||0}</td>
               <td>
                 <button class="btn btn-ghost btn-sm" onclick="openModuleModal('${m.id}')">✏️ Editar</button>
-                <button class="btn btn-ghost btn-sm" onclick="openQuestionsModal('${m.id}','${m.title.replace(/'/g,"\\'")}')">❓ Preguntas</button>
-                <button class="btn btn-ghost btn-sm" onclick="openModuleFilesModal('${m.id}','${m.title.replace(/'/g,"\\'")}')">📎 Archivos</button>
+                <button class="btn btn-ghost btn-sm" onclick="openQuestionsModalById('${m.id}')">❓ Preguntas</button>
+                <button class="btn btn-ghost btn-sm" onclick="openModuleFilesModalById('${m.id}')">📎 Archivos</button>
                 <button class="btn btn-ghost btn-sm" onclick="deleteModule('${m.id}')" style="color:var(--danger)">🗑️</button>
               </td>
             </tr>`).join('')}
@@ -1540,6 +1540,16 @@ async function deleteModuleFile(modId, fileName) {
 }
 
 // ── QUESTIONS ──
+async function openQuestionsModalById(modId) {
+  const { data: mod } = await sb.from('modules').select('id,title').eq('id', modId).single();
+  if (mod) openQuestionsModal(mod.id, mod.title);
+}
+
+async function openModuleFilesModalById(modId) {
+  const { data: mod } = await sb.from('modules').select('id,title').eq('id', modId).single();
+  if (mod) openModuleFilesModal(mod.id, mod.title);
+}
+
 async function openQuestionsModal(modId, modTitle) {
   window._currentModId = modId;
   const { data: qs } = await sb.from('questions').select('*').eq('module_id', modId).order('created_at');
