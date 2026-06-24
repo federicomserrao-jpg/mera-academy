@@ -1718,7 +1718,7 @@ async function uploadOptionImage(qId, optIdx, input) {
   const { error } = await sb.storage.from('module-files').upload(path, file, { upsert: true });
   if (error) { alert('Error subiendo imagen: ' + error.message); return; }
   const { data: { publicUrl } } = sb.storage.from('module-files').getPublicUrl(path);
-  const { data: curQ } = await sb.from('questions').select('option_images').eq('id', qId).single().catch(() => ({data:null}));
+  const { data: curQ } = await sb.from('questions').select('option_images').eq('id', qId).single().then(r=>r).catch(()=>({data:null}));
   const imgs = Array.isArray(curQ?.option_images) ? [...curQ.option_images] : [];
   while (imgs.length <= optIdx) imgs.push('');
   imgs[optIdx] = publicUrl;
@@ -1729,7 +1729,7 @@ async function uploadOptionImage(qId, optIdx, input) {
 }
 
 async function removeOptionImage(qId, optIdx) {
-  const { data: curQ } = await sb.from('questions').select('option_images').eq('id', qId).single().catch(() => ({data:null}));
+  const { data: curQ } = await sb.from('questions').select('option_images').eq('id', qId).single().then(r=>r).catch(()=>({data:null}));
   const imgs = Array.isArray(curQ?.option_images) ? [...curQ.option_images] : [];
   imgs[optIdx] = '';
   await sb.from('questions').update({ option_images: imgs }).eq('id', qId);
@@ -1790,8 +1790,8 @@ async function saveQuestion(qId) {
   }
 
   // Get current option_images (managed separately via uploadOptionImage)
-  const { data: curQ2 } = await sb.from('questions').select('option_images').eq('id', qId).single().catch(() => ({data:null}));
-  const curOptImgs = curQ2?.option_images || [];
+  let curOptImgs = [];
+  try { const { data: curQ2 } = await sb.from('questions').select('option_images').eq('id', qId).single(); curOptImgs = curQ2?.option_images || []; } catch(e) {}
   await sb.from('questions').update({ question, options: opts, correct_index: correctIndex, correct_indices: correctIndices, type, explanation: exp, option_images: curOptImgs }).eq('id', qId);
   const card = document.getElementById('qcard-'+qId);
   card.style.borderColor = 'var(--success)';
