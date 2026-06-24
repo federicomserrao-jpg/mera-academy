@@ -1569,6 +1569,8 @@ function renderQuestionItem(q, i) {
   const type = q.type || 'single';
   const correctIndices = Array.isArray(q.correct_indices) ? q.correct_indices : 
     (q.correct_indices ? JSON.parse(q.correct_indices) : [q.correct_index || 0]);
+  const optionImages = Array.isArray(q.option_images) ? q.option_images :
+    (q.option_images ? (typeof q.option_images === 'string' ? JSON.parse(q.option_images) : q.option_images) : []);
 
   const typeLabels = { single: '☑️ Una respuesta', multiple: '✅ Varias respuestas', open: '✏️ Desarrollo', image: '🖼️ Con imagen' };
 
