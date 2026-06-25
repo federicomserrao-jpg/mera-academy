@@ -1383,7 +1383,18 @@ async function openModuleModal(id) {
   showModal('modal-module', `${id ? 'Editar' : 'Nuevo'} Módulo`, `
     <div class="form-group"><label class="form-label">Título</label><input class="form-control" id="mTitle" value="${mod?.title||''}"></div>
     <div class="form-group"><label class="form-label">Descripción</label>${makeRTE('mDesc', mod?.description||'', 'Descripción del módulo...')}</div>
-    <div class="form-group"><label class="form-label">URL del Video (YouTube embed)</label><input class="form-control" id="mVideo" placeholder="https://www.youtube.com/embed/..." value="${mod?.video_url||''}"></div>
+    <div class="form-group">
+      <label class="form-label">Video</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input class="form-control" id="mVideo" placeholder="https://www.youtube.com/embed/... o URL del video" value="${mod?.video_url||''}">
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="file" id="mVideoFile" accept="video/*" style="display:none" onchange="uploadModuleVideo(this)">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('mVideoFile').click()">📹 Subir video MP4</button>
+        <span id="mVideoStatus" style="font-size:12px;color:var(--text-muted)"></span>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Podés pegar una URL de YouTube/Vimeo o subir un MP4 directamente</div>
+    </div>
     <div class="form-group">
       <label class="form-label">Duración del video (en minutos) <span style="color:var(--text-muted);font-weight:400">— las preguntas se habilitan al completar este tiempo</span></label>
       <div style="display:flex;align-items:center;gap:10px">
@@ -1777,8 +1788,16 @@ async function saveQuestion(qId) {
   let opts = [], correctIndex = 0, correctIndices = [];
 
   if (type !== 'open') {
-    opts = [0,1,2,3].map(i => (document.getElementById(`qopt-${qId}-${i}`)?.value||'').trim()).filter(Boolean);
-    if (opts.length < 2) { alert('Agregá al menos 2 opciones'); return; }
+    // Collect options - text is optional if there's an image for that option
+    let curOptImgsCheck = [];
+    try { const { data: qCheck } = await sb.from('questions').select('option_images').eq('id', qId).single(); curOptImgsCheck = qCheck?.option_images || []; } catch(e) {}
+    opts = [0,1,2,3].map(i => (document.getElementById(`qopt-${qId}-${i}`)?.value||'').trim());
+    // Keep option if it has text OR has an image
+    const validOpts = opts.map((o,i) => o !== '' || (curOptImgsCheck[i] && curOptImgsCheck[i] !== ''));
+    const filledCount = validOpts.filter(Boolean).length;
+    if (filledCount < 2) { alert('Agregá al menos 2 opciones (texto o imagen)'); return; }
+    // Replace empty text options that have images with a space placeholder
+    opts = opts.map((o,i) => (o === '' && curOptImgsCheck[i]) ? ' ' : o).filter((o,i) => validOpts[i]);
     if (type === 'multiple') {
       correctIndices = [0,1,2,3].filter(i => document.querySelector(`input[name="correct-${qId}"][value="${i}"]`)?.checked);
       if (!correctIndices.length) { alert('Marcá al menos una respuesta correcta'); return; }
@@ -2395,6 +2414,7 @@ async function startModule(modId) {
   }
   const getYouTubeId = url => { const m = url?.match(/(?:embed\/|v=|youtu\.be\/)([^?&]+)/); return m?m[1]:null; };
   const ytId = getYouTubeId(mod.video_url);
+  const isMp4 = mod.video_url && !ytId && /\.(mp4|webm|ogg|mov)(\?|$)/i.test(mod.video_url);
   const questions = (qs||[]).slice(0,10);
   window._evalState = { mod, questions, answers: {}, submitted: false, attempt: attempts + 1 };
 
@@ -2460,6 +2480,33 @@ async function startModule(modId) {
         </div>
         <div id="evalSection" style="display:none;margin-top:8px"></div>
         `}
+      ` : isMp4 ? `
+        <div style="margin-bottom:24px">
+          <video id="mp4Player" controls controlsList="nodownload" style="width:100%;border-radius:var(--radius);background:#000;max-height:420px" ${mod.video_duration > 0 ? 'onended="window.revealEval()"' : ''}>
+            <source src="${mod.video_url}" type="video/mp4">
+          </video>
+        </div>
+        ${mod.video_duration > 0 && !skipVideo ? `
+        <div id="videoGate" style="margin:24px 0;padding:20px 24px;background:var(--accent-light);border:2px solid var(--accent);border-radius:var(--radius)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div>
+              <div style="font-weight:700;font-size:15px;margin-bottom:3px">⏱️ Mirá el video completo</div>
+              <div style="font-size:13px;color:var(--text-muted)">La evaluación se habilita cuando termine el video</div>
+            </div>
+            <div style="text-align:center">
+              <div id="timerDisplay" style="font-size:28px;font-weight:800;color:var(--accent);font-family:'DM Mono',monospace">${formatDuration(mod.video_duration)}</div>
+              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">restante</div>
+            </div>
+          </div>
+          <div class="progress-bar" style="height:8px;margin-bottom:12px">
+            <div id="timerBar" style="height:100%;width:0%;background:var(--accent);border-radius:10px;transition:width 1s linear"></div>
+          </div>
+          <button class="btn btn-primary" id="evalBtn" style="width:100%;padding:12px;font-size:15px;opacity:0.4;cursor:not-allowed" disabled onclick="window.revealEval()">
+            🔒 Completá el video para desbloquear la evaluación
+          </button>
+        </div>
+        <div id="evalSection" style="display:none;margin-top:8px"></div>
+        ` : `<div id="evalSection" style="margin-top:8px"></div>`}
       ` : mod.video_url ? `
         <div class="card" style="padding:16px;margin-bottom:24px;text-align:center">
           <a href="${mod.video_url}" target="_blank" class="btn btn-primary">▶️ Ver Video</a>
@@ -3152,6 +3199,19 @@ async function exportUserAnswers(uid) {
   a.download = `respuestas_${u.full_name.replace(/ /g,'_')}.csv`;
   a.click();
 }
+
+// ── MODULE VIDEO UPLOAD ──
+window.uploadModuleVideo = async function(input) {
+  const file = input.files[0]; if (!file) return;
+  const statusEl = document.getElementById('mVideoStatus');
+  if (statusEl) statusEl.textContent = 'Subiendo... puede tardar unos minutos';
+  const path = 'videos/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const { error } = await sb.storage.from('module-files').upload(path, file, { upsert: true });
+  if (error) { if (statusEl) statusEl.textContent = '❌ Error: ' + error.message; return; }
+  const { data: { publicUrl } } = sb.storage.from('module-files').getPublicUrl(path);
+  document.getElementById('mVideo').value = publicUrl;
+  if (statusEl) statusEl.textContent = '✅ Video subido correctamente';
+};
 
 // ── UNLOCK MANAGEMENT ──
 async function openUnlockModal(uid) {
