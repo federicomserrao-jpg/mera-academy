@@ -3588,22 +3588,36 @@ async function viewCustomSurveyResults(surveyId, surveyTitle) {
 }
 
 // ── SUPERVISOR VIEWS ──
+async function getSupCampaigns() {
+  // Get supervisor's assigned campaigns from DB
+  const { data: supUser } = await sb.from('users').select('campaigns,campaign').eq('id', window.S.user.id).single().then(r=>r).catch(()=>({data:null}));
+  const camps = Array.isArray(supUser?.campaigns) && supUser.campaigns.length > 0
+    ? supUser.campaigns
+    : (supUser?.campaign ? [supUser.campaign] : []);
+  return camps.map(c => c.toUpperCase());
+}
+
 async function renderSupDashboard() {
   setTopbarActions('');
   setContent('<div class="loading"><div class="spinner"></div></div>');
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
+  const supCamps = await getSupCampaigns();
+  const [{ data: allUsers }, { data: mods }, { data: comps }] = await Promise.all([
     sb.from('users').select('*').eq('role','col'),
     sb.from('modules').select('*'),
     sb.from('completions').select('*')
   ]);
-  const passed = (comps||[]).filter(c => c.passed).length;
-  const failed = (comps||[]).filter(c => !c.passed).length;
-  const avgScore = (comps||[]).length ? Math.round((comps||[]).reduce((a,c)=>a+c.score,0)/(comps||[]).length) : 0;
+  // Filter users to supervisor's campaigns
+  const users = (allUsers||[]).filter(u => supCamps.length === 0 || supCamps.includes((u.campaign||'').toUpperCase()));
+  const userIds = new Set(users.map(u => u.id));
+  const filteredComps = (comps||[]).filter(c => userIds.has(c.user_id));
+  const passed = filteredComps.filter(c => c.passed).length;
+  const failed = filteredComps.filter(c => !c.passed).length;
+  const avgScore = filteredComps.length ? Math.round(filteredComps.reduce((a,c)=>a+c.score,0)/filteredComps.length) : 0;
 
   // Top 5 módulos con más aprobaciones
   const modMap = Object.fromEntries((mods||[]).map(m=>[m.id,m]));
   const modStats = {};
-  (comps||[]).forEach(c => {
+  filteredComps.forEach(c => {
     if (!modStats[c.module_id]) modStats[c.module_id] = { passed:0, total:0 };
     modStats[c.module_id].total++;
     if (c.passed) modStats[c.module_id].passed++;
@@ -3611,12 +3625,12 @@ async function renderSupDashboard() {
   const topMods = Object.entries(modStats).sort((a,b)=>b[1].passed-a[1].passed).slice(0,5);
 
   // Actividad reciente
-  const recentComps = [...(comps||[])].sort((a,b)=>new Date(b.completed_at)-new Date(a.completed_at)).slice(0,8);
-  const userMap = Object.fromEntries((users||[]).map(u=>[u.id,u]));
+  const recentComps = [...filteredComps].sort((a,b)=>new Date(b.completed_at)-new Date(a.completed_at)).slice(0,8);
+  const userMap = Object.fromEntries(users.map(u=>[u.id,u]));
 
   setContent(`
     <div class="stats-grid" style="margin-bottom:24px">
-      <div class="stat-card"><div class="stat-icon orange">👥</div><div><div class="stat-value">${(users||[]).length}</div><div class="stat-label">Colaboradores</div></div></div>
+      <div class="stat-card"><div class="stat-icon orange">👥</div><div><div class="stat-value">${users.length}</div><div class="stat-label">Colaboradores</div></div></div>
       <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-value">${passed}</div><div class="stat-label">Aprobaciones</div></div></div>
       <div class="stat-card"><div class="stat-icon red">❌</div><div><div class="stat-value">${failed}</div><div class="stat-label">Reprobados</div></div></div>
       <div class="stat-card"><div class="stat-icon yellow">📊</div><div><div class="stat-value">${avgScore}%</div><div class="stat-label">Promedio General</div></div></div>
@@ -3663,24 +3677,28 @@ async function renderSupDashboard() {
 async function renderSupResults() {
   setTopbarActions('');
   setContent('<div class="loading"><div class="spinner"></div></div>');
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
+  const supCamps = await getSupCampaigns();
+  const [{ data: allUsers }, { data: mods }, { data: comps }] = await Promise.all([
     sb.from('users').select('*').eq('role','col'),
     sb.from('modules').select('*'),
     sb.from('completions').select('*').order('completed_at', { ascending: false })
   ]);
-  const uMap = Object.fromEntries((users||[]).map(u=>[u.id,u]));
+  const users = (allUsers||[]).filter(u => supCamps.length === 0 || supCamps.includes((u.campaign||'').toUpperCase()));
+  const userIds = new Set(users.map(u => u.id));
+  const filteredComps = (comps||[]).filter(c => userIds.has(c.user_id));
+  const uMap = Object.fromEntries(users.map(u=>[u.id,u]));
   const mMap = Object.fromEntries((mods||[]).map(m=>[m.id,m]));
   setContent(`
     <div class="card">
       <div class="card-header">
-        <div class="card-title">Resultados (${(comps||[]).length})</div>
+        <div class="card-title">Resultados (${filteredComps.length})</div>
         <input class="form-control" style="width:220px" placeholder="Buscar..." oninput="filterTable(this,'supResultsTable')">
       </div>
       <div class="table-wrap">
         <table id="supResultsTable">
           <thead><tr><th>Colaborador</th><th>Campaña</th><th>Módulo</th><th>Nota</th><th>Estado</th><th>Fecha</th></tr></thead>
           <tbody>
-            ${(comps||[]).map(c => {
+            ${filteredComps.map(c => {
               const u2=uMap[c.user_id], m2=mMap[c.module_id];
               const scoreColor = c.score>=80?'var(--success)':c.score>=60?'var(--warning)':'var(--danger)';
               return `<tr>
@@ -3702,12 +3720,14 @@ async function renderSupResults() {
 async function renderSupCampaigns() {
   setTopbarActions('');
   setContent('<div class="loading"><div class="spinner"></div></div>');
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
+  const supCamps = await getSupCampaigns();
+  const [{ data: allUsers }, { data: mods }, { data: comps }] = await Promise.all([
     sb.from('users').select('*').eq('role','col'),
     sb.from('modules').select('*'),
     sb.from('completions').select('*')
   ]);
-  const camps = [...new Set((users||[]).map(u=>u.campaign))];
+  const users = (allUsers||[]).filter(u => supCamps.length === 0 || supCamps.includes((u.campaign||'').toUpperCase()));
+  const camps = [...new Set(users.map(u=>u.campaign))];
   setContent(`
     <div class="campaign-grid">
       ${camps.map(camp => {
@@ -3737,11 +3757,13 @@ async function renderSupCampaigns() {
 async function renderSupOverdue() {
   setTopbarActions('');
   setContent('<div class="loading"><div class="spinner"></div></div>');
-  const [{ data: users }, { data: mods }, { data: comps }] = await Promise.all([
+  const supCamps = await getSupCampaigns();
+  const [{ data: allUsers }, { data: mods }, { data: comps }] = await Promise.all([
     sb.from('users').select('*').eq('role','col'),
     sb.from('modules').select('*'),
     sb.from('completions').select('*')
   ]);
+  const users = (allUsers||[]).filter(u => supCamps.length === 0 || supCamps.includes((u.campaign||'').toUpperCase()));
   const overdue = [];
   (users||[]).forEach(u => {
     (mods||[]).forEach(m => {
