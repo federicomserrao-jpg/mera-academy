@@ -3389,7 +3389,7 @@ window.scoreOpenAnswer = async function(completionId, questionId, score, userId)
 
 // ── BULK CAMPAIGN ASSIGNMENT ──
 async function openBulkCampaignModal() {
-  const campOpts = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR']
+  const campOpts = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR','Dental Total','Edenred']
     .map(c => `<option value="${c}">${c}</option>`).join('');
   showModal('modal-bulk-campaign', '🏷️ Cambiar Campaña Masiva', `
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Podés cambiar la campaña a múltiples colaboradores de dos formas:</p>
