@@ -35,7 +35,6 @@
   --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
   --shadow-lg: 0 10px 25px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.06);
 }
-
 /* ── DARK MODE ── */
 body.dark {
   --bg: #0f1117;
@@ -67,9 +66,7 @@ body.dark .eval-option.selected { background: rgba(0,177,255,0.15); }
 body.dark .module-card { background: #1a1d24; border-color: #2a2f3d; }
 body.dark .module-card:hover { border-color: var(--accent); }
 body.dark select.form-control option { background: #1a1d24; }
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 body {
   font-family: 'DM Sans', sans-serif;
   background: var(--bg);
@@ -77,7 +74,6 @@ body {
   min-height: 100vh;
   font-size: 14px;
 }
-
 /* ── LOGIN ── */
 #loginScreen {
   min-height: 100vh;
@@ -210,11 +206,9 @@ body {
   margin-top: 12px;
   display: none;
 }
-
 /* ── LAYOUT ── */
 #appScreen { display: none; min-height: 100vh; }
 .layout { display: flex; min-height: 100vh; }
-
 /* ── SIDEBAR ── */
 .sidebar {
   width: 240px;
@@ -318,7 +312,6 @@ body {
   font-family: 'DM Sans', sans-serif;
 }
 .logout-btn:hover { color: rgba(255,255,255,0.7); }
-
 /* ── MAIN ── */
 .main {
   margin-left: 240px;
@@ -360,7 +353,6 @@ body {
 }
 .search-bar input::placeholder { color: var(--text-light); }
 .content { padding: 32px; }
-
 /* ── CARDS ── */
 .card {
   background: var(--card);
@@ -377,7 +369,6 @@ body {
 }
 .card-title { font-size: 15px; font-weight: 600; color: var(--text); }
 .card-body { padding: 24px; }
-
 /* ── STATS ── */
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
 .stat-card {
@@ -405,7 +396,6 @@ body {
 .stat-icon.red { background: var(--danger-light); }
 .stat-value { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; }
 .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-
 /* ── BUTTONS ── */
 .btn {
   display: inline-flex;
@@ -432,7 +422,6 @@ body {
 .btn-sm { padding: 6px 12px; font-size: 12px; }
 .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid transparent; }
 .btn-ghost:hover { background: var(--bg); border-color: var(--border); color: var(--text); }
-
 /* ── TABLE ── */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
@@ -455,7 +444,6 @@ tbody td {
 }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover { background: #FAFAFA; }
-
 /* ── BADGES ── */
 .badge {
   display: inline-flex;
@@ -471,7 +459,6 @@ tbody tr:hover { background: #FAFAFA; }
 .badge-orange { background: var(--accent-light); color: #0077aa; }
 .badge-gray { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
 .badge-blue { background: #EFF6FF; color: #1e40af; }
-
 /* ── MODAL ── */
 .modal-overlay {
   position: fixed; inset: 0;
@@ -521,7 +508,6 @@ tbody tr:hover { background: #FAFAFA; }
   justify-content: flex-end;
   gap: 10px;
 }
-
 /* ── FORM ── */
 .form-group { margin-bottom: 18px; }
 .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
@@ -539,7 +525,6 @@ tbody tr:hover { background: #FAFAFA; }
 }
 .form-control:focus { border-color: var(--accent); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
 /* ── PROGRESS ── */
 .progress-bar {
   height: 6px;
@@ -554,7 +539,6 @@ tbody tr:hover { background: #FAFAFA; }
   transition: width 0.3s;
 }
 .progress-fill.green { background: var(--success); }
-
 /* ── MODULE CARDS ── */
 .modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
 .module-card {
@@ -598,7 +582,6 @@ tbody tr:hover { background: #FAFAFA; }
 .module-title { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
 .module-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; }
 .module-meta { display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--text-muted); }
-
 /* ── EVALUACION ── */
 .eval-container { max-width: 700px; margin: 0 auto; }
 .eval-question-card {
@@ -652,7 +635,6 @@ tbody tr:hover { background: #FAFAFA; }
   line-height: 1.5;
   display: none;
 }
-
 /* ── RESULT ── */
 .result-card {
   background: var(--card);
@@ -670,12 +652,10 @@ tbody tr:hover { background: #FAFAFA; }
 }
 .result-score.pass { color: var(--success); }
 .result-score.fail { color: var(--danger); }
-
 /* ── STARS ── */
 .stars { display: flex; gap: 8px; justify-content: center; margin: 16px 0; }
 .star { font-size: 32px; cursor: pointer; transition: transform 0.1s; color: #D1D5DB; }
 .star:hover, .star.active { color: #F59E0B; transform: scale(1.1); }
-
 /* ── NOTIFICATIONS ── */
 .notif-banner {
   padding: 12px 24px;
@@ -689,7 +669,6 @@ tbody tr:hover { background: #FAFAFA; }
 }
 .notif-danger { background: var(--danger-light); color: #991b1b; border: 1px solid #fca5a5; }
 .notif-warning { background: var(--warning-light); color: #92400e; border: 1px solid #fcd34d; }
-
 /* ── CAMPAIGN CARDS ── */
 .campaign-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
 .campaign-card {
@@ -701,7 +680,6 @@ tbody tr:hover { background: #FAFAFA; }
 }
 .campaign-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
 .campaign-stats { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
-
 /* ── EMPTY STATE ── */
 .empty-state {
   text-align: center;
@@ -711,7 +689,6 @@ tbody tr:hover { background: #FAFAFA; }
 .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
 .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
 .empty-state p { font-size: 13px; }
-
 /* ── CERT ── */
 .cert {
   background: white;
@@ -731,7 +708,6 @@ tbody tr:hover { background: #FAFAFA; }
 .cert-module { font-size: 16px; color: var(--text-muted); margin-bottom: 24px; }
 .cert-score { font-size: 48px; font-weight: 800; color: var(--accent); }
 .cert-date { font-size: 12px; color: var(--text-light); margin-top: 24px; }
-
 /* ── RICH TEXT EDITOR ── */
 .rte-wrap { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
 .rte-toolbar { display:flex;gap:2px;padding:6px 8px;background:var(--bg);border-bottom:1px solid var(--border); }
@@ -739,7 +715,6 @@ tbody tr:hover { background: #FAFAFA; }
 .rte-btn:hover { background:var(--border);color:var(--text); }
 .rte-content { padding:10px 14px;min-height:60px;outline:none;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:white; }
 .rte-content:empty::before { content:attr(data-placeholder);color:var(--text-light); }
-
 /* ── LOADING ── */
 .loading { display: flex; align-items: center; justify-content: center; padding: 60px; }
 .spinner {
@@ -750,7 +725,6 @@ tbody tr:hover { background: #FAFAFA; }
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-
 /* ── VIDEO ── */
 .video-wrap {
   position: relative;
@@ -766,7 +740,6 @@ tbody tr:hover { background: #FAFAFA; }
   width: 100%; height: 100%;
   border: none;
 }
-
 /* ── MISC ── */
 .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .section-title { font-size: 18px; font-weight: 700; }
@@ -779,7 +752,6 @@ tbody tr:hover { background: #FAFAFA; }
 .mt-4 { margin-top: 16px; }
 .mb-4 { margin-bottom: 16px; }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-
 @media (max-width: 900px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); }
   .form-row { grid-template-columns: 1fr; }
@@ -787,7 +759,6 @@ tbody tr:hover { background: #FAFAFA; }
 </style>
 </head>
 <body>
-
 <!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-card">
@@ -813,7 +784,6 @@ tbody tr:hover { background: #FAFAFA; }
     <div class="login-error" id="loginError"></div>
   </div>
 </div>
-
 <!-- APP -->
 <div id="appScreen">
   <div class="layout">
@@ -840,7 +810,6 @@ tbody tr:hover { background: #FAFAFA; }
         </button>
       </div>
     </aside>
-
     <!-- MAIN -->
     <main class="main">
       <div class="topbar">
@@ -860,19 +829,15 @@ tbody tr:hover { background: #FAFAFA; }
     </main>
   </div>
 </div>
-
 <script>
 // ── SUPABASE INIT ──
 const SUPA_URL = 'https://aqkvjckrokuaoeilpcnx.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFxa3ZqY2tyb2t1YW9laWxwY254Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzM3NjE5MCwiZXhwIjoyMDkyOTUyMTkwfQ.7ItsyRXZpU4O9K4dAkHBWFZKTw8K73nKHM_oDVijLZs';
 const { createClient } = supabase;
 const sb = createClient(SUPA_URL, SUPA_KEY);
-
 // ── STATE ──
 window.S = { role: 'col', user: null };
-
 const CAMPAIGNS = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR','Dental Total','Edenred'];
-
 // ── DARK MODE ──
 window.toggleDark = function() {
   document.body.classList.toggle('dark');
@@ -885,7 +850,6 @@ window.toggleDark = function() {
 if (localStorage.getItem('mera_dark') === '1') {
   document.body.classList.add('dark');
 }
-
 // ── GLOBAL SEARCH ──
 let _searchTimeout = null;
 window.globalSearch = async function(q) {
@@ -917,18 +881,15 @@ window.globalSearch = async function(q) {
     resultsEl.style.display = 'block';
   }, 300);
 };
-
 window.closeSearch = function() {
   document.getElementById('globalSearchResults').style.display = 'none';
   document.getElementById('globalSearchInput').value = '';
 };
-
 document.addEventListener('click', e => {
   if (!e.target.closest('#globalSearchBar') && !e.target.closest('#globalSearchResults')) {
     document.getElementById('globalSearchResults')?.style && (document.getElementById('globalSearchResults').style.display = 'none');
   }
 });
-
 // ── LOGIN ──
 window.setRole = function(r) {
   window.S.role = r;
@@ -936,7 +897,6 @@ window.setRole = function(r) {
   document.getElementById('tabAdm').classList.toggle('active', r === 'adm');
   document.getElementById('tabSup').classList.toggle('active', r === 'sup');
 };
-
 window.doLogin = async function() {
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value.trim();
@@ -961,7 +921,6 @@ window.doLogin = async function() {
     btn.disabled = false; btn.textContent = 'Ingresar';
   }
 };
-
 window.doLogout = function() {
   window.S.user = null; window.S.role = 'col';
   document.getElementById('appScreen').style.display = 'none';
@@ -971,7 +930,6 @@ window.doLogout = function() {
   document.getElementById('loginBtn').disabled = false;
   document.getElementById('loginBtn').textContent = 'Ingresar';
 };
-
 function showApp() {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('appScreen').style.display = 'block';
@@ -990,7 +948,6 @@ function showApp() {
   }
   navigate(window.S.role === 'sup' ? 'sup_dashboard' : 'dashboard');
 }
-
 // ── NAV ──
 function buildNav() {
   const isAdm = window.S.role === 'adm';
@@ -1022,7 +979,6 @@ function buildNav() {
   ];
   nav.innerHTML = items.map(i => `<div class="nav-item" id="nav-${i.id}" onclick="navigate('${i.id}')"><span class="nav-icon">${i.icon}</span>${i.label}</div>`).join('');
 }
-
 function navigate(page) {
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const el = document.getElementById('nav-' + page);
@@ -1060,10 +1016,8 @@ function navigate(page) {
   };
   if (pages[page]) pages[page]();
 }
-
 function setContent(html) { document.getElementById('mainContent').innerHTML = html; }
 function setTopbarActions(html) { document.getElementById('topbarActions').innerHTML = html; }
-
 // ── ADMIN DASHBOARD ──
 async function renderAdminDashboard() {
   setTopbarActions('');
@@ -1119,7 +1073,6 @@ async function renderAdminDashboard() {
     </div>
   `);
 }
-
 // ── COURSES ADMIN ──
 async function renderCourses() {
   setTopbarActions(`<button class="btn btn-primary" onclick="openCourseModal()">＋ Nuevo Curso</button>`);
@@ -1153,7 +1106,6 @@ async function renderCourses() {
     </div>
   `);
 }
-
 async function openCourseModal(id) {
   let course = null;
   if (id) { const { data } = await sb.from('courses').select('*').eq('id', id).single(); course = data; }
@@ -1192,13 +1144,11 @@ async function openCourseModal(id) {
     closeModal(); renderCourses();
   });
 }
-
 async function deleteCourse(id) {
   if (!confirm('¿Eliminar este curso? Se eliminarán también las asignaciones de módulos.')) return;
   await sb.from('courses').delete().eq('id', id);
   renderCourses();
 }
-
 async function openCourseModulesModal(courseId, courseTitle) {
   const [{ data: allMods }, { data: cms }] = await Promise.all([
     sb.from('modules').select('*').order('campaign').order('sort_order'),
@@ -1207,7 +1157,6 @@ async function openCourseModulesModal(courseId, courseTitle) {
   const assignedIds = new Set((cms||[]).map(cm => cm.module_id));
   const assigned = (cms||[]).map(cm => ({ ...cm, mod: (allMods||[]).find(m => m.id === cm.module_id) })).filter(cm => cm.mod).sort((a,b) => a.sort_order - b.sort_order);
   const available = (allMods||[]).filter(m => !assignedIds.has(m.id));
-
   showModal('modal-course-mods', `Módulos del curso: ${courseTitle}`, `
     <div style="margin-bottom:20px">
       <label class="form-label">Módulos en este curso (en orden)</label>
@@ -1238,7 +1187,6 @@ async function openCourseModulesModal(courseId, courseTitle) {
     </div>
   `, null, true);
 }
-
 async function addCourseModule(courseId, courseTitle) {
   const modId = document.getElementById('modToAdd').value;
   if (!modId) { alert('Seleccioná un módulo'); return; }
@@ -1248,13 +1196,11 @@ async function addCourseModule(courseId, courseTitle) {
   closeModal();
   openCourseModulesModal(courseId, courseTitle);
 }
-
 async function removeCourseModule(cmId, courseId, courseTitle) {
   await sb.from('course_modules').delete().eq('id', cmId);
   closeModal();
   openCourseModulesModal(courseId, courseTitle);
 }
-
 // ── MY COURSES (colaborador) ──
 async function renderMyCourses() {
   setTopbarActions('');
@@ -1274,12 +1220,10 @@ async function renderMyCourses() {
   const cmsByCourse = (cms||[]).reduce((acc, cm) => { if (!acc[cm.course_id]) acc[cm.course_id] = []; acc[cm.course_id].push(cm); return acc; }, {});
   const unlockedModules = new Set((modUnlocks||[]).map(u => u.module_id));
   const unlockedCourses = new Set((courseUnlocks||[]).map(u => u.course_id));
-
   if (!(courses||[]).length) {
     setContent(`<div class="empty-state"><div class="empty-icon">🎓</div><h3>Sin cursos asignados</h3><p>Tu supervisor asignará cursos a tu campaña pronto.</p></div>`);
     return;
   }
-
   setContent((courses||[]).map(course => {
     const courseMods = (cmsByCourse[course.id]||[]).sort((a,b) => a.sort_order - b.sort_order).map(cm => ({ ...cm, mod: modMap[cm.module_id] })).filter(cm => cm.mod);
     const total = courseMods.length;
@@ -1290,7 +1234,6 @@ async function renderMyCourses() {
     const courseFullyUnlocked = unlockedCourses.has(course.id);
     // Opción 3: curso sin orden obligatorio
     const noOrden = course.orden_obligatorio === false;
-
     return `<div class="card" style="margin-bottom:20px">
       <div style="background:var(--accent);padding:20px 24px 18px;border-radius:var(--radius) var(--radius) 0 0">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -1332,7 +1275,6 @@ async function renderMyCourses() {
     </div>`;
   }).join(''));
 }
-
 // ── MODULES ADMIN ──
 async function renderModules() {
   setTopbarActions(`<button class="btn btn-primary" onclick="openModuleModal()">＋ Nuevo Módulo</button>`);
@@ -1368,14 +1310,12 @@ async function renderModules() {
     </div>
   `);
 }
-
 function filterTable(input, tableId) {
   const q = input.value.toLowerCase();
   document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr => {
     tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
   });
 }
-
 async function openModuleModal(id) {
   let mod = null;
   if (id) { const { data } = await sb.from('modules').select('*').eq('id', id).single(); mod = data; }
@@ -1446,13 +1386,11 @@ async function openModuleModal(id) {
     closeModal(); renderModules();
   });
 }
-
 async function deleteModule(id) {
   if (!confirm('¿Eliminar este módulo?')) return;
   await sb.from('modules').delete().eq('id', id);
   renderModules();
 }
-
 // ── MODULE FILES ──
 async function openModuleFilesModal(modId, modTitle) {
   showModal('modal-files', `📎 Archivos — ${modTitle}`, `
@@ -1476,7 +1414,6 @@ async function openModuleFilesModal(modId, modTitle) {
   `, null, true);
   loadModuleFiles(modId);
 }
-
 async function loadModuleFiles(modId) {
   const el = document.getElementById(`filesList-${modId}`);
   if (!el) return;
@@ -1501,7 +1438,6 @@ async function loadModuleFiles(modId) {
     </div>`;
   }).join('');
 }
-
 async function uploadModuleFile(modId, input) {
   const file = input.files[0];
   if (!file) return;
@@ -1526,7 +1462,6 @@ async function uploadModuleFile(modId, input) {
   setTimeout(() => { progressEl.style.display = 'none'; barEl.style.width = '0%'; barEl.style.background = ''; }, 2000);
   loadModuleFiles(modId);
 }
-
 async function downloadModuleFile(modId, fileName) {
   const { data } = sb.storage.from('module-files').getPublicUrl(`${modId}/${fileName}`);
   // Try to find the exact path
@@ -1540,7 +1475,6 @@ async function downloadModuleFile(modId, fileName) {
   const a = document.createElement('a'); a.href = url; a.download = fileName; a.click();
   URL.revokeObjectURL(url);
 }
-
 async function deleteModuleFile(modId, fileName) {
   if (!confirm(`¿Eliminar "${fileName}"?`)) return;
   const { data: files } = await sb.storage.from('module-files').list(modId);
@@ -1549,18 +1483,15 @@ async function deleteModuleFile(modId, fileName) {
   await sb.storage.from('module-files').remove([`${modId}/${fileName}`]);
   loadModuleFiles(modId);
 }
-
 // ── QUESTIONS ──
 async function openQuestionsModalById(modId) {
   const { data: mod } = await sb.from('modules').select('id,title').eq('id', modId).single();
   if (mod) openQuestionsModal(mod.id, mod.title);
 }
-
 async function openModuleFilesModalById(modId) {
   const { data: mod } = await sb.from('modules').select('id,title').eq('id', modId).single();
   if (mod) openModuleFilesModal(mod.id, mod.title);
 }
-
 async function openQuestionsModal(modId, modTitle) {
   window._currentModId = modId;
   const { data: qs } = await sb.from('questions').select('*').eq('module_id', modId).order('created_at');
@@ -1571,7 +1502,6 @@ async function openQuestionsModal(modId, modTitle) {
     <button class="btn btn-secondary" style="width:100%;margin-top:16px" onclick="addNewQuestion('${modId}')">＋ Agregar Pregunta</button>
   `, null, true);
 }
-
 function renderQuestionItem(q, i) {
   const opts = JSON.parse(typeof q.options === 'string' ? q.options : JSON.stringify(q.options));
   while (opts.length < 4) opts.push('');
@@ -1582,9 +1512,7 @@ function renderQuestionItem(q, i) {
     (q.correct_indices ? JSON.parse(q.correct_indices) : [q.correct_index || 0]);
   const optionImages = Array.isArray(q.option_images) ? q.option_images :
     (q.option_images ? (typeof q.option_images === 'string' ? JSON.parse(q.option_images) : q.option_images) : []);
-
   const typeLabels = { single: '☑️ Una respuesta', multiple: '✅ Varias respuestas', open: '✏️ Desarrollo', image: '🖼️ Con imagen' };
-
   return `<div class="card" style="margin-bottom:16px;padding:20px;border:1px solid var(--border)" id="qcard-${q.id}">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:10px">
@@ -1594,7 +1522,6 @@ function renderQuestionItem(q, i) {
       </div>
       <button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteQuestion('${q.id}')">🗑️ Eliminar</button>
     </div>
-
     <div class="form-row" style="margin-bottom:16px">
       <div class="form-group" style="margin-bottom:0">
         <label class="form-label">Tipo de pregunta</label>
@@ -1606,12 +1533,10 @@ function renderQuestionItem(q, i) {
         </select>
       </div>
     </div>
-
     <div class="form-group">
       <label class="form-label">Enunciado de la pregunta</label>
       <input class="form-control" id="qt-${q.id}" placeholder="Escribí la pregunta acá..." value="${q.question.replace(/"/g,'&quot;')}">
     </div>
-
     ${type === 'image' ? `
     <div class="form-group" id="imgSection-${q.id}">
       <label class="form-label">Imagen del enunciado</label>
@@ -1632,7 +1557,6 @@ function renderQuestionItem(q, i) {
         <span id="imgStatus-${q.id}" style="font-size:12px;color:var(--text-muted)"></span>
       </div>
     </div>`}
-
     ${type === 'open' ? `
     <div class="form-group">
       <label class="form-label">Guía de corrección (visible solo para el admin)</label>
@@ -1675,11 +1599,9 @@ ${makeRTE('qe-'+q.id, q.explanation||'', 'Guía de corrección...')}
 ${makeRTE('qe-'+q.id, q.explanation||'', 'Ej: La respuesta correcta es A porque...')}
     </div>
     `}
-
     <button class="btn btn-primary btn-sm" onclick="saveQuestion('${q.id}')">💾 Guardar pregunta</button>
   </div>`;
 }
-
 window.changeQuestionType = function(qId, newType) {
   // Re-render just this card
   const card = document.getElementById('qcard-'+qId);
@@ -1694,7 +1616,6 @@ window.changeQuestionType = function(qId, newType) {
   };
   card.outerHTML = renderQuestionItem(fakeQ, parseInt(card.querySelector('strong')?.textContent?.replace('Pregunta ',''))-1 || 0);
 };
-
 window.highlightCorrect = function(qId, selectedIdx) {
   for (let i = 0; i < 4; i++) {
     const row = document.getElementById(`optrow-${qId}-${i}`);
@@ -1709,7 +1630,6 @@ window.highlightCorrect = function(qId, selectedIdx) {
     else if (!isCorrect && span) span.remove();
   }
 };
-
 window.highlightMultiple = function(qId, idx, checked) {
   const row = document.getElementById(`optrow-${qId}-${idx}`);
   if (!row) return;
@@ -1721,8 +1641,6 @@ window.highlightMultiple = function(qId, idx, checked) {
   if (checked && !span) { const s=document.createElement('span'); s.style.cssText='font-size:11px;font-weight:600;color:var(--success);white-space:nowrap'; s.textContent='✓ Correcta'; row.appendChild(s); }
   else if (!checked && span) span.remove();
 };
-
-
 async function uploadOptionImage(qId, optIdx, input) {
   const file = input.files[0]; if (!file) return;
   const path = 'options/' + qId + '_' + optIdx + '_' + Date.now() + '.' + file.name.split('.').pop();
@@ -1738,7 +1656,6 @@ async function uploadOptionImage(qId, optIdx, input) {
   const { data: allQs } = await sb.from('questions').select('*').eq('module_id', window._currentModId||'').order('created_at');
   if (allQs) document.getElementById('questionsList').innerHTML = (allQs||[]).map((q2,i) => renderQuestionItem(q2, i)).join('');
 }
-
 async function removeOptionImage(qId, optIdx) {
   const { data: curQ } = await sb.from('questions').select('option_images').eq('id', qId).single().then(r=>r).catch(()=>({data:null}));
   const imgs = Array.isArray(curQ?.option_images) ? [...curQ.option_images] : [];
@@ -1747,7 +1664,6 @@ async function removeOptionImage(qId, optIdx) {
   const { data: allQs } = await sb.from('questions').select('*').eq('module_id', window._currentModId||'').order('created_at');
   if (allQs) document.getElementById('questionsList').innerHTML = (allQs||[]).map((q2,i) => renderQuestionItem(q2, i)).join('');
 }
-
 async function uploadQuestionImage(qId, input) {
   const file = input.files[0]; if (!file) return;
   const statusEl = document.getElementById('imgStatus-'+qId);
@@ -1765,28 +1681,23 @@ async function uploadQuestionImage(qId, input) {
     else imgSection.insertAdjacentHTML('afterbegin', '<img src="' + publicUrl + '" style="max-width:100%;border-radius:8px;margin-bottom:10px;max-height:200px;object-fit:cover">');
   }
 }
-
 async function removeQuestionImage(qId) {
   await sb.from('questions').update({ image_url: '' }).eq('id', qId);
   const imgSection = document.getElementById('imgSection-'+qId);
   if (imgSection) imgSection.querySelector('img')?.remove();
 }
-
 async function addNewQuestion(modId) {
   const { data: q } = await sb.from('questions').insert({ module_id: modId, question: '', options: ['','','',''], correct_index: 0, correct_indices: [], type: 'single' }).select().single();
   const { data: allQs } = await sb.from('questions').select('*').eq('module_id', modId).order('created_at');
   document.getElementById('questionsList').innerHTML = (allQs||[]).map((q2,i) => renderQuestionItem(q2, i)).join('');
   document.getElementById(`qcard-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
-
 async function saveQuestion(qId) {
   const question = (document.getElementById('qt-'+qId)?.value || rteVal('qt-'+qId) || '').replace(/<br\s*\/?>/gi,'').trim();
   if (!question) { alert('Escribí el enunciado de la pregunta'); return; }
   const type = document.getElementById('qtype-'+qId)?.value || 'single';
   const exp = rteVal('qe-'+qId) || '';
-
   let opts = [], correctIndex = 0, correctIndices = [];
-
   if (type !== 'open') {
     // Collect options - text is optional if there's an image for that option
     let curOptImgsCheck = [];
@@ -1807,7 +1718,6 @@ async function saveQuestion(qId) {
       correctIndices = [correctIndex];
     }
   }
-
   // Get current option_images (managed separately via uploadOptionImage)
   let curOptImgs = [];
   try { const { data: curQ2 } = await sb.from('questions').select('option_images').eq('id', qId).single(); curOptImgs = curQ2?.option_images || []; } catch(e) {}
@@ -1817,13 +1727,11 @@ async function saveQuestion(qId) {
   card.style.background = 'var(--success-light)';
   setTimeout(() => { card.style.borderColor = ''; card.style.background = ''; }, 1500);
 }
-
 async function deleteQuestion(qId) {
   if (!confirm('¿Eliminar esta pregunta?')) return;
   await sb.from('questions').delete().eq('id', qId);
   document.getElementById('qcard-'+qId)?.remove();
 }
-
 // ── USERS ADMIN ──
 async function renderUsers() {
   setTopbarActions(`
@@ -1875,7 +1783,6 @@ async function renderUsers() {
     </div>
   `);
 }
-
 async function openUserModal(id) {
   let user = null;
   if (id) { const { data } = await sb.from('users').select('*').eq('id', id).single(); user = data; }
@@ -1905,13 +1812,11 @@ async function openUserModal(id) {
     closeModal(); renderUsers();
   });
 }
-
 async function deleteUser(id) {
   if (!confirm('¿Eliminar este colaborador?')) return;
   await sb.from('users').delete().eq('id', id);
   renderUsers();
 }
-
 // ── EXPORTAR PLANTILLA VACÍA ──
 function exportUsersTemplate() {
   const campList = CAMPAIGNS.join(' | ');
@@ -1928,7 +1833,6 @@ function exportUsersTemplate() {
   a.download = 'plantilla_colaboradores_MERA.csv';
   a.click();
 }
-
 // ── EXPORTAR LISTADO ACTUAL ──
 function exportCurrentUsers() {
   const users = window._usersData || [];
@@ -1947,7 +1851,6 @@ function exportCurrentUsers() {
   a.download = `colaboradores_MERA_${new Date().toLocaleDateString('es-AR').replace(/\//g,'-')}.csv`;
   a.click();
 }
-
 // ── IMPORTAR CSV ──
 function importUsersCSV() {
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.csv';
@@ -1985,7 +1888,6 @@ function importUsersCSV() {
   };
   inp.click();
 }
-
 // ── RESULTS ADMIN ──
 async function renderResults() {
   setTopbarActions(`<button class="btn btn-secondary" onclick="exportResults()">📥 Exportar CSV</button>`);
@@ -1997,14 +1899,12 @@ async function renderResults() {
   ]);
   const uMap = Object.fromEntries((users||[]).map(u => [u.id, u]));
   const mMap = Object.fromEntries((mods||[]).map(m => [m.id, m]));
-
   // Group by user to show attempt history
   const byUser = {};
   (comps||[]).forEach(c => {
     if (!byUser[c.user_id]) byUser[c.user_id] = [];
     byUser[c.user_id].push(c);
   });
-
   setContent(`
     <div class="card">
       <div class="card-header">
@@ -2042,7 +1942,6 @@ async function renderResults() {
   `);
   window._resultsData = { comps, uMap, mMap };
 }
-
 function exportResults() {
   if (!window._resultsData) return;
   const { comps, uMap, mMap } = window._resultsData;
@@ -2054,7 +1953,6 @@ function exportResults() {
   const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
   a.download = 'resultados_mera_academy.csv'; a.click();
 }
-
 // ── CAMPAIGNS ──
 async function renderCampaigns() {
   setTopbarActions('');
@@ -2091,7 +1989,6 @@ async function renderCampaigns() {
   `);
   window._campaignData = { users, mods, comps };
 }
-
 async function exportCampaign(camp) {
   const { users, mods, comps } = window._campaignData;
   const campUsers = users.filter(u => u.campaign === camp);
@@ -2107,7 +2004,6 @@ async function exportCampaign(camp) {
   const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
   a.download = `mera_academy_${camp}.csv`; a.click();
 }
-
 // ── OVERDUE ──
 async function renderOverdue() {
   setTopbarActions(`<button class="btn btn-secondary" onclick="exportOverdue()">📥 Exportar CSV</button>`);
@@ -2153,7 +2049,6 @@ async function renderOverdue() {
     </div>
   `);
 }
-
 function exportOverdue() {
   const rows = [['Colaborador','Campaña','Módulo','Fecha Vencimiento','Días Retraso']];
   (window._overdueData||[]).forEach(o => rows.push([o.user.full_name, o.user.campaign, o.mod.title, o.due.toLocaleDateString('es-AR'), o.days]));
@@ -2161,7 +2056,6 @@ function exportOverdue() {
   const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
   a.download = 'vencidos_mera_academy.csv'; a.click();
 }
-
 // ── SURVEYS ──
 async function renderSurveys() {
   setTopbarActions('');
@@ -2209,7 +2103,6 @@ async function renderSurveys() {
     </div>
   `);
 }
-
 // ── ASSIGNMENTS ──
 async function renderAssignments() {
   setTopbarActions(`<button class="btn btn-primary" onclick="openAssignModal()">＋ Nueva Asignación</button>`);
@@ -2241,7 +2134,6 @@ async function renderAssignments() {
   `);
   window._assignData = { users, mods };
 }
-
 async function openAssignModal() {
   const { users, mods } = window._assignData || {};
   if (!users || !mods) return;
@@ -2257,12 +2149,10 @@ async function openAssignModal() {
     closeModal(); renderAssignments();
   });
 }
-
 async function deleteAssignment(id) {
   await sb.from('module_assignments').delete().eq('id', id);
   renderAssignments();
 }
-
 // ── LOGS ──
 async function renderLogs() {
   setTopbarActions('');
@@ -2294,7 +2184,6 @@ async function renderLogs() {
     </div>
   `);
 }
-
 // ── COL DASHBOARD ──
 async function renderColDashboard() {
   setTopbarActions('');
@@ -2311,7 +2200,6 @@ async function renderColDashboard() {
   const passed = allComps.filter(c => c.passed).length;
   const pct = allMods.length > 0 ? Math.round(passed / allMods.length * 100) : 0;
   const avg = allComps.length > 0 ? Math.round(allComps.reduce((a,c) => a+c.score, 0) / allComps.length) : 0;
-
   const banners = [];
   allMods.forEach(m => {
     const comp = allComps.find(c => c.module_id === m.id);
@@ -2323,7 +2211,6 @@ async function renderColDashboard() {
       else if (days <= 2) banners.push(`<div class="notif-banner notif-warning">⏰ El módulo <strong>${m.title}</strong> vence en ${days} días.</div>`);
     }
   });
-
   setContent(`
     ${banners.join('')}
     <div class="stats-grid">
@@ -2341,7 +2228,6 @@ async function renderColDashboard() {
     </div>
   `);
 }
-
 // ── MY MODULES ──
 async function renderMyModules() {
   setTopbarActions('');
@@ -2359,7 +2245,6 @@ async function renderMyModules() {
   const campMods = myMods.filter(m => m.campaign !== 'General' && m.campaign !== 'Onboarding');
   const compMap = Object.fromEntries((comps||[]).map(c => [c.module_id, c]));
   const genDone = genMods.every(m => compMap[m.id]?.passed);
-
   function renderMods(mods, locked) {
     return mods.map(m => {
       const comp = compMap[m.id];
@@ -2380,7 +2265,6 @@ async function renderMyModules() {
       </div>`;
     }).join('');
   }
-
   setContent(`
     ${genMods.length ? `<div class="section-header"><div class="section-title">📋 Inducción General</div></div>
     <div class="modules-grid mb-4" style="margin-bottom:24px">${renderMods(genMods, false)}</div>` : ''}
@@ -2389,7 +2273,6 @@ async function renderMyModules() {
     ${!myMods.length ? '<div class="empty-state"><div class="empty-icon">📚</div><h3>Sin módulos asignados</h3><p>Tu supervisor te asignará módulos pronto.</p></div>' : ''}
   `);
 }
-
 // ── START MODULE ──
 async function startModule(modId) {
   setContent('<div class="loading"><div class="spinner"></div></div>');
@@ -2398,14 +2281,12 @@ async function startModule(modId) {
     sb.from('questions').select('*').eq('module_id', modId),
     sb.from('completions').select('*').eq('user_id', window.S.user.id).eq('module_id', modId)
   ]);
-
   // Load files separately to handle errors gracefully
   let filesList = [];
   try {
     const { data: filesData, error: filesError } = await sb.storage.from('module-files').list(modId, { sortBy: { column: 'name', order: 'asc' } });
     if (!filesError && filesData) filesList = filesData.filter(f => f.name && f.name !== '.emptyFolderPlaceholder');
   } catch(e) { console.warn('Files load error:', e); }
-
   const attempts = (comps||[]).length;
   const skipVideo = attempts > 0 && mod.require_video_on_retry === false;
   if (attempts >= (mod.max_attempts||3)) {
@@ -2417,7 +2298,6 @@ async function startModule(modId) {
   const isMp4 = mod.video_url && !ytId && /\.(mp4|webm|ogg|mov)(\?|$)/i.test(mod.video_url);
   const questions = (qs||[]).slice(0,10);
   window._evalState = { mod, questions, answers: {}, submitted: false, attempt: attempts + 1 };
-
   // Files section for collaborator
   const filesHtml = filesList.length > 0 ? `
     <div class="card" style="margin-bottom:24px">
@@ -2442,7 +2322,6 @@ async function startModule(modId) {
         }).join('')}
       </div>
     </div>` : '';
-
   setContent(`
     <div class="eval-container">
       <button class="btn btn-ghost btn-sm" onclick="renderMyModules()" style="margin-bottom:20px">← Volver</button>
@@ -2518,20 +2397,17 @@ async function startModule(modId) {
       ` : '<div id="evalSection" style="margin-top:8px"></div>'}
     </div>
   `);
-
   // Inject questions into evalSection after DOM is ready
   const evalSection = document.getElementById('evalSection');
   if (evalSection) {
     evalSection.innerHTML = buildQuestionsHtml(questions);
   }
-
   // Auto-start timer if video_duration is set and not skipping video
   if (mod.video_duration > 0 && !skipVideo) {
     if (window._videoTimer) clearInterval(window._videoTimer);
     setTimeout(() => startVideoTimer(mod.video_duration), 500);
   }
 }
-
 function buildQuestionsHtml(questions) {
   if (!questions.length) return '<div class="card" style="padding:32px;text-align:center"><p class="text-muted">Este módulo aún no tiene preguntas.</p><button class="btn btn-secondary" style="margin-top:16px" onclick="renderMyModules()">← Volver</button></div>';
   const letters = ['A','B','C','D','E'];
@@ -2578,7 +2454,6 @@ function buildQuestionsHtml(questions) {
   html += '<button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px;margin-top:8px" onclick="submitEval()">Enviar Evaluación</button>';
   return html;
 }
-
 // ── RICH TEXT EDITOR ──
 function makeRTE(id, value, placeholder) {
   var bbs = [
@@ -2595,18 +2470,15 @@ function makeRTE(id, value, placeholder) {
   return '<div class="rte-wrap"><div class="rte-toolbar">' + btns + '</div>'
     + '<div class="rte-content" id="' + id + '" contenteditable="true" data-placeholder="' + placeholder + '">' + (value||'') + '</div></div>';
 }
-
 function rteVal(id) {
   const el = document.getElementById(id);
   return el ? el.innerHTML : '';
 }
-
 function selectAnswer(qId, oi) {
   window._evalState.answers[qId] = oi;
   document.querySelectorAll(`[id^="opt-${qId}-"]`).forEach(el => el.classList.remove('selected'));
   document.getElementById(`opt-${qId}-${oi}`).classList.add('selected');
 }
-
 function selectMultiple(qId, oi) {
   if (!window._evalState.answers[qId]) window._evalState.answers[qId] = [];
   const arr = window._evalState.answers[qId];
@@ -2615,7 +2487,6 @@ function selectMultiple(qId, oi) {
   if (idx === -1) { arr.push(oi); el?.classList.add('selected'); }
   else { arr.splice(idx, 1); el?.classList.remove('selected'); }
 }
-
 window.revealEval = function() {
   const gate = document.getElementById('videoGate');
   const evalSection = document.getElementById('evalSection');
@@ -2631,17 +2502,14 @@ window.revealEval = function() {
   // Stop timer if running
   if (window._videoTimer) { clearInterval(window._videoTimer); window._videoTimer = null; }
 };
-
 // ── VIDEO TIMER SYSTEM ──
 window._videoTimer = null;
-
 function formatDuration(secs) {
   if (!secs) return '0:00';
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   return `${m}:${s.toString().padStart(2,'0')}`;
 }
-
 function startVideoTimer(totalSeconds) {
   if (!totalSeconds || totalSeconds <= 0) return;
   let remaining = totalSeconds;
@@ -2650,15 +2518,12 @@ function startVideoTimer(totalSeconds) {
   const timerBar = document.getElementById('timerBar');
   const evalBtn = document.getElementById('evalBtn');
   if (!timerDisplay || !evalBtn) return;
-
   window._videoTimer = setInterval(() => {
     elapsed++;
     remaining = Math.max(0, totalSeconds - elapsed);
     const pct = Math.round(elapsed / totalSeconds * 100);
-
     if (timerDisplay) timerDisplay.textContent = formatDuration(remaining);
     if (timerBar) timerBar.style.width = pct + '%';
-
     if (remaining <= 0) {
       clearInterval(window._videoTimer);
       // Unlock button
@@ -2674,7 +2539,6 @@ function startVideoTimer(totalSeconds) {
     }
   }, 1000);
 }
-
 // ── YOUTUBE IFRAME API (solo para detectar play) ──
 window.onYouTubeIframeAPIReady = function() {
   const iframe = document.getElementById('ytPlayer');
@@ -2706,7 +2570,6 @@ window.onYouTubeIframeAPIReady = function() {
     });
   } catch(e) { console.warn('YouTube API error:', e); }
 };
-
 if (!window.YT) {
   const tag = document.createElement('script');
   tag.src = 'https://www.youtube.com/iframe_api';
@@ -2714,10 +2577,8 @@ if (!window.YT) {
 } else if (window.YT && window.YT.Player) {
   window.onYouTubeIframeAPIReady();
 }
-
 async function submitEval() {
   const { mod, questions, answers, attempt } = window._evalState;
-
   // Check unanswered (open questions always count as answered)
   const unanswered = questions.filter(q => {
     const type = q.type || 'single';
@@ -2727,30 +2588,24 @@ async function submitEval() {
     return answers[q.id] === undefined;
   });
   if (unanswered.length > 0) { alert(`Faltan responder ${unanswered.length} pregunta(s).`); return; }
-
   let correct = 0;
   let scoreable = 0;
   const openAnswers = {};
   const mcAnswers = {}; // guardar respuestas de multiple choice
-
   questions.forEach(q => {
     const type = q.type || 'single';
     const correctIndices = Array.isArray(q.correct_indices) && q.correct_indices.length ? q.correct_indices : [q.correct_index||0];
-
     if (type === 'open') {
       const ans = document.getElementById(`open-${q.id}`)?.value?.trim() || '';
       openAnswers[q.id] = ans;
       return;
     }
-
     if (type === 'image' && (!q.options || q.options.length < 2)) {
       const ans = document.getElementById(`open-${q.id}`)?.value?.trim() || '';
       openAnswers[q.id] = ans;
       return;
     }
-
     scoreable++;
-
     if (type === 'multiple') {
       const userAns = answers[q.id] || [];
       mcAnswers[q.id] = userAns; // guardar índices elegidos
@@ -2801,16 +2656,13 @@ async function submitEval() {
     }
     document.querySelectorAll(`[id^="opt-${q.id}-"]`).forEach(el => { el.style.pointerEvents='none'; el.style.cursor='default'; });
   });
-
   const score = scoreable > 0 ? Math.round(correct / scoreable * 100) : 100;
   const passed = score >= 60;
   const hasOpen = Object.keys(openAnswers).length > 0;
   const submitBtn = document.querySelector('[onclick="submitEval()"]');
   if (submitBtn) submitBtn.remove();
-
   const uid = window.S.user.id;
   await sb.from('completions').insert({ user_id: uid, module_id: mod.id, score, passed, attempt, completed_at: new Date().toISOString(), open_answers: openAnswers, mc_answers: mcAnswers });
-
   const resultHtml = `<div class="result-card" style="margin-top:24px">
     <div style="font-size:48px">${passed?'🏆':'😔'}</div>
     <div class="result-score ${passed?'pass':'fail'}">${score}%</div>
@@ -2822,13 +2674,11 @@ async function submitEval() {
   </div>`;
   document.getElementById('evalQuestions')?.insertAdjacentHTML('afterend', resultHtml);
   document.querySelector('.result-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
   if (passed) {
     window._certData = { name: window.S.user.full_name, module: mod.title, score, date: new Date().toLocaleDateString('es-AR', { year:'numeric', month:'long', day:'numeric' }) };
     setTimeout(() => showSurveyModal(uid, mod.id), 2000);
   }
 }
-
 function showCertificate() {
   const { name, module: mod2, score, date } = window._certData;
   showModal('modal-cert', 'Certificado de Aprobación', `
@@ -2844,7 +2694,6 @@ function showCertificate() {
     </div>
   `, null, true);
 }
-
 function showSurveyModal(uid, modId) {
   let rating = 0;
   showModal('modal-survey', '¿Qué te pareció este módulo?', `
@@ -2866,7 +2715,6 @@ function showSurveyModal(uid, modId) {
     document.querySelectorAll('.star').forEach(s => s.classList.toggle('active', parseInt(s.dataset.n) <= n));
   };
 }
-
 // ── MY RESULTS ──
 async function renderMyResults() {
   setTopbarActions('');
@@ -2881,14 +2729,12 @@ async function renderMyResults() {
   const failed = (comps||[]).filter(c => !c.passed).length;
   const avg = (comps||[]).length ? Math.round((comps||[]).reduce((a,c) => a+c.score,0)/(comps||[]).length) : 0;
   const best = (comps||[]).length ? Math.max(...(comps||[]).map(c => c.score)) : 0;
-
   // Group by module to show evolution
   const byModule = {};
   (comps||[]).forEach(c => {
     if (!byModule[c.module_id]) byModule[c.module_id] = [];
     byModule[c.module_id].push(c);
   });
-
   setContent(`
     <div class="stats-grid" style="margin-bottom:24px">
       <div class="stat-card"><div class="stat-icon green">✅</div><div><div class="stat-value">${passed}</div><div class="stat-label">Aprobados</div></div></div>
@@ -2896,7 +2742,6 @@ async function renderMyResults() {
       <div class="stat-card"><div class="stat-icon orange">📊</div><div><div class="stat-value">${avg}%</div><div class="stat-label">Promedio</div></div></div>
       <div class="stat-card"><div class="stat-icon yellow">🏆</div><div><div class="stat-value">${best}%</div><div class="stat-label">Mejor nota</div></div></div>
     </div>
-
     ${Object.keys(byModule).length === 0
       ? `<div class="empty-state"><div class="empty-icon">📊</div><h3>Todavía no rendiste ninguna evaluación</h3></div>`
       : Object.entries(byModule).map(([modId, attempts]) => {
@@ -2936,7 +2781,6 @@ async function renderMyResults() {
     }
   `);
 }
-
 // ── MY PROFILE ──
 async function renderMyProfile() {
   setTopbarActions('');
@@ -3003,7 +2847,6 @@ async function renderMyProfile() {
     </div>
   `);
 }
-
 async function viewUserProfile(uid) {
   const [{ data: u }, { data: comps }, { data: mods }, { data: questions }, { data: courses }] = await Promise.all([
     sb.from('users').select('*').eq('id', uid).single(),
@@ -3025,13 +2868,10 @@ async function viewUserProfile(uid) {
   const qByModule = (questions||[]).reduce((acc, q) => { if (!acc[q.module_id]) acc[q.module_id] = []; acc[q.module_id].push(q); return acc; }, {});
   const passed = (comps||[]).filter(c => c.passed).length;
   const avg = (comps||[]).length ? Math.round((comps||[]).reduce((a,c)=>a+c.score,0)/(comps||[]).length) : 0;
-
   // Group completions by module
   const byModule = {};
   (comps||[]).forEach(c => { if (!byModule[c.module_id]) byModule[c.module_id] = []; byModule[c.module_id].push(c); });
-
   window._profileData = { u, comps, mMap, qByModule };
-
   showModal('modal-profile', `Perfil — ${u.full_name}`, `
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
       <div style="width:48px;height:48px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;font-weight:700;flex-shrink:0">${u.full_name.charAt(0)}</div>
@@ -3058,7 +2898,6 @@ async function viewUserProfile(uid) {
         <div style="font-size:11px;color:var(--text-muted)">Intentos</div>
       </div>
     </div>
-
     ${Object.entries(byModule).map(([modId, attempts]) => {
       const mod = mMap[modId];
       const qs = qByModule[modId] || [];
@@ -3083,7 +2922,6 @@ async function viewUserProfile(uid) {
                 const type = q.type || 'single';
                 const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
                 const correctIndices = Array.isArray(q.correct_indices) && q.correct_indices.length ? q.correct_indices : [q.correct_index||0];
-
                 if (type === 'open' || (type === 'image' && opts.length < 2)) {
                   const ans = openAnswers[q.id] || '(sin respuesta)';
                   const existingScore = scoreMap[`${c.id}_${q.id}`];
@@ -3110,7 +2948,6 @@ async function viewUserProfile(uid) {
                     </div>` : ''}
                   </div>`;
                 }
-
                 const mcAnswers = c.mc_answers || {};
                 const userChoseArr = type === 'multiple'
                   ? (Array.isArray(mcAnswers[q.id]) ? mcAnswers[q.id] : [])
@@ -3142,7 +2979,6 @@ async function viewUserProfile(uid) {
     }).join('')}
   `, null, true);
 }
-
 window.toggleAccordion = function(id) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -3150,7 +2986,6 @@ window.toggleAccordion = function(id) {
   const arrow = el.previousElementSibling?.querySelector('span:last-child');
   if (arrow) arrow.textContent = el.style.display === 'none' ? '▼' : '▲';
 };
-
 async function exportUserAnswers(uid) {
   const { u, comps, mMap, qByModule } = window._profileData || {};
   if (!u) return;
@@ -3199,7 +3034,6 @@ async function exportUserAnswers(uid) {
   a.download = `respuestas_${u.full_name.replace(/ /g,'_')}.csv`;
   a.click();
 }
-
 // ── MODULE VIDEO UPLOAD ──
 window.uploadModuleVideo = async function(input) {
   const file = input.files[0]; if (!file) return;
@@ -3212,7 +3046,6 @@ window.uploadModuleVideo = async function(input) {
   document.getElementById('mVideo').value = publicUrl;
   if (statusEl) statusEl.textContent = '✅ Video subido correctamente';
 };
-
 // ── UNLOCK MANAGEMENT ──
 async function openUnlockModal(uid) {
   const [{ data: u }, { data: courses }, { data: allMods }, { data: modUnlocks }, { data: courseUnlocks }] = await Promise.all([
@@ -3224,10 +3057,8 @@ async function openUnlockModal(uid) {
   ]);
   const unlockedModIds = new Set((modUnlocks||[]).map(u => u.module_id));
   const unlockedCourseIds = new Set((courseUnlocks||[]).map(u => u.course_id));
-
   showModal('modal-unlocks', `🔓 Desbloqueos — ${u?.full_name}`, `
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Gestioná las excepciones de orden para este colaborador.</p>
-
     <div class="form-group">
       <label class="form-label">📚 Opción 1 — Desbloquear módulo específico</label>
       <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -3248,9 +3079,7 @@ async function openUnlockModal(uid) {
         }).join('')}
       ` : ''}
     </div>
-
     <div class="divider"></div>
-
     <div class="form-group">
       <label class="form-label">🎓 Opción 2 — Desbloquear curso completo para este colaborador</label>
       <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -3271,16 +3100,13 @@ async function openUnlockModal(uid) {
         }).join('')}
       ` : ''}
     </div>
-
     <div class="divider"></div>
-
     <div style="padding:12px 16px;background:var(--bg);border-radius:var(--radius-sm);font-size:13px">
       <div style="font-weight:600;margin-bottom:4px">⚙️ Opción 3 — Sin orden obligatorio en el curso</div>
       <div style="color:var(--text-muted);font-size:12px">Configurá esto desde <strong>Cursos → ✏️ Editar</strong> y desactivá "Orden obligatorio". Aplica para todos los colaboradores del curso.</div>
     </div>
   `, null, true);
 }
-
 async function unlockModule(uid) {
   const modId = document.getElementById('unlockModSelect').value;
   if (!modId) { alert('Seleccioná un módulo'); return; }
@@ -3288,13 +3114,11 @@ async function unlockModule(uid) {
   closeModal();
   openUnlockModal(uid);
 }
-
 async function lockModule(ulId, uid) {
   await sb.from('module_unlocks').delete().eq('id', ulId);
   closeModal();
   openUnlockModal(uid);
 }
-
 async function unlockCourse(uid) {
   const courseId = document.getElementById('unlockCourseSelect').value;
   if (!courseId) { alert('Seleccioná un curso'); return; }
@@ -3302,13 +3126,11 @@ async function unlockCourse(uid) {
   closeModal();
   openUnlockModal(uid);
 }
-
 async function lockCourse(ulId, uid) {
   await sb.from('course_unlocks').delete().eq('id', ulId);
   closeModal();
   openUnlockModal(uid);
 }
-
 // ── SCORE OPEN ANSWERS ──
 window.scoreOpenAnswer = async function(completionId, questionId, score, userId) {
   // Save or update score
@@ -3316,7 +3138,6 @@ window.scoreOpenAnswer = async function(completionId, questionId, score, userId)
     { completion_id: completionId, question_id: questionId, score, scored_by: window.S.user.id, scored_at: new Date().toISOString() },
     { onConflict: 'completion_id,question_id' }
   );
-
   // Update button visuals
   for (let n = 1; n <= 10; n++) {
     const btn = document.getElementById(`score-btn-${completionId}-${questionId}-${n}`);
@@ -3325,25 +3146,20 @@ window.scoreOpenAnswer = async function(completionId, questionId, score, userId)
     btn.style.color = n === score ? 'white' : 'var(--text)';
     btn.style.borderColor = n === score ? 'var(--accent)' : 'var(--border)';
   }
-
   // Recalculate module score
   // Get completion data
   const { data: comp } = await sb.from('completions').select('*').eq('id', completionId).single();
   if (!comp) return;
-
   // Get all questions for this module
   const { data: allQs } = await sb.from('questions').select('*').eq('module_id', comp.module_id);
   const { data: allScores } = await sb.from('open_scores').select('*').eq('completion_id', completionId);
   const scoresMap = Object.fromEntries((allScores||[]).map(s => [s.question_id, s.score]));
-
   const mcAnswers = comp.mc_answers || {};
   let totalPoints = 0;
   let maxPoints = 0;
-
   (allQs||[]).forEach(q => {
     const type = q.type || 'single';
     const correctIndices = Array.isArray(q.correct_indices) && q.correct_indices.length ? q.correct_indices : [q.correct_index||0];
-
     if (type === 'open' || (type === 'image' && (!q.options || q.options.length < 2))) {
       const s = scoresMap[q.id];
       if (s !== undefined) {
@@ -3364,29 +3180,23 @@ window.scoreOpenAnswer = async function(completionId, questionId, score, userId)
       }
     }
   });
-
   const newScore = maxPoints > 0 ? Math.round(totalPoints / maxPoints * 100) : comp.score;
   const newPassed = newScore >= 60;
-
   await sb.from('completions').update({ score: newScore, passed: newPassed }).eq('id', completionId);
-
   // Update score display in the accordion header
   const scoreColor = newScore>=80?'var(--success)':newScore>=60?'var(--warning)':'var(--danger)';
   const headerScore = document.querySelector(`[onclick="toggleAccordion('acc-${completionId}')"] span:first-of-type`);
   if (headerScore) headerScore.textContent = newScore + '%';
-
   // Update badge label
   const badgeEl = document.querySelector(`[onclick="toggleAccordion('acc-${completionId}')"] .badge`);
   if (badgeEl) {
     badgeEl.textContent = newPassed ? '✓ Aprobado' : '✗ Reprobado';
     badgeEl.className = `badge ${newPassed?'badge-green':'badge-red'}`;
   }
-
   // Show feedback
   const pendingBadge = document.getElementById(`score-btn-${completionId}-${questionId}-${score}`)?.closest('div[style*="border-bottom"]')?.querySelector('.badge');
   if (pendingBadge) { pendingBadge.textContent = `Calificado: ${score}/10`; pendingBadge.className = 'badge badge-blue'; }
 };
-
 // ── BULK CAMPAIGN ASSIGNMENT ──
 async function openBulkCampaignModal() {
   const campOpts = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR','Dental Total','Edenred']
@@ -3419,7 +3229,6 @@ async function openBulkCampaignModal() {
     <div id="bulkResult" style="margin-top:12px"></div>
   `, null, true);
 }
-
 async function bulkChangeCampaign() {
   const from = document.getElementById('bulkFrom').value;
   const to = document.getElementById('bulkTo').value;
@@ -3430,7 +3239,6 @@ async function bulkChangeCampaign() {
   if (error) { resultEl.innerHTML = '<div style="color:var(--danger)">Error: ' + error.message + '</div>'; return; }
   resultEl.innerHTML = '<div style="color:var(--success);font-weight:600">✅ ' + (data?.length||0) + ' colaboradores actualizados de ' + from + ' → ' + to + '</div>';
 }
-
 async function bulkChangeCampaignCSV() {
   const text = document.getElementById('bulkCsvText').value.trim();
   if (!text) { alert('Pegá el contenido CSV'); return; }
@@ -3443,7 +3251,6 @@ async function bulkChangeCampaignCSV() {
   }
   resultEl.innerHTML = '<div style="color:var(--success);font-weight:600">✅ ' + ok + ' actualizados' + (fail > 0 ? ' · ⚠️ ' + fail + ' errores' : '') + '</div>';
 }
-
 // ── CUSTOM SURVEYS ──
 async function renderCustomSurveys() {
   setTopbarActions('<button class="btn btn-primary" onclick="openCustomSurveyModal()">＋ Nueva Encuesta</button>');
@@ -3472,11 +3279,10 @@ async function renderCustomSurveys() {
     </div>
   `);
 }
-
 async function openCustomSurveyModal(id) {
   let s = null;
   if (id) { const { data } = await sb.from('custom_surveys').select('*').eq('id', id).single(); s = data; }
-  const campOpts = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR']
+  const campOpts = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR','Dental Total','Edenred']
     .map(c => `<option value="${c}" ${s?.campaign===c?'selected':''}>${c}</option>`).join('');
   showModal('modal-cs', `${id?'Editar':'Nueva'} Encuesta`, `
     <div class="form-group"><label class="form-label">Título</label><input class="form-control" id="csTitle" value="${s?.title||''}"></div>
@@ -3496,13 +3302,11 @@ async function openCustomSurveyModal(id) {
     closeModal(); renderCustomSurveys();
   });
 }
-
 async function deleteCustomSurvey(id) {
   if (!confirm('¿Eliminar esta encuesta?')) return;
   await sb.from('custom_surveys').delete().eq('id', id);
   renderCustomSurveys();
 }
-
 async function openCustomSurveyQuestions(surveyId, surveyTitle) {
   const { data: qs } = await sb.from('custom_survey_questions').select('*').eq('survey_id', surveyId).order('sort_order');
   showModal('modal-csq', 'Preguntas — ' + surveyTitle, `
@@ -3514,7 +3318,6 @@ async function openCustomSurveyQuestions(surveyId, surveyTitle) {
   `, null, true);
   window._currentSurveyId = surveyId;
 }
-
 function buildSurveyQuestionItem(q, i) {
   const opts = Array.isArray(q.options) ? q.options : JSON.parse(q.options||'[]');
   const types = { single: '☑️ Una respuesta', multiple: '✅ Varias', open: '✏️ Texto libre', scale: '⭐ Escala 1-5' };
@@ -3539,7 +3342,6 @@ function buildSurveyQuestionItem(q, i) {
     <button class="btn btn-primary btn-sm" onclick="saveCustomSurveyQuestion('${q.id}')">💾 Guardar</button>
   </div>`;
 }
-
 async function addCustomSurveyQuestion(surveyId) {
   const { data: existing } = await sb.from('custom_survey_questions').select('count').eq('survey_id', surveyId);
   const order = existing?.[0]?.count || 0;
@@ -3547,7 +3349,6 @@ async function addCustomSurveyQuestion(surveyId) {
   const { data: qs } = await sb.from('custom_survey_questions').select('*').eq('survey_id', surveyId).order('sort_order');
   document.getElementById('csSurveyQList').innerHTML = (qs||[]).map((q,i) => buildSurveyQuestionItem(q,i)).join('');
 }
-
 async function saveCustomSurveyQuestion(qId) {
   const question = document.getElementById('csqt-'+qId).value.trim();
   const type = document.getElementById('csqtype-'+qId).value;
@@ -3557,13 +3358,11 @@ async function saveCustomSurveyQuestion(qId) {
   const card = document.getElementById('csqcard-'+qId);
   if (card) { card.style.borderColor='var(--success)'; setTimeout(()=>{card.style.borderColor='';},1500); }
 }
-
 async function deleteCustomSurveyQuestion(qId) {
   if (!confirm('¿Eliminar esta pregunta?')) return;
   await sb.from('custom_survey_questions').delete().eq('id', qId);
   document.getElementById('csqcard-'+qId)?.remove();
 }
-
 async function viewCustomSurveyResults(surveyId, surveyTitle) {
   const [{ data: responses }, { data: users }, { data: qs }] = await Promise.all([
     sb.from('custom_survey_responses').select('*').eq('survey_id', surveyId),
@@ -3586,7 +3385,6 @@ async function viewCustomSurveyResults(surveyId, surveyTitle) {
       }).join('')}
   `, null, true);
 }
-
 // ── SUPERVISOR VIEWS ──
 async function getSupCampaigns() {
   // Get supervisor's assigned campaigns from DB
@@ -3596,7 +3394,6 @@ async function getSupCampaigns() {
     : (supUser?.campaign ? [supUser.campaign] : []);
   return camps.map(c => c.toUpperCase());
 }
-
 async function renderSupDashboard() {
   setTopbarActions('');
   setContent('<div class="loading"><div class="spinner"></div></div>');
@@ -3613,7 +3410,6 @@ async function renderSupDashboard() {
   const passed = filteredComps.filter(c => c.passed).length;
   const failed = filteredComps.filter(c => !c.passed).length;
   const avgScore = filteredComps.length ? Math.round(filteredComps.reduce((a,c)=>a+c.score,0)/filteredComps.length) : 0;
-
   // Top 5 módulos con más aprobaciones
   const modMap = Object.fromEntries((mods||[]).map(m=>[m.id,m]));
   const modStats = {};
@@ -3623,11 +3419,9 @@ async function renderSupDashboard() {
     if (c.passed) modStats[c.module_id].passed++;
   });
   const topMods = Object.entries(modStats).sort((a,b)=>b[1].passed-a[1].passed).slice(0,5);
-
   // Actividad reciente
   const recentComps = [...filteredComps].sort((a,b)=>new Date(b.completed_at)-new Date(a.completed_at)).slice(0,8);
   const userMap = Object.fromEntries(users.map(u=>[u.id,u]));
-
   setContent(`
     <div class="stats-grid" style="margin-bottom:24px">
       <div class="stat-card"><div class="stat-icon orange">👥</div><div><div class="stat-value">${users.length}</div><div class="stat-label">Colaboradores</div></div></div>
@@ -3673,7 +3467,6 @@ async function renderSupDashboard() {
     </div>
   `);
 }
-
 async function renderSupResults() {
   setTopbarActions('');
   setContent('<div class="loading"><div class="spinner"></div></div>');
@@ -3716,7 +3509,6 @@ async function renderSupResults() {
     </div>
   `);
 }
-
 async function renderSupCampaigns() {
   setTopbarActions('');
   setContent('<div class="loading"><div class="spinner"></div></div>');
@@ -3753,7 +3545,6 @@ async function renderSupCampaigns() {
     </div>
   `);
 }
-
 async function renderSupOverdue() {
   setTopbarActions('');
   setContent('<div class="loading"><div class="spinner"></div></div>');
@@ -3799,7 +3590,6 @@ async function renderSupOverdue() {
     </div>
   `);
 }
-
 async function renderSupSurveys() {
   setTopbarActions('');
   setContent('<div class="loading"><div class="spinner"></div></div>');
@@ -3835,8 +3625,6 @@ async function renderSupSurveys() {
     </div>
   `);
 }
-
-
 function showModal(id, title, body, onSave, readOnly) {
   closeModal();
   const m = document.createElement('div');
@@ -3856,14 +3644,12 @@ function showModal(id, title, body, onSave, readOnly) {
   m.addEventListener('click', e => { if (e.target === m) closeModal(); });
   window._modalOnSave = onSave;
 }
-
 window.modalSave = async function() {
   const btn = document.getElementById('modalSaveBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
   try { await window._modalOnSave?.(); }
   catch(e) { alert('Error: ' + e.message); if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; } }
 };
-
 function closeModal() {
   document.getElementById('modalOverlay')?.remove();
 }
