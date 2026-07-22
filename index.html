@@ -1739,34 +1739,70 @@ async function renderUsers() {
     <button class="btn btn-secondary" onclick="exportUsersTemplate()">📋 Descargar Plantilla</button>
     <button class="btn btn-secondary" onclick="exportCurrentUsers()">📤 Exportar Listado</button>
     <button class="btn btn-secondary" onclick="importUsersCSV()">📥 Importar CSV</button>
-    <button class="btn btn-primary" onclick="openUserModal()">＋ Nuevo Colaborador</button>
+    <button class="btn btn-primary" onclick="openUserModal()">＋ Nuevo Usuario</button>
   `);
   setContent('<div class="loading"><div class="spinner"></div></div>');
-  const { data: users } = await sb.from('users').select('*').neq('role','adm').order('full_name');
-  window._usersData = users || [];
+  const { data: allUsers } = await sb.from('users').select('*').neq('role','adm').order('full_name');
+  window._usersData = allUsers || [];
+  const cols = (allUsers||[]).filter(u => u.role === 'col');
+  const sups = (allUsers||[]).filter(u => u.role === 'sup');
   setContent(`
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">Colaboradores (${(users||[]).length})</div>
-        <input class="form-control" style="width:220px" placeholder="Buscar..." oninput="filterTable(this,'usersTable')">
+    <div style="display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid var(--border)">
+      <button onclick="showUsersTab('col')" id="tabUserCol" style="padding:10px 24px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid var(--accent);margin-bottom:-2px;color:var(--accent)">
+        Colaboradores (${cols.length})
+      </button>
+      <button onclick="showUsersTab('sup')" id="tabUserSup" style="padding:10px 24px;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--text-muted)">
+        Supervisores (${sups.length})
+      </button>
+    </div>
+    <div id="usersTabCol">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Colaboradores (${cols.length})</div>
+          <input class="form-control" style="width:220px" placeholder="Buscar..." oninput="filterTable(this,'usersTable')">
+        </div>
+        <div class="table-wrap">
+          <table id="usersTable">
+            <thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th>Ingreso</th><th>Acciones</th></tr></thead>
+            <tbody>
+              ${cols.map(u => `<tr>
+                <td><strong>${u.full_name}</strong></td>
+                <td><span style="font-family:'DM Mono',monospace;font-size:12px">${u.username}</span></td>
+                <td><span class="badge badge-orange">${u.campaign}</span></td>
+                <td class="text-sm text-muted">${u.start_date ? new Date(u.start_date).toLocaleDateString('es-AR') : '-'}</td>
+                <td>
+                  <button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.id}')">✏️</button>
+                  <button class="btn btn-ghost btn-sm" onclick="viewUserProfile('${u.id}')" title="Ver perfil">👤</button>
+                  <button class="btn btn-ghost btn-sm" onclick="deleteUser('${u.id}')" style="color:var(--danger)">🗑️</button>
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table id="usersTable">
-          <thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th>Ingreso</th><th>Acciones</th></tr></thead>
-          <tbody>
-            ${(users||[]).map(u => `<tr>
-              <td><strong>${u.full_name}</strong></td>
-              <td><span style="font-family:'DM Mono',monospace;font-size:12px">${u.username}</span></td>
-              <td><span class="badge badge-orange">${u.campaign}</span></td>
-              <td class="text-sm text-muted">${u.start_date ? new Date(u.start_date).toLocaleDateString('es-AR') : '-'}</td>
-              <td>
-                <button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.id}')">✏️</button>
-                <button class="btn btn-ghost btn-sm" onclick="viewUserProfile('${u.id}')" title="Ver perfil">👤</button>
-                <button class="btn btn-ghost btn-sm" onclick="deleteUser('${u.id}')" style="color:var(--danger)">🗑️</button>
-              </td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
+    </div>
+    <div id="usersTabSup" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Supervisores (${sups.length})</div>
+          <input class="form-control" style="width:220px" placeholder="Buscar..." oninput="filterTable(this,'supsTable')">
+        </div>
+        <div class="table-wrap">
+          <table id="supsTable">
+            <thead><tr><th>Nombre</th><th>Usuario</th><th>Acciones</th></tr></thead>
+            <tbody>
+              ${sups.length === 0 ? '<tr><td colspan="3" style="text-align:center;padding:32px;color:var(--text-muted)">Sin supervisores todavía</td></tr>' :
+                sups.map(u => `<tr>
+                  <td><strong>${u.full_name}</strong></td>
+                  <td><span style="font-family:'DM Mono',monospace;font-size:12px">${u.username}</span></td>
+                  <td>
+                    <button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.id}')">✏️</button>
+                    <button class="btn btn-ghost btn-sm" onclick="deleteUser('${u.id}')" style="color:var(--danger)">🗑️</button>
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
     <div class="card" style="margin-top:16px;padding:20px;background:var(--accent-light);border:1px dashed var(--accent)">
@@ -1787,24 +1823,35 @@ async function openUserModal(id) {
   let user = null;
   if (id) { const { data } = await sb.from('users').select('*').eq('id', id).single(); user = data; }
   const campOpts = CAMPAIGNS.map(c => `<option value="${c}" ${user?.campaign===c?'selected':''}>${c}</option>`).join('');
-  showModal('modal-user', `${id ? 'Editar' : 'Nuevo'} Colaborador`, `
+  const currentRole = user?.role || 'col';
+  showModal('modal-user', `${id ? 'Editar' : 'Nuevo'} Usuario`, `
     <div class="form-group"><label class="form-label">Nombre Completo</label><input class="form-control" id="uName" value="${user?.full_name||''}"></div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Usuario</label><input class="form-control" id="uUser" value="${user?.username||''}"></div>
       <div class="form-group"><label class="form-label">Contraseña</label><input class="form-control" id="uPass" value="${user?.password||''}" type="text"></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Campaña</label><select class="form-control" id="uCamp">${campOpts}</select></div>
-      <div class="form-group"><label class="form-label">Fecha Ingreso</label><input class="form-control" id="uDate" type="date" value="${user?.start_date||new Date().toISOString().split('T')[0]}"></div>
+    <div class="form-group">
+      <label class="form-label">Rol</label>
+      <select class="form-control" id="uRole" onchange="toggleCampField(this.value)">
+        <option value="col" ${currentRole==='col'?'selected':''}>Colaborador</option>
+        <option value="sup" ${currentRole==='sup'?'selected':''}>Supervisor</option>
+      </select>
+    </div>
+    <div id="campFieldWrap" ${currentRole==='sup'?'style="display:none"':''}>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Campaña</label><select class="form-control" id="uCamp">${campOpts}</select></div>
+        <div class="form-group"><label class="form-label">Fecha Ingreso</label><input class="form-control" id="uDate" type="date" value="${user?.start_date||new Date().toISOString().split('T')[0]}"></div>
+      </div>
     </div>
   `, async () => {
+    const role = document.getElementById('uRole').value;
     const payload = {
       full_name: document.getElementById('uName').value.trim(),
       username: document.getElementById('uUser').value.trim(),
       password: document.getElementById('uPass').value.trim(),
-      campaign: document.getElementById('uCamp').value,
-      start_date: document.getElementById('uDate').value,
-      role: 'col'
+      role,
+      campaign: role === 'sup' ? null : document.getElementById('uCamp').value,
+      start_date: role === 'sup' ? null : document.getElementById('uDate').value,
     };
     if (!payload.full_name || !payload.username || !payload.password) { alert('Completá todos los campos'); return; }
     if (id) { await sb.from('users').update(payload).eq('id', id); }
@@ -1813,10 +1860,21 @@ async function openUserModal(id) {
   });
 }
 async function deleteUser(id) {
-  if (!confirm('¿Eliminar este colaborador?')) return;
+  if (!confirm('¿Eliminar este usuario?')) return;
   await sb.from('users').delete().eq('id', id);
   renderUsers();
 }
+function showUsersTab(tab) {
+  document.getElementById('usersTabCol').style.display = tab === 'col' ? 'block' : 'none';
+  document.getElementById('usersTabSup').style.display = tab === 'sup' ? 'block' : 'none';
+  document.getElementById('tabUserCol').style.borderBottomColor = tab === 'col' ? 'var(--accent)' : 'transparent';
+  document.getElementById('tabUserCol').style.color = tab === 'col' ? 'var(--accent)' : 'var(--text-muted)';
+  document.getElementById('tabUserSup').style.borderBottomColor = tab === 'sup' ? 'var(--accent)' : 'transparent';
+  document.getElementById('tabUserSup').style.color = tab === 'sup' ? 'var(--accent)' : 'var(--text-muted)';
+}
+window.toggleCampField = function(role) {
+  document.getElementById('campFieldWrap').style.display = role === 'sup' ? 'none' : 'block';
+};
 // ── EXPORTAR PLANTILLA VACÍA ──
 function exportUsersTemplate() {
   const campList = CAMPAIGNS.join(' | ');
@@ -3199,7 +3257,7 @@ window.scoreOpenAnswer = async function(completionId, questionId, score, userId)
 };
 // ── BULK CAMPAIGN ASSIGNMENT ──
 async function openBulkCampaignModal() {
-  const campOpts = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR','Dental Total','Edenred']
+  const campOpts = ['General','Onboarding','VISA','TLMK','EDESUR','FARMACITY','MATER DEI','ADT','STRIX','CAR ONE','PRO JUBILAR','AYSA','RIO GAS','MIRGOR','Dental Total','Edenred','INFINITE']
     .map(c => `<option value="${c}">${c}</option>`).join('');
   showModal('modal-bulk-campaign', '🏷️ Cambiar Campaña Masiva', `
     <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">Podés cambiar la campaña a múltiples colaboradores de dos formas:</p>
