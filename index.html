@@ -106,7 +106,7 @@ body {
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 20px;
   padding: 48px;
-  width: 420px;
+  width: 480px;
   position: relative;
   z-index: 1;
 }
@@ -134,20 +134,21 @@ body {
   border-radius: var(--radius-sm);
   padding: 4px;
   margin-bottom: 28px;
-  gap: 4px;
+  gap: 3px;
 }
 .role-tab {
   flex: 1;
-  padding: 10px;
+  padding: 9px 4px;
   border: none;
   background: transparent;
   color: rgba(255,255,255,0.5);
   border-radius: 6px;
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 .role-tab.active {
   background: var(--accent);
@@ -284,16 +285,18 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 20px;
+  padding: 10px 14px;
   color: rgba(255,255,255,0.5);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
   font-size: 13px;
   font-weight: 500;
   border-left: 3px solid transparent;
+  margin: 1px 8px;
+  border-radius: 8px;
 }
-.nav-item:hover { background: var(--sidebar-hover); color: rgba(255,255,255,0.85); }
-.nav-item.active { background: rgba(0,177,255,0.12); color: white; border-left-color: var(--accent); }
+.nav-item:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); transform: translateX(2px); }
+.nav-item.active { background: rgba(0,177,255,0.15); color: white; border-left-color: var(--accent); box-shadow: 0 2px 8px rgba(0,177,255,0.2); }
 .nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
 .sidebar-footer {
   padding: 16px 20px;
@@ -380,6 +383,12 @@ body {
   align-items: center;
   gap: 16px;
   box-shadow: var(--shadow);
+  transition: all 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent);
 }
 .stat-icon {
   width: 44px; height: 44px;
@@ -408,9 +417,10 @@ body {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
+.btn:active { transform: scale(0.97); }
 .btn-primary { background: var(--accent); color: white; }
 .btn-primary:hover { background: #0099dd; }
 .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
@@ -443,7 +453,8 @@ tbody td {
   color: var(--text);
 }
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: #FAFAFA; }
+tbody tr { transition: background 0.15s ease; }
+tbody tr:hover { background: #F0F6FA; }
 /* ── BADGES ── */
 .badge {
   display: inline-flex;
@@ -725,6 +736,7 @@ tbody tr:hover { background: #FAFAFA; }
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 /* ── VIDEO ── */
 .video-wrap {
   position: relative;
@@ -824,7 +836,7 @@ tbody tr:hover { background: #FAFAFA; }
         </div>
       </div>
       <div id="globalSearchResults" style="position:fixed;top:60px;right:32px;width:360px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:200;display:none;max-height:400px;overflow-y:auto"></div>
-      <div class="content" id="mainContent">
+      <div class="content" id="mainContent" style="animation:fadeIn 0.2s ease">
         <div class="loading"><div class="spinner"></div></div>
       </div>
     </main>
@@ -1020,7 +1032,12 @@ function navigate(page) {
   };
   if (pages[page]) pages[page]();
 }
-function setContent(html) { document.getElementById('mainContent').innerHTML = html; }
+function setContent(html) {
+  const el = document.getElementById('mainContent');
+  el.style.animation = 'none';
+  el.innerHTML = html;
+  requestAnimationFrame(() => { el.style.animation = 'fadeIn 0.2s ease'; });
+}
 function setTopbarActions(html) { document.getElementById('topbarActions').innerHTML = html; }
 // ── ADMIN DASHBOARD ──
 async function renderAdminDashboard() {
