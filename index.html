@@ -1345,48 +1345,19 @@ async function openModuleModal(id) {
     <div class="form-group"><label class="form-label">Título</label><input class="form-control" id="mTitle" value="${mod?.title||''}"></div>
     <div class="form-group"><label class="form-label">Descripción</label>${makeRTE('mDesc', mod?.description||'', 'Descripción del módulo...')}</div>
     <div class="form-group">
-      <label class="form-label">Tipo de material principal</label>
-      <div style="display:flex;gap:10px;margin-bottom:4px">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 16px;border:2px solid var(--border);border-radius:var(--radius);flex:1;justify-content:center;transition:.15s" id="mTypeVideoLabel">
-          <input type="radio" name="mMaterialType" id="mTypeVideo" value="video" ${!mod?.material_type || mod?.material_type==='video' ? 'checked' : ''} onchange="window._switchMaterialType('video')" style="display:none">
-          🎬 Video
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 16px;border:2px solid var(--border);border-radius:var(--radius);flex:1;justify-content:center;transition:.15s" id="mTypePresentacionLabel">
-          <input type="radio" name="mMaterialType" id="mTypePresentacion" value="presentation" ${mod?.material_type==='presentation' ? 'checked' : ''} onchange="window._switchMaterialType('presentation')" style="display:none">
-          📊 Presentación
-        </label>
+      <label class="form-label">Video</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <input class="form-control" id="mVideo" placeholder="https://www.youtube.com/embed/... o URL del video" value="${mod?.video_url||''}">
       </div>
-    </div>
-    <div id="mVideoSection" style="${mod?.material_type==='presentation' ? 'display:none' : ''}">
-      <div class="form-group">
-        <label class="form-label">Video</label>
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <input class="form-control" id="mVideo" placeholder="https://www.youtube.com/embed/... o URL del video" value="${mod?.video_url||''}">
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input type="file" id="mVideoFile" accept="video/*" style="display:none" onchange="uploadModuleVideo(this)">
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('mVideoFile').click()">📹 Subir video MP4</button>
-          <span id="mVideoStatus" style="font-size:12px;color:var(--text-muted)"></span>
-        </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Podés pegar una URL de YouTube/Vimeo o subir un MP4 directamente</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="file" id="mVideoFile" accept="video/*" style="display:none" onchange="uploadModuleVideo(this)">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('mVideoFile').click()">📹 Subir video MP4</button>
+        <span id="mVideoStatus" style="font-size:12px;color:var(--text-muted)"></span>
       </div>
-    </div>
-    <div id="mPresentacionSection" style="${mod?.material_type==='presentation' ? '' : 'display:none'}">
-      <div class="form-group">
-        <label class="form-label">Presentación (PDF, PPT, PPTX)</label>
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <input class="form-control" id="mPresUrl" placeholder="URL de la presentación (se completa automáticamente al subir)" value="${mod?.presentation_url||''}">
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <input type="file" id="mPresFile" accept=".pdf,.ppt,.pptx,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" style="display:none" onchange="uploadModulePresentation(this)">
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('mPresFile').click()">📊 Subir PDF / PPT</button>
-          <span id="mPresStatus" style="font-size:12px;color:var(--text-muted)"></span>
-        </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Subí un PDF o PowerPoint — se abrirá embebido dentro del módulo</div>
-      </div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Podés pegar una URL de YouTube/Vimeo o subir un MP4 directamente</div>
     </div>
     <div class="form-group">
-      <label class="form-label" id="mDurationLabel">${!mod?.material_type || mod?.material_type==='video' ? 'Duración del video (en minutos)' : 'Tiempo mínimo de lectura (en minutos)'} <span style="color:var(--text-muted);font-weight:400">— las preguntas se habilitan al completar este tiempo</span></label>
+      <label class="form-label">Duración del video (en minutos) <span style="color:var(--text-muted);font-weight:400">— las preguntas se habilitan al completar este tiempo</span></label>
       <div style="display:flex;align-items:center;gap:10px">
         <input class="form-control" id="mDuration" type="number" min="0" step="0.5" placeholder="Ej: 3.5 = 3 min 30 seg" value="${mod?.video_duration ? Math.round(mod.video_duration/60*10)/10 : 0}" style="max-width:200px">
         <span style="font-size:13px;color:var(--text-muted)">minutos</span>
@@ -1408,17 +1379,14 @@ async function openModuleModal(id) {
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <input type="checkbox" id="mRequireVideo" ${mod?.require_video_on_retry!==false?'checked':''}>
-        <label for="mRequireVideo" style="font-size:13px;font-weight:500">Obligar a ver el material al reintentar</label>
+        <label for="mRequireVideo" style="font-size:13px;font-weight:500">Obligar a ver el video al reintentar</label>
       </div>
     </div>
   `, async () => {
-    const _matType = document.querySelector('input[name="mMaterialType"]:checked')?.value || 'video';
     const payload = {
       title: document.getElementById('mTitle').value.trim(),
       description: rteVal('mDesc'),
-      material_type: _matType,
-      video_url: _matType === 'video' ? document.getElementById('mVideo').value.trim() : null,
-      presentation_url: _matType === 'presentation' ? document.getElementById('mPresUrl').value.trim() : null,
+      video_url: document.getElementById('mVideo').value.trim(),
       video_duration: Math.round((parseFloat(document.getElementById('mDuration').value)||0) * 60),
       campaign: document.getElementById('mCamp').value,
       sort_order: parseInt(document.getElementById('mOrder').value)||0,
@@ -1438,11 +1406,6 @@ async function openModuleModal(id) {
     }
     closeModal(); renderModules();
   });
-  // Initialize material type UI state after modal renders
-  setTimeout(() => {
-    const initType = (mod?.material_type === 'presentation') ? 'presentation' : 'video';
-    window._switchMaterialType(initType);
-  }, 0);
 }
 async function deleteModule(id) {
   if (!confirm('¿Eliminar este módulo?')) return;
@@ -1794,6 +1757,7 @@ async function deleteQuestion(qId) {
 async function renderUsers() {
   setTopbarActions(`
     <button class="btn btn-secondary" onclick="openBulkCampaignModal()">🏷️ Cambiar Campaña Masiva</button>
+    <button class="btn btn-danger btn-sm" id="btnDeleteSelected" style="display:none" onclick="deleteSelectedUsers()">🗑️ Eliminar seleccionados</button>
     <button class="btn btn-secondary" onclick="exportUsersTemplate()">📋 Descargar Plantilla</button>
     <button class="btn btn-secondary" onclick="exportCurrentUsers()">📤 Exportar Listado</button>
     <button class="btn btn-secondary" onclick="importUsersCSV()">📥 Importar CSV</button>
@@ -1822,9 +1786,10 @@ async function renderUsers() {
         </div>
         <div class="table-wrap">
           <table id="usersTable">
-            <thead><tr><th>Nombre</th><th>Usuario</th><th>Campaña</th><th>Ingreso</th><th>Acciones</th></tr></thead>
+            <thead><tr><th style="width:32px"><input type="checkbox" id="chkAllCols" title="Seleccionar todos" onchange="toggleAllUserChecks(this.checked)"></th><th>Nombre</th><th>Usuario</th><th>Campaña</th><th>Ingreso</th><th>Acciones</th></tr></thead>
             <tbody>
               ${cols.map(u => `<tr>
+                <td><input type="checkbox" class="user-chk" data-id="${u.id}" onchange="window._updateDeleteBtn()"></td>
                 <td><strong>${u.full_name}</strong></td>
                 <td><span style="font-family:'DM Mono',monospace;font-size:12px">${u.username}</span></td>
                 <td><span class="badge badge-orange">${u.campaign}</span></td>
@@ -1975,17 +1940,30 @@ function importUsersCSV() {
   inp.onchange = async (e) => {
     const file = e.target.files[0]; if (!file) return;
     const text = await file.text();
-    const lines = text.split('\n');
+    const lines = text.split(/\r?\n/);
     // Saltear header y líneas de comentario (//)
-    const dataRows = lines.slice(1).filter(l => l.trim() && !l.trim().startsWith('//') && !l.trim().startsWith('"//'));
-    const rows = dataRows.map(r => r.split(',').map(s => s.trim().replace(/^"|"$/g,'')));
-    const inserts = rows.filter(r => r.length >= 4 && r[0] && r[1] && r[2]).map(r => ({
-      full_name: r[0],
-      username: r[1],
-      password: r[2],
-      campaign: r[3] || 'General',
+    const dataRows = lines.slice(1).filter(l => l.trim() && !l.trim().startsWith('//') && !l.trim().startsWith('"//"'));
+    // Parser CSV robusto: maneja celdas con comillas y espacios extra
+    function parseCSVLine(line) {
+      const result = []; let cur = ''; let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') { if (inQ && line[i+1] === '"') { cur += '"'; i++; } else { inQ = !inQ; } }
+        else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+        else { cur += ch; }
+      }
+      result.push(cur.trim());
+      return result.map(s => s.replace(/^"+|"+$/g, '').trim());
+    }
+    const rows = dataRows.map(parseCSVLine);
+    const today = new Date().toISOString().split('T')[0];
+    const inserts = rows.filter(r => r.length >= 3 && r[0] && r[1] && r[2]).map(r => ({
+      full_name: r[0].replace(/["“”]/g, '').trim(),
+      username: r[1].replace(/["“”\s]/g, '').toLowerCase(),
+      password: r[2].replace(/["“”]/g, '').trim(),
+      campaign: (r[3] || 'General').replace(/["“”]/g, '').trim(),
       role: 'col',
-      start_date: r[4] || new Date().toISOString().split('T')[0]
+      start_date: r[4] ? r[4].replace(/["“”]/g, '').trim() : today
     }));
     if (!inserts.length) {
       alert('No se encontraron datos válidos.\n\nFormato requerido:\nNombre Completo,Usuario,Contraseña,Campaña,Fecha Ingreso\n\nUsá la Plantilla para asegurarte del formato correcto.');
@@ -1995,16 +1973,49 @@ function importUsersCSV() {
     const preview = inserts.slice(0,5).map(u => `• ${u.full_name} (${u.username}) — ${u.campaign}`).join('\n');
     const more = inserts.length > 5 ? `\n...y ${inserts.length - 5} más` : '';
     if (!confirm(`Se van a importar ${inserts.length} colaboradores:\n\n${preview}${more}\n\n¿Confirmás?`)) return;
-    const { error } = await sb.from('users').insert(inserts);
-    if (error) {
-      if (error.message.includes('unique')) alert('⚠️ Algunos usuarios ya existen en el sistema. Verificá que los usuarios (columna Usuario) no estén duplicados.');
-      else alert('Error al importar: ' + error.message);
-      return;
+    // Insertar de a lotes de 10 — detecta errores por usuario
+    let ok = 0; const failed = [];
+    const BATCH = 10;
+    for (let i = 0; i < inserts.length; i += BATCH) {
+      const batch = inserts.slice(i, i + BATCH);
+      const { error } = await sb.from('users').insert(batch);
+      if (error) {
+        for (const u of batch) {
+          const { error: e2 } = await sb.from('users').insert([u]);
+          if (e2) failed.push({ user: u.username, reason: e2.message.includes('unique') ? 'ya existe' : e2.message });
+          else ok++;
+        }
+      } else { ok += batch.length; }
     }
-    alert(`✅ ${inserts.length} colaboradores importados correctamente.`);
+    let msg = `✅ ${ok} colaboradores importados correctamente.`;
+    if (failed.length) {
+      msg += `\n\n⚠️ ${failed.length} no se pudieron importar:\n` + failed.slice(0,10).map(f => `• ${f.user}: ${f.reason}`).join('\n');
+      if (failed.length > 10) msg += `\n...y ${failed.length - 10} más`;
+    }
+    alert(msg);
     renderUsers();
   };
   inp.click();
+}
+// ── ELIMINACIÓN MASIVA ──
+window._updateDeleteBtn = function() {
+  const checked = document.querySelectorAll('.user-chk:checked').length;
+  const btn = document.getElementById('btnDeleteSelected');
+  if (btn) { btn.style.display = checked > 0 ? 'inline-flex' : 'none'; btn.textContent = `🗑️ Eliminar ${checked} seleccionados`; }
+};
+window.toggleAllUserChecks = function(val) {
+  document.querySelectorAll('.user-chk').forEach(c => { c.checked = val; });
+  window._updateDeleteBtn();
+};
+async function deleteSelectedUsers() {
+  const checked = [...document.querySelectorAll('.user-chk:checked')];
+  if (!checked.length) return;
+  const ids = checked.map(c => c.dataset.id);
+  if (!confirm(`⚠️ Vas a eliminar ${ids.length} usuarios permanentemente.\n¿Estás segura?`)) return;
+  const { error } = await sb.from('users').delete().in('id', ids);
+  if (error) { alert('Error al eliminar: ' + error.message); return; }
+  alert(`✅ ${ids.length} usuarios eliminados.`);
+  renderUsers();
 }
 // ── RESULTS ADMIN ──
 async function renderResults() {
@@ -2414,8 +2425,6 @@ async function startModule(modId) {
   const getYouTubeId = url => { const m = url?.match(/(?:embed\/|v=|youtu\.be\/)([^?&]+)/); return m?m[1]:null; };
   const ytId = getYouTubeId(mod.video_url);
   const isMp4 = mod.video_url && !ytId && /\.(mp4|webm|ogg|mov)(\?|$)/i.test(mod.video_url);
-  const isPresentation = mod.material_type === 'presentation' && mod.presentation_url;
-  const isPdf = isPresentation && /\.pdf(\?|$)/i.test(mod.presentation_url);
   const questions = (qs||[]).slice(0,10);
   window._evalState = { mod, questions, answers: {}, submitted: false, attempt: attempts + 1 };
   // Files section for collaborator
@@ -2506,46 +2515,6 @@ async function startModule(modId) {
         </div>
         <div id="evalSection" style="display:none;margin-top:8px"></div>
         ` : `<div id="evalSection" style="margin-top:8px"></div>`}
-      ` : isPresentation ? `
-        <div class="card" style="margin-bottom:24px;overflow:hidden">
-          <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
-            <div class="card-title">📊 ${mod.title}</div>
-            <a href="${mod.presentation_url}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:12px">⬇️ Descargar</a>
-          </div>
-          <div style="background:#f0f0f0">
-            ${isPdf
-              ? `<iframe src="${mod.presentation_url}" style="width:100%;height:600px;border:none;display:block" allowfullscreen></iframe>`
-              : `<iframe src="https://docs.google.com/viewer?url=${encodeURIComponent(mod.presentation_url)}&embedded=true" style="width:100%;height:600px;border:none;display:block" allowfullscreen></iframe>`
-            }
-          </div>
-        </div>
-        ${mod.video_duration > 0 && !skipVideo ? `
-        <div id="videoGate" style="margin:24px 0;padding:20px 24px;background:var(--accent-light);border:2px solid var(--accent);border-radius:var(--radius)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div>
-              <div style="font-weight:700;font-size:15px;margin-bottom:3px">⏱️ Leé la presentación completa</div>
-              <div style="font-size:13px;color:var(--text-muted)">La evaluación se habilita después del tiempo estimado de lectura</div>
-            </div>
-            <div style="text-align:center">
-              <div id="timerDisplay" style="font-size:28px;font-weight:800;color:var(--accent);font-family:'DM Mono',monospace">${formatDuration(mod.video_duration)}</div>
-              <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px">restante</div>
-            </div>
-          </div>
-          <div class="progress-bar" style="height:8px;margin-bottom:12px">
-            <div id="timerBar" style="height:100%;width:0%;background:var(--accent);border-radius:10px;transition:width 1s linear"></div>
-          </div>
-          <button class="btn btn-primary" id="evalBtn" style="width:100%;padding:12px;font-size:15px;opacity:0.4;cursor:not-allowed" disabled onclick="window.revealEval()">
-            🔒 Completá la lectura para desbloquear la evaluación
-          </button>
-        </div>
-        <div id="evalSection" style="display:none;margin-top:8px"></div>
-        ` : `
-        <div id="videoGate" style="text-align:center;margin:24px 0;padding:20px;background:var(--accent-light);border:2px dashed var(--accent);border-radius:var(--radius)">
-          <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Revisá la presentación y cuando termines hacé click</div>
-          <button class="btn btn-primary" style="padding:12px 32px" onclick="window.revealEval()">✅ Continuar a la evaluación</button>
-        </div>
-        <div id="evalSection" style="display:none;margin-top:8px"></div>
-        `}
       ` : mod.video_url ? `
         <div class="card" style="padding:16px;margin-bottom:24px;text-align:center">
           <a href="${mod.video_url}" target="_blank" class="btn btn-primary">▶️ Ver Video</a>
@@ -2562,7 +2531,7 @@ async function startModule(modId) {
   if (evalSection) {
     evalSection.innerHTML = buildQuestionsHtml(questions);
   }
-  // Auto-start timer if video_duration is set and not skipping material
+  // Auto-start timer if video_duration is set and not skipping video
   if (mod.video_duration > 0 && !skipVideo) {
     if (window._videoTimer) clearInterval(window._videoTimer);
     setTimeout(() => startVideoTimer(mod.video_duration), 500);
@@ -3205,40 +3174,6 @@ window.uploadModuleVideo = async function(input) {
   const { data: { publicUrl } } = sb.storage.from('module-files').getPublicUrl(path);
   document.getElementById('mVideo').value = publicUrl;
   if (statusEl) statusEl.textContent = '✅ Video subido correctamente';
-};
-// ── MODULE PRESENTATION UPLOAD ──
-window.uploadModulePresentation = async function(input) {
-  const file = input.files[0]; if (!file) return;
-  const statusEl = document.getElementById('mPresStatus');
-  if (statusEl) statusEl.textContent = 'Subiendo...';
-  const ext = file.name.split('.').pop().toLowerCase();
-  const path = 'presentations/' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const { error } = await sb.storage.from('module-files').upload(path, file, { upsert: true });
-  if (error) { if (statusEl) statusEl.textContent = '❌ Error: ' + error.message; return; }
-  const { data: { publicUrl } } = sb.storage.from('module-files').getPublicUrl(path);
-  document.getElementById('mPresUrl').value = publicUrl;
-  if (statusEl) statusEl.textContent = '✅ Presentación subida correctamente';
-};
-// ── MATERIAL TYPE SWITCHER ──
-window._switchMaterialType = function(type) {
-  const videoSection = document.getElementById('mVideoSection');
-  const presSection = document.getElementById('mPresentacionSection');
-  const label = document.getElementById('mDurationLabel');
-  const labelVideo = document.getElementById('mTypeVideoLabel');
-  const labelPres = document.getElementById('mTypePresentacionLabel');
-  if (type === 'video') {
-    if (videoSection) videoSection.style.display = '';
-    if (presSection) presSection.style.display = 'none';
-    if (label) label.firstChild.textContent = 'Duración del video (en minutos)';
-    if (labelVideo) { labelVideo.style.borderColor = 'var(--accent)'; labelVideo.style.background = 'var(--accent-light)'; labelVideo.style.fontWeight = '600'; }
-    if (labelPres) { labelPres.style.borderColor = 'var(--border)'; labelPres.style.background = ''; labelPres.style.fontWeight = ''; }
-  } else {
-    if (videoSection) videoSection.style.display = 'none';
-    if (presSection) presSection.style.display = '';
-    if (label) label.firstChild.textContent = 'Tiempo mínimo de lectura (en minutos)';
-    if (labelVideo) { labelVideo.style.borderColor = 'var(--border)'; labelVideo.style.background = ''; labelVideo.style.fontWeight = ''; }
-    if (labelPres) { labelPres.style.borderColor = 'var(--accent)'; labelPres.style.background = 'var(--accent-light)'; labelPres.style.fontWeight = '600'; }
-  }
 };
 // ── UNLOCK MANAGEMENT ──
 async function openUnlockModal(uid) {
