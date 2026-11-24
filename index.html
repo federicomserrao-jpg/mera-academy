@@ -3362,11 +3362,16 @@ async function bulkChangeCampaign() {
   const from = document.getElementById('bulkFrom').value;
   const to = document.getElementById('bulkTo').value;
   if (from === to) { alert('Las campañas son iguales'); return; }
-  if (!confirm('¿Cambiar TODOS los colaboradores de ' + from + ' a ' + to + '?')) return;
-  const { data, error } = await sb.from('users').update({ campaign: to }).eq('campaign', from).eq('role', 'col').select('id');
   const resultEl = document.getElementById('bulkResult');
+  // Primero contar cuántos hay en esa campaña
+  const { count } = await sb.from('users').select('id', { count: 'exact', head: true }).eq('campaign', from).eq('role', 'col');
+  if (!count) { resultEl.innerHTML = '<div style="color:var(--warning)">⚠️ No hay colaboradores en la campaña ' + from + '</div>'; return; }
+  if (!confirm('¿Cambiar ' + count + ' colaboradores de ' + from + ' a ' + to + '?')) return;
+  resultEl.innerHTML = '<div style="color:var(--text-muted)">Actualizando...</div>';
+  const { error } = await sb.from('users').update({ campaign: to }).eq('campaign', from).eq('role', 'col');
   if (error) { resultEl.innerHTML = '<div style="color:var(--danger)">Error: ' + error.message + '</div>'; return; }
-  resultEl.innerHTML = '<div style="color:var(--success);font-weight:600">✅ ' + (data?.length||0) + ' colaboradores actualizados de ' + from + ' → ' + to + '</div>';
+  resultEl.innerHTML = '<div style="color:var(--success);font-weight:600">✅ ' + count + ' colaboradores actualizados de ' + from + ' → ' + to + '</div>';
+  renderUsers();
 }
 async function bulkChangeCampaignCSV() {
   const text = document.getElementById('bulkCsvText').value.trim();
